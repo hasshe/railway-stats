@@ -43,8 +43,6 @@ public class MalarDalenClient implements RestClient {
         HttpResponse<String> response =
             httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            IO.println(response.body());
-
         if (response.statusCode() != 200) {
             throw new RuntimeException(
                 "API call failed with status: " + response.statusCode()
