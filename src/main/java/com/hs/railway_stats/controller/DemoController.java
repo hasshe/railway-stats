@@ -8,16 +8,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
-import com.hs.railway_stats.service.DemoService;
+import com.hs.railway_stats.service.TripInfoService;
 
 
 @RestController
 @RequestMapping("/demo")
 public class DemoController {
 
-    private final DemoService demoService;
+    private final TripInfoService demoService;
 
-    public DemoController(DemoService demoService) {
+    public DemoController(TripInfoService demoService) {
         this.demoService = demoService;
     }
 

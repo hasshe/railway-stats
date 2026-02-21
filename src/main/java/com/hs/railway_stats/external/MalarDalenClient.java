@@ -16,8 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hs.railway_stats.dto.TripRequest;
 import com.hs.railway_stats.dto.TripResponse;
 
-import ch.qos.logback.core.util.StringUtil;
-
 @Component
 public class MalarDalenClient implements RestClient {
 
@@ -45,6 +43,8 @@ public class MalarDalenClient implements RestClient {
         HttpResponse<String> response =
             httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+            IO.println(response.body());
+
         if (response.statusCode() != 200) {
             throw new RuntimeException(
                 "API call failed with status: " + response.statusCode()
@@ -62,32 +62,18 @@ public class MalarDalenClient implements RestClient {
         }
 
         private TripRequest getRequestBody(long originId, long destinationId, String nextToken) {
-            TripRequest requestBody;
-            
-            if (!StringUtil.isNullOrEmpty(nextToken)) {
-                requestBody = new TripRequest(
-                    originId,
-                    destinationId,
-                    nextToken,
-                    null,
-                    false,
-                    false
-                );
-            } else {
-                var start = OffsetDateTime.of(
-                    LocalDate.now(),
-                    LocalTime.of(1, 0, 0),
-                    ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
-                );
-                requestBody = new TripRequest(
+            var start = OffsetDateTime.of(
+                LocalDate.now(),
+                LocalTime.of(1, 0, 0),
+                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+            );
+
+            return new TripRequest(
                     originId,
                     destinationId,
                     nextToken,
                     start.toString(),
                     false,
-            false
-                );
-            }
-            return requestBody;
+            false);
         }
 }

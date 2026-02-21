@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
 
-public interface DemoService {
+public interface TripInfoService {
 
     List<TripInfoResponse> getDemoList(String param);
     

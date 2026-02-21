@@ -27,7 +27,16 @@ public class TripInfoMapper {
                 if (planned != null && actual != null) {
                     totalMinutesLate = (int) Duration.between(planned, actual).toMinutes();
                 }
-                return new TripInfoResponse(startDestination, endingDestination, isCancelled, totalMinutesLate);
+                var initialDepartureTime = firstLeg.origin().plannedDateTime();
+                var actualArrivalTime = lastLeg.destination().actualDateTime();
+                return new TripInfoResponse(
+                    startDestination,
+                    endingDestination,
+                    isCancelled,
+                    totalMinutesLate,
+                    initialDepartureTime,
+                    actualArrivalTime
+                );
             })
             .toList();
     }
