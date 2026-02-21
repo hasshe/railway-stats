@@ -6,6 +6,6 @@ import com.hs.railway_stats.dto.TripResponse;
 
 public interface RestClient {
 
-    TripResponse callSearch(long originId, long destinationId, String nextToken) throws IOException, InterruptedException;
-    
+    TripResponse callSearch(long originId, long destinationId, String nextToken)
+     throws IOException, InterruptedException;
 }

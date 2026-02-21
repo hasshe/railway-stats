@@ -6,13 +6,15 @@ import java.util.List;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
 
-public class TripInfoMapper {
+public final class TripInfoMapper {
 
     private TripInfoMapper() {
         // Private constructor to prevent instantiation
     }
     public static List<TripInfoResponse> mapFromTripResponse(TripResponse tripResponse) {
-        if (tripResponse == null || tripResponse.trips() == null) return List.of();
+        if (tripResponse == null || tripResponse.trips() == null) {
+            return List.of();
+        }
         return tripResponse.trips().stream()
             .filter(trip -> trip.legs() != null && !trip.legs().isEmpty())
             .map(trip -> {

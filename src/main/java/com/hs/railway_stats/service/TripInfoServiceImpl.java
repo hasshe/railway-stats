@@ -40,7 +40,7 @@ public class TripInfoServiceImpl implements TripInfoService {
         }
     }
 
-    @Scheduled(cron = "59 40 23 * * ?") 
+    @Scheduled(cron = "59 40 23 * * ?")
     private void scheduleRun() {
         getTripInfo(740000005, 740000001);
         getTripInfo(740000001, 740000005);

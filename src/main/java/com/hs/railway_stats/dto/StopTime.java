@@ -9,4 +9,4 @@ public record StopTime(
         String name,
         OffsetDateTime plannedDateTime,
         OffsetDateTime actualDateTime
-) {}
+) { }

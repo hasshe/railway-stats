@@ -7,4 +7,4 @@ public record TripRequest(
         String dateTime,
         boolean searchForArrival,
         boolean includeAllMovingoOperators
-) {}
+) { }

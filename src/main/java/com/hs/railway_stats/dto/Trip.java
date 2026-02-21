@@ -8,4 +8,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record Trip(
         Boolean canceled,
         List<Leg> legs
-) {}
+) { }

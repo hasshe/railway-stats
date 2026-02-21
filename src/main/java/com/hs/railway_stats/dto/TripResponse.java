@@ -8,4 +8,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record TripResponse(
         List<Trip> trips,
         String nextToken
-) {}
+) { }

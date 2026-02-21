@@ -25,5 +25,4 @@ public class AdminController {
     public List<TripInfoResponse> getTripInformation(@PathVariable long originId, @PathVariable long destinationId) {
         return demoService.getTripInfo(originId, destinationId);
     }
-    
 }

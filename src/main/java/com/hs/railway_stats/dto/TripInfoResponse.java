@@ -9,4 +9,4 @@ public record TripInfoResponse(
     int totalMinutesLate,
     OffsetDateTime initialDepartureTime,
     OffsetDateTime actualArrivalTime
-) {}
+) { }
