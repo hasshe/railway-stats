@@ -34,54 +34,58 @@ public class MalarDalenClient implements RestClient {
         public TripResponse callSearch(long originId, long destinationId, String nextToken)
             throws IOException, InterruptedException {
 
-        TripRequest requestBody;
-        
-        if (!StringUtil.isNullOrEmpty(nextToken)) {
-            requestBody = new TripRequest(
-                originId,
-                destinationId,
-                nextToken,
-                null,
-                false,
-                false
-            );
-        } else {
-            var start = OffsetDateTime.of(
-                LocalDate.now(),
-                LocalTime.of(1, 0, 0),
-                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
-            );
-            requestBody = new TripRequest(
-                originId,
-                destinationId,
-                nextToken,
-                start.toString(),
-                false,
-        false
-            );
-        }
+        TripRequest requestBody = getRequestBody(originId, destinationId, nextToken);
 
         String json = objectMapper.writeValueAsString(requestBody);
 
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(BASE_URL))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .build();
+        HttpRequest request = getRequest(json);
 
         HttpResponse<String> response =
             httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        IO.println("Response status code: " + response.statusCode());
-        IO.println("Response body: " + response.body());
-        IO.println("Request body: " + json);
 
         if (response.statusCode() != 200) {
             throw new RuntimeException(
                 "API call failed with status: " + response.statusCode()
             );
         }
-        // Deserialize response body to TripResponse
         return objectMapper.readValue(response.body(), TripResponse.class);
     }
+
+        private HttpRequest getRequest(String json) {
+            return HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        }
+
+        private TripRequest getRequestBody(long originId, long destinationId, String nextToken) {
+            TripRequest requestBody;
+            
+            if (!StringUtil.isNullOrEmpty(nextToken)) {
+                requestBody = new TripRequest(
+                    originId,
+                    destinationId,
+                    nextToken,
+                    null,
+                    false,
+                    false
+                );
+            } else {
+                var start = OffsetDateTime.of(
+                    LocalDate.now(),
+                    LocalTime.of(1, 0, 0),
+                    ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+                );
+                requestBody = new TripRequest(
+                    originId,
+                    destinationId,
+                    nextToken,
+                    start.toString(),
+                    false,
+            false
+                );
+            }
+            return requestBody;
+        }
 }
