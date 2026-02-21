@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.DemoService;
 
 
@@ -21,7 +22,7 @@ public class DemoController {
     }
 
     @GetMapping
-    public List<String> getMethodName(@RequestParam String param) {
+    public List<TripInfoResponse> getMethodName(@RequestParam String param) {
         return demoService.getDemoList(param);
     }
     

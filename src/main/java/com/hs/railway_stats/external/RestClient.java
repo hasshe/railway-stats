@@ -2,7 +2,7 @@ package com.hs.railway_stats.external;
 
 import java.io.IOException;
 
-import com.hs.railway_stats.external.dto.TripResponse;
+import com.hs.railway_stats.dto.TripResponse;
 
 public interface RestClient {
 

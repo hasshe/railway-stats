@@ -1,4 +1,4 @@
-package com.hs.railway_stats.external.dto;
+package com.hs.railway_stats.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

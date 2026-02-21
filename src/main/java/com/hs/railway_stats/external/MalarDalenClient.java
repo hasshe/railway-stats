@@ -13,8 +13,8 @@ import java.time.ZoneId;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hs.railway_stats.external.dto.TripRequest;
-import com.hs.railway_stats.external.dto.TripResponse;
+import com.hs.railway_stats.dto.TripRequest;
+import com.hs.railway_stats.dto.TripResponse;
 
 import ch.qos.logback.core.util.StringUtil;
 
