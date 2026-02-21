@@ -12,7 +12,7 @@ import com.hs.railway_stats.service.TripInfoService;
 
 
 @RestController
-@RequestMapping("/demo")
+@RequestMapping("/trip-info")
 public class AdminController {
 
     private final TripInfoService demoService;
