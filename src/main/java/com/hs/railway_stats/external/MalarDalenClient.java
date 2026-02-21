@@ -5,7 +5,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Component;
 
@@ -28,7 +31,7 @@ public class MalarDalenClient implements RestClient {
     }
 
         @Override
-        public TripResponse callSearch(OffsetDateTime startOfDay, long originId, long destinationId, String nextToken)
+        public TripResponse callSearch(long originId, long destinationId, String nextToken)
             throws IOException, InterruptedException {
 
         TripRequest requestBody;
@@ -43,11 +46,16 @@ public class MalarDalenClient implements RestClient {
                 false
             );
         } else {
+            var start = OffsetDateTime.of(
+                LocalDate.now(),
+                LocalTime.of(1, 0, 0),
+                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+            );
             requestBody = new TripRequest(
                 originId,
                 destinationId,
                 nextToken,
-                startOfDay.toLocalDateTime().toString(),
+                start.toString(),
                 false,
         false
             );
