@@ -1,9 +1,11 @@
 package com.hs.railway_stats.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.hs.railway_stats.external.RestClient;
-import com.hs.railway_stats.external.TripResponse;
+import com.hs.railway_stats.external.dto.TripResponse;
 
 @Service
 public class DemoServiceImpl implements DemoService {
@@ -15,12 +17,13 @@ public class DemoServiceImpl implements DemoService {
     }
 
     @Override
-    public String getDemoString(String param) {
+    public List<String> getDemoList(String param) {
         try {
         TripResponse resp = restClient.callSearch(740000005, 740000001, null);
-        return "Hello, " + param + "! Response: " + resp.trips().getFirst();
+        return resp.trips().stream()
+                .map(e -> e.legs().getFirst().origin().name() + " to " + e.legs().getFirst().destination().name()).toList();
         } catch (Exception e) {
-            return "Hello, " + param + "! An error occurred: " + e.getMessage();
+            return List.of("Hello, " + param + "! An error occurred: " + e.getMessage());
         }
     }
     

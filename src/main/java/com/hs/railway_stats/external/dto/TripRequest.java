@@ -1,4 +1,4 @@
-package com.hs.railway_stats.external;
+package com.hs.railway_stats.external.dto;
 
 public record TripRequest(
         long originId,
