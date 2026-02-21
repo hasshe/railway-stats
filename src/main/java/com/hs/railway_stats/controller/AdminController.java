@@ -13,17 +13,17 @@ import com.hs.railway_stats.service.TripInfoService;
 
 @RestController
 @RequestMapping("/demo")
-public class DemoController {
+public class AdminController {
 
     private final TripInfoService demoService;
 
-    public DemoController(TripInfoService demoService) {
+    public AdminController(TripInfoService demoService) {
         this.demoService = demoService;
     }
 
     @GetMapping("/{originId}/{destinationId}")
-    public List<TripInfoResponse> getMethodName(@PathVariable long originId, @PathVariable long destinationId) {
-        return demoService.getDemoList(originId, destinationId);
+    public List<TripInfoResponse> getTripInformation(@PathVariable long originId, @PathVariable long destinationId) {
+        return demoService.getTripInfo(originId, destinationId);
     }
     
 }

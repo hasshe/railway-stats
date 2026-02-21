@@ -19,7 +19,7 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Override
-    public List<TripInfoResponse> getDemoList(long originId, long destinationId) {
+    public List<TripInfoResponse> getTripInfo(long originId, long destinationId) {
         try {
             String nextToken = null;
             List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
@@ -42,8 +42,8 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Scheduled(cron = "59 40 23 * * ?") 
     private void scheduleRun() {
-        getDemoList(740000005, 740000001);
-        getDemoList(740000001, 740000005);
+        getTripInfo(740000005, 740000001);
+        getTripInfo(740000001, 740000005);
     }
 
     private boolean isLastTrainOfDay(TripResponse response) {

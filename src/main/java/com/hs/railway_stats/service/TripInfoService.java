@@ -6,6 +6,6 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 
 public interface TripInfoService {
 
-    List<TripInfoResponse> getDemoList(long originId, long destinationId);
+    List<TripInfoResponse> getTripInfo(long originId, long destinationId);
     
 }
