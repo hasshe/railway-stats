@@ -38,14 +38,21 @@ public class TripInfoServiceImpl implements TripInfoService {
             throw new RuntimeException("Failed to fetch trip info", e);
         }
     }
+
     private boolean isLastTrainOfDay(TripResponse response) {
-        if (response == null || response.trips() == null || response.trips().isEmpty()) return false;
-            var lastTrip = response.trips().get(response.trips().size() - 1);
-            if (lastTrip.legs() == null || lastTrip.legs().isEmpty()) return false;
-                var lastLeg = lastTrip.legs().get(lastTrip.legs().size() - 1);
-                var plannedDeparture = lastLeg.origin().plannedDateTime();
-                if (plannedDeparture == null) return false;
-                    var endOfDay = plannedDeparture.toLocalDate().atTime(23, 59);
-                    return !plannedDeparture.toLocalDateTime().isBefore(endOfDay);
+        if (response == null || response.trips() == null || response.trips().isEmpty()) {
+            return false;
+        }
+        var lastTrip = response.trips().get(response.trips().size() - 1);
+        if (lastTrip.legs() == null || lastTrip.legs().isEmpty()) {
+            return false;
+        }
+        var lastLeg = lastTrip.legs().get(lastTrip.legs().size() - 1);
+        var plannedDeparture = lastLeg.origin().plannedDateTime();
+        if (plannedDeparture == null) {
+            return false;
+        }
+        var endOfDay = plannedDeparture.toLocalDate().atTime(23, 59);
+        return !plannedDeparture.toLocalDateTime().isBefore(endOfDay);
     }
 }
