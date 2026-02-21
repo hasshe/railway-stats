@@ -1,0 +1,79 @@
+package com.hs.railway_stats.external;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.OffsetDateTime;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.qos.logback.core.util.StringUtil;
+
+@Component
+public class MalarDalenClient implements RestClient {
+
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+    private static final String BASE_URL =
+            "https://v2.api.transithub.se/travelplanner/api/v2/trip";
+
+    public MalarDalenClient() {
+        this.httpClient = HttpClient.newHttpClient();
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.findAndRegisterModules();
+    }
+
+        @Override
+        public TripResponse callSearch(OffsetDateTime startOfDay, long originId, long destinationId, String nextToken)
+            throws IOException, InterruptedException {
+
+        TripRequest requestBody;
+        
+        if (!StringUtil.isNullOrEmpty(nextToken)) {
+            requestBody = new TripRequest(
+                originId,
+                destinationId,
+                nextToken,
+                null,
+                false,
+                false
+            );
+        } else {
+            requestBody = new TripRequest(
+                originId,
+                destinationId,
+                nextToken,
+                startOfDay.toLocalDateTime().toString(),
+                false,
+        false
+            );
+        }
+
+        String json = objectMapper.writeValueAsString(requestBody);
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(BASE_URL))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+
+        HttpResponse<String> response =
+            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        IO.println("Response status code: " + response.statusCode());
+        IO.println("Response body: " + response.body());
+        IO.println("Request body: " + json);
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException(
+                "API call failed with status: " + response.statusCode()
+            );
+        }
+        // Deserialize response body to TripResponse
+        return objectMapper.readValue(response.body(), TripResponse.class);
+    }
+}
