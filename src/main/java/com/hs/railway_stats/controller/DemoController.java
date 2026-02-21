@@ -3,8 +3,8 @@ package com.hs.railway_stats.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
@@ -21,9 +21,9 @@ public class DemoController {
         this.demoService = demoService;
     }
 
-    @GetMapping
-    public List<TripInfoResponse> getMethodName(@RequestParam String param) {
-        return demoService.getDemoList(param);
+    @GetMapping("/{originId}/{destinationId}")
+    public List<TripInfoResponse> getMethodName(@PathVariable long originId, @PathVariable long destinationId) {
+        return demoService.getDemoList(originId, destinationId);
     }
     
 }

@@ -2,6 +2,7 @@ package com.hs.railway_stats.service;
 
 import java.util.List;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
@@ -18,12 +19,12 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Override
-    public List<TripInfoResponse> getDemoList(String param) {
+    public List<TripInfoResponse> getDemoList(long originId, long destinationId) {
         try {
             String nextToken = null;
             List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
             for (int i = 0; i < 7; i++) {
-                TripResponse response = restClient.callSearch(740000005, 740000001, nextToken);
+                TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
                 var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
                 allTrips.addAll(mappedTrips);
 
@@ -37,6 +38,12 @@ public class TripInfoServiceImpl implements TripInfoService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch trip info", e);
         }
+    }
+
+    @Scheduled(cron = "59 40 23 * * ?") 
+    private void scheduleRun() {
+        getDemoList(740000005, 740000001);
+        getDemoList(740000001, 740000005);
     }
 
     private boolean isLastTrainOfDay(TripResponse response) {
