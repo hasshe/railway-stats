@@ -30,9 +30,9 @@ public class MalarDalenClient implements RestClient {
         this.objectMapper.findAndRegisterModules();
     }
 
-        @Override
-        public TripResponse callSearch(long originId, long destinationId, String nextToken)
-            throws IOException, InterruptedException {
+    @Override
+    public TripResponse callSearch(long originId, long destinationId, String nextToken)
+        throws IOException, InterruptedException {
 
         TripRequest requestBody = getRequestBody(originId, destinationId, nextToken);
 
@@ -51,27 +51,26 @@ public class MalarDalenClient implements RestClient {
         return objectMapper.readValue(response.body(), TripResponse.class);
     }
 
-        private HttpRequest getRequest(String json) {
-            return HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-        }
+    private HttpRequest getRequest(String json) {
+        return HttpRequest.newBuilder()
+            .uri(URI.create(BASE_URL))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+    }
 
-        private TripRequest getRequestBody(long originId, long destinationId, String nextToken) {
-            var start = OffsetDateTime.of(
-                LocalDate.now(),
-                LocalTime.of(1, 0, 0),
-                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
-            );
-
-            return new TripRequest(
-                    originId,
-                    destinationId,
-                    nextToken,
-                    start.toString(),
-                    false,
-            false);
-        }
+    private TripRequest getRequestBody(long originId, long destinationId, String nextToken) {
+        var start = OffsetDateTime.of(
+            LocalDate.now(),
+            LocalTime.of(1, 0, 0),
+            ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+        );
+        return new TripRequest(
+                originId,
+                destinationId,
+                nextToken,
+                start.toString(),
+                false,
+     false);
+    }
 }
