@@ -35,6 +35,12 @@
 			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
 
+		<!-- Liquibase for database migrations -->
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+		</dependency>
+
 		<!-- Jackson Databind for JSON serialization/deserialization -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
