@@ -1,6 +1,5 @@
 spring:
   application:
     name: railway-stats
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: true
+  profiles:
+    active: dev

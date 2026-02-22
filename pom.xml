@@ -35,10 +35,10 @@
 			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
 
-		<!-- Liquibase for database migrations -->
+		<!-- Spring Data JPA for database ORM -->
 		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
 		<!-- Jackson Databind for JSON serialization/deserialization -->
