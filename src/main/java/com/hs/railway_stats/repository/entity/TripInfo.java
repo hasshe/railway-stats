@@ -1,4 +1,4 @@
-package com.hs.railway_stats.entity;
+package com.hs.railway_stats.repository.entity;
 
 import java.time.LocalDateTime;
 
