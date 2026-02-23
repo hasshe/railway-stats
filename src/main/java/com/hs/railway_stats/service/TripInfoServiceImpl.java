@@ -1,5 +1,6 @@
 package com.hs.railway_stats.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,9 +13,15 @@ import com.hs.railway_stats.mapper.TripInfoMapper;
 import com.hs.railway_stats.repository.TripInfoRepository;
 import com.hs.railway_stats.repository.entity.TripInfo;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class TripInfoServiceImpl implements TripInfoService {
 
+    private static final int MINUTE = 59;
+    private static final int HOUR = 23;
+    private static final int UPPSALA_ID = 740000005;
+    private static final int STOCKHOLM_ID = 740000001;
     private RestClient restClient;
     private TripInfoRepository tripInfoRepository;
 
@@ -24,31 +31,39 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Override
+    @Transactional
     public void collectTripInformation(long originId, long destinationId) {
         try {
             String nextToken = null;
             List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
-            for (int i = 0; i < 7; i++) {
+            LocalDate today = LocalDate.now();
+            boolean hasMoreData = true;
+            while(hasMoreData) {
                 TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
                 var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
                 allTrips.addAll(mappedTrips);
 
-                if (isLastTrainOfDay(response)) {
-                    break;
+                if (isLastTrainOfDay(response, today)) {
+                    hasMoreData = false;
                 }
                 nextToken = response != null ? response.nextToken() : null;
             }
-            saveTripInfoToDatabase(allTrips, originId, destinationId);
+            List<TripInfoResponse> todayTrips = allTrips.stream()
+                .filter(trip -> trip.initialDepartureTime() != null 
+                    && trip.initialDepartureTime().toLocalDate().equals(today))
+                .toList();
+            saveTripInfoToDatabase(todayTrips, originId, destinationId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch trip info", e);
         }
     }
 
     @Override
-    public List<TripInfoResponse> getTripInfo(long originId, long destinationId) {
+    public List<TripInfoResponse> getTripInfo(long originId, long destinationId, LocalDate date) {
         List<TripInfo> tripInfos = tripInfoRepository.findAll();
         return tripInfos.stream()
             .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
+            .filter(info -> info.getOriginalDepartureTime() != null && info.getOriginalDepartureTime().toLocalDate().equals(date))
             .map(info -> new TripInfoResponse(
                 String.valueOf(info.getOriginId()),
                 String.valueOf(info.getDestinationId()),
@@ -75,13 +90,14 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Scheduled(cron = "59 40 23 * * ?")
-    private void scheduleRun() {
-        getTripInfo(740000005, 740000001);
-        getTripInfo(740000001, 740000005);
+    protected final void scheduleRun() {
+        getTripInfo(UPPSALA_ID, STOCKHOLM_ID, LocalDate.now());
+        getTripInfo(STOCKHOLM_ID, UPPSALA_ID, LocalDate.now());
     }
 
-    private boolean isLastTrainOfDay(TripResponse response) {
-        if (response == null || response.trips() == null || response.trips().isEmpty()) {
+    private boolean isLastTrainOfDay(final TripResponse response, final LocalDate today) {
+        if (response == null || response.trips() == null
+        || response.trips().isEmpty()) {
             return false;
         }
         var lastTrip = response.trips().get(response.trips().size() - 1);
@@ -93,7 +109,11 @@ public class TripInfoServiceImpl implements TripInfoService {
         if (plannedDeparture == null) {
             return false;
         }
-        var endOfDay = plannedDeparture.toLocalDate().atTime(23, 59);
+        LocalDate departureDate = plannedDeparture.toLocalDate();
+        if (!departureDate.equals(today)) {
+            return true;
+        }
+        var endOfDay = plannedDeparture.toLocalDate().atTime(HOUR, MINUTE);
         return !plannedDeparture.toLocalDateTime().isBefore(endOfDay);
     }
 }

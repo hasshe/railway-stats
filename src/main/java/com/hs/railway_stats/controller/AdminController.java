@@ -1,5 +1,6 @@
 package com.hs.railway_stats.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +22,8 @@ public class AdminController {
         this.demoService = demoService;
     }
 
-    @GetMapping("/{originId}/{destinationId}")
-    public List<TripInfoResponse> getTripInformation(@PathVariable long originId, @PathVariable long destinationId) {
-        return demoService.getTripInfo(originId, destinationId);
+    @GetMapping("/{originId}/{destinationId}/{date}")
+    public List<TripInfoResponse> getTripInformation(@PathVariable long originId, @PathVariable long destinationId, @PathVariable String date) {
+        return demoService.getTripInfo(originId, destinationId, LocalDate.parse(date));
     }
 }
