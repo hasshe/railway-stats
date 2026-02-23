@@ -5,6 +5,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Directories ###
+data/
+src/main/frontend/generated
+.vaadin/
+dist/
+
 ### STS ###
 .apt_generated
 .classpath

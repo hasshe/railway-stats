@@ -3,3 +3,6 @@ spring:
     name: railway-stats
   profiles:
     active: dev
+
+vaadin:
+  launch-browser: true

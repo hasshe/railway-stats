@@ -1,0 +1,101 @@
+package com.hs.railway_stats.view;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import com.hs.railway_stats.dto.TripInfoResponse;
+import com.hs.railway_stats.service.TripInfoService;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.Route;
+
+@Route("")
+public class TripInfoView extends VerticalLayout {
+
+    private final TripInfoService tripInfoService;
+
+    private final Grid<TripInfoResponse> grid;
+
+    public TripInfoView(final TripInfoService tripInfoService) {
+        this.tripInfoService = tripInfoService;
+        this.grid = new Grid<>(TripInfoResponse.class);
+
+        setPadding(true);
+        setSpacing(true);
+
+        add(new com.vaadin.flow.component.html.H1("Trip Information"));
+
+        TextField originField = new TextField("Origin ID");
+        originField.setValue("740000005");
+
+        TextField destinationField = new TextField("Destination ID");
+        destinationField.setValue("740000001");
+
+        Button swapButton = getSwapButton(originField, destinationField);
+
+        Button searchButton = getSearchButton(tripInfoService, originField, destinationField);
+        formatGrid();
+
+        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton);
+        add(inputLayout, grid);
+        setFlexGrow(1, grid);
+    }
+
+    private Button getSwapButton(TextField originField, TextField destinationField) {
+        return new Button("⇄ Swap", event -> {
+            String temp = originField.getValue();
+            originField.setValue(destinationField.getValue());
+            destinationField.setValue(temp);
+        });
+    }
+
+    private Button getSearchButton(final TripInfoService tripInfoService, TextField originField,
+            TextField destinationField) {
+        return new Button("Search", event -> {
+            try {
+                long originId = Long.parseLong(originField.getValue());
+                long destinationId = Long.parseLong(destinationField.getValue());
+                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originId,
+                    destinationId, java.time.LocalDate.now());
+                grid.setItems(trips);
+            } catch (NumberFormatException e) {
+                Notification
+                    .show("Invalid ID format");
+            }
+        });
+    }
+
+    private HorizontalLayout getInputLayout(TextField originField, TextField destinationField, Button swapButton,
+            Button searchButton) {
+        HorizontalLayout inputLayout =
+            new HorizontalLayout(originField, swapButton, destinationField, searchButton);
+        inputLayout.setAlignItems(Alignment.END);
+        return inputLayout;
+    }
+
+    private void formatGrid() {
+        grid.removeAllColumns();
+        grid.addColumn(TripInfoResponse::startDestination)
+            .setHeader("Start");
+        grid.addColumn(TripInfoResponse::endingDestination)
+            .setHeader("End");
+        grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No")
+            .setHeader("Cancelled");
+        grid.addColumn(TripInfoResponse::totalMinutesLate)
+            .setHeader("Minutes Late");
+        DateTimeFormatter formatter = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm");
+        grid.addColumn(trip -> trip.initialDepartureTime() != null
+            ? trip.initialDepartureTime().format(formatter)
+            : "N/A")
+            .setHeader("Departure");
+        grid.addColumn(trip -> trip.actualArrivalTime() != null
+            ? trip.actualArrivalTime().format(formatter)
+            : "N/A")
+            .setHeader("Arrival");
+    }
+}
