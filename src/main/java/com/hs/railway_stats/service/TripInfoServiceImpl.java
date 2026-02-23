@@ -22,10 +22,8 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     private static final int MINUTE = 59;
     private static final int HOUR = 23;
-    private static final int UPPSALA_ID = 740000005;
-    private static final int STOCKHOLM_ID = 740000001;
-    private static final String UPPSALA_NAME = "Uppsala";
-    private static final String STOCKHOLM_NAME = "Stockholm";
+    private static final String UPPSALA_NAME = "Uppsala C";
+    private static final String STOCKHOLM_NAME = "Stockholm C";
     private RestClient restClient;
     private TripInfoRepository tripInfoRepository;
     private TranslationRepository translationRepository;
@@ -103,8 +101,8 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Scheduled(cron = "59 40 23 * * ?")
     protected final void scheduleRun() {
-        getTripInfo(UPPSALA_NAME, STOCKHOLM_NAME, LocalDate.now());
-        getTripInfo(STOCKHOLM_NAME, UPPSALA_NAME, LocalDate.now());
+        collectTripInformation(UPPSALA_NAME, STOCKHOLM_NAME);
+        collectTripInformation(STOCKHOLM_NAME, UPPSALA_NAME);
     }
 
     private long stationNameToDestinationId(String stationName) {
