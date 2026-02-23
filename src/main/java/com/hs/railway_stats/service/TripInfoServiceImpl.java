@@ -1,6 +1,7 @@
 package com.hs.railway_stats.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -90,12 +91,13 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     private void saveTripInfoToDatabase(List<TripInfoResponse> trips, long originId, long destinationId) {
+        ZoneId stockholmZone = ZoneId.of("Europe/Stockholm");
         trips.forEach(trip -> {
             TripInfo tripInfo = TripInfo.builder()
                 .originId((int) originId)
                 .destinationId((int) destinationId)
-                .originalDepartureTime(trip.initialDepartureTime() != null ? trip.initialDepartureTime().toZonedDateTime() : null)
-                .actualArrivalTime(trip.actualArrivalTime() != null ? trip.actualArrivalTime().toZonedDateTime() : null)
+                .originalDepartureTime(trip.initialDepartureTime() != null ? trip.initialDepartureTime().atZoneSameInstant(stockholmZone) : null)
+                .actualArrivalTime(trip.actualArrivalTime() != null ? trip.actualArrivalTime().atZoneSameInstant(stockholmZone) : null)
                 .canceled(trip.isCancelled() ? 1 : 0)
                 .minutesLate(trip.totalMinutesLate())
                 .build();
