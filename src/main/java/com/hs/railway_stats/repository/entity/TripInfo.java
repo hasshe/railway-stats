@@ -1,6 +1,7 @@
 package com.hs.railway_stats.repository.entity;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,10 +34,10 @@ public class TripInfo {
     private Integer destinationId;
     
     @Column
-    private LocalDateTime originalDepartureTime;
+    private ZonedDateTime originalDepartureTime;
     
     @Column
-    private LocalDateTime actualArrivalTime;
+    private ZonedDateTime actualArrivalTime;
     
     @Column
     private Integer canceled;
@@ -45,10 +46,10 @@ public class TripInfo {
     private Integer minutesLate;
     
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
     
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = ZonedDateTime.now(ZoneId.systemDefault());
     }
 }

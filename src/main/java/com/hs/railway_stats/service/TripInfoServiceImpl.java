@@ -9,17 +9,22 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.mapper.TripInfoMapper;
+import com.hs.railway_stats.repository.TripInfoRepository;
+import com.hs.railway_stats.repository.entity.TripInfo;
 
 @Service
 public class TripInfoServiceImpl implements TripInfoService {
 
     private RestClient restClient;
-    public TripInfoServiceImpl(RestClient restClient) {
+    private TripInfoRepository tripInfoRepository;
+
+    public TripInfoServiceImpl(RestClient restClient, TripInfoRepository tripInfoRepository) {
         this.restClient = restClient;
+        this.tripInfoRepository = tripInfoRepository;
     }
 
     @Override
-    public List<TripInfoResponse> getTripInfo(long originId, long destinationId) {
+    public void collectTripInformation(long originId, long destinationId) {
         try {
             String nextToken = null;
             List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
@@ -31,13 +36,42 @@ public class TripInfoServiceImpl implements TripInfoService {
                 if (isLastTrainOfDay(response)) {
                     break;
                 }
-
                 nextToken = response != null ? response.nextToken() : null;
             }
-            return allTrips;
+            saveTripInfoToDatabase(allTrips, originId, destinationId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch trip info", e);
         }
+    }
+
+    @Override
+    public List<TripInfoResponse> getTripInfo(long originId, long destinationId) {
+        List<TripInfo> tripInfos = tripInfoRepository.findAll();
+        return tripInfos.stream()
+            .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
+            .map(info -> new TripInfoResponse(
+                String.valueOf(info.getOriginId()),
+                String.valueOf(info.getDestinationId()),
+                info.getCanceled() == 1,
+                info.getMinutesLate(),
+                info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().toOffsetDateTime() : null,
+                info.getActualArrivalTime() != null ? info.getActualArrivalTime().toOffsetDateTime() : null
+            ))
+            .toList();
+    }
+
+    private void saveTripInfoToDatabase(List<TripInfoResponse> trips, long originId, long destinationId) {
+        trips.forEach(trip -> {
+            TripInfo tripInfo = TripInfo.builder()
+                .originId((int) originId)
+                .destinationId((int) destinationId)
+                .originalDepartureTime(trip.initialDepartureTime() != null ? trip.initialDepartureTime().toZonedDateTime() : null)
+                .actualArrivalTime(trip.actualArrivalTime() != null ? trip.actualArrivalTime().toZonedDateTime() : null)
+                .canceled(trip.isCancelled() ? 1 : 0)
+                .minutesLate(trip.totalMinutesLate())
+                .build();
+            tripInfoRepository.save(tripInfo);
+        });
     }
 
     @Scheduled(cron = "59 40 23 * * ?")
