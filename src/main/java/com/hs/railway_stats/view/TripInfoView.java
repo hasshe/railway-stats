@@ -1,16 +1,17 @@
 package com.hs.railway_stats.view;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 
 @Route("")
@@ -29,11 +30,15 @@ public class TripInfoView extends VerticalLayout {
 
         add(new com.vaadin.flow.component.html.H1("Trip Information"));
 
-        TextField originField = new TextField("Origin ID");
-        originField.setValue("740000005");
+        List<String> stationOptions = Arrays.asList("Uppsala C", "Stockholm C");
 
-        TextField destinationField = new TextField("Destination ID");
-        destinationField.setValue("740000001");
+        ComboBox<String> originField = new ComboBox<>("Origin Station");
+        originField.setItems(stationOptions);
+        originField.setValue("Uppsala C");
+
+        ComboBox<String> destinationField = new ComboBox<>("Destination Station");
+        destinationField.setItems(stationOptions);
+        destinationField.setValue("Stockholm C");
 
         Button swapButton = getSwapButton(originField, destinationField);
 
@@ -45,7 +50,7 @@ public class TripInfoView extends VerticalLayout {
         setFlexGrow(1, grid);
     }
 
-    private Button getSwapButton(TextField originField, TextField destinationField) {
+    private Button getSwapButton(ComboBox<String> originField, ComboBox<String> destinationField) {
         return new Button("⇄ Swap", event -> {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
@@ -53,23 +58,28 @@ public class TripInfoView extends VerticalLayout {
         });
     }
 
-    private Button getSearchButton(final TripInfoService tripInfoService, TextField originField,
-            TextField destinationField) {
+    private Button getSearchButton(final TripInfoService tripInfoService, ComboBox<String> originField,
+            ComboBox<String> destinationField) {
         return new Button("Search", event -> {
             try {
-                long originId = Long.parseLong(originField.getValue());
-                long destinationId = Long.parseLong(destinationField.getValue());
-                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originId,
-                    destinationId, java.time.LocalDate.now());
+                String originStation = originField.getValue();
+                String destinationStation = destinationField.getValue();
+                
+                if (originStation == null || destinationStation == null) {
+                    Notification.show("Please select both stations");
+                    return;
+                }
+                
+                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation,
+                    destinationStation, java.time.LocalDate.now());
                 grid.setItems(trips);
-            } catch (NumberFormatException e) {
-                Notification
-                    .show("Invalid ID format");
+            } catch (Exception e) {
+                Notification.show("Error fetching trips: " + e.getMessage());
             }
         });
     }
 
-    private HorizontalLayout getInputLayout(TextField originField, TextField destinationField, Button swapButton,
+    private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField, Button swapButton,
             Button searchButton) {
         HorizontalLayout inputLayout =
             new HorizontalLayout(originField, swapButton, destinationField, searchButton);

@@ -7,6 +7,6 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 
 public interface TripInfoService {
 
-    List<TripInfoResponse> getTripInfo(long originId, long destinationId, LocalDate date);
-    void collectTripInformation(long originId, long destinationId);
+    List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date);
+    void collectTripInformation(String originStationName, String destinationStationName);
 }

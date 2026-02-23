@@ -10,7 +10,9 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.mapper.TripInfoMapper;
+import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoRepository;
+import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfo;
 
 import jakarta.transaction.Transactional;
@@ -22,18 +24,25 @@ public class TripInfoServiceImpl implements TripInfoService {
     private static final int HOUR = 23;
     private static final int UPPSALA_ID = 740000005;
     private static final int STOCKHOLM_ID = 740000001;
+    private static final String UPPSALA_NAME = "Uppsala";
+    private static final String STOCKHOLM_NAME = "Stockholm";
     private RestClient restClient;
     private TripInfoRepository tripInfoRepository;
+    private TranslationRepository translationRepository;
 
-    public TripInfoServiceImpl(RestClient restClient, TripInfoRepository tripInfoRepository) {
+    public TripInfoServiceImpl(RestClient restClient, TripInfoRepository tripInfoRepository, TranslationRepository translationRepository) {
         this.restClient = restClient;
         this.tripInfoRepository = tripInfoRepository;
+        this.translationRepository = translationRepository;
     }
 
     @Override
     @Transactional
-    public void collectTripInformation(long originId, long destinationId) {
+    public void collectTripInformation(String originStationName, String destinationStationName) {
         try {
+            long originId = stationNameToDestinationId(originStationName);
+            long destinationId = stationNameToDestinationId(destinationStationName);
+            
             String nextToken = null;
             List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
             LocalDate today = LocalDate.now();
@@ -59,14 +68,17 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Override
-    public List<TripInfoResponse> getTripInfo(long originId, long destinationId, LocalDate date) {
+    public List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date) {
+        long originId = stationNameToDestinationId(originStationName);
+        long destinationId = stationNameToDestinationId(destinationStationName);
+        
         List<TripInfo> tripInfos = tripInfoRepository.findAll();
         return tripInfos.stream()
             .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
             .filter(info -> info.getOriginalDepartureTime() != null && info.getOriginalDepartureTime().toLocalDate().equals(date))
             .map(info -> new TripInfoResponse(
-                String.valueOf(info.getOriginId()),
-                String.valueOf(info.getDestinationId()),
+                destinationIdToStationName(info.getOriginId()),
+                destinationIdToStationName(info.getDestinationId()),
                 info.getCanceled() == 1,
                 info.getMinutesLate(),
                 info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().toOffsetDateTime() : null,
@@ -91,8 +103,20 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Scheduled(cron = "59 40 23 * * ?")
     protected final void scheduleRun() {
-        getTripInfo(UPPSALA_ID, STOCKHOLM_ID, LocalDate.now());
-        getTripInfo(STOCKHOLM_ID, UPPSALA_ID, LocalDate.now());
+        getTripInfo(UPPSALA_NAME, STOCKHOLM_NAME, LocalDate.now());
+        getTripInfo(STOCKHOLM_NAME, UPPSALA_NAME, LocalDate.now());
+    }
+
+    private long stationNameToDestinationId(String stationName) {
+        Translation translation = translationRepository.findByStationName(stationName)
+            .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
+        return translation.getDestinationId();
+    }
+
+    private String destinationIdToStationName(int destinationId) {
+        Translation translation = translationRepository.findByDestinationId(destinationId)
+            .orElseThrow(() -> new RuntimeException("Destination ID not found: " + destinationId));
+        return translation.getStationName();
     }
 
     private boolean isLastTrainOfDay(final TripResponse response, final LocalDate today) {

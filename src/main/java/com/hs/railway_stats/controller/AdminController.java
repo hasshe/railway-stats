@@ -22,8 +22,8 @@ public class AdminController {
         this.demoService = demoService;
     }
 
-    @GetMapping("/{originId}/{destinationId}/{date}")
-    public List<TripInfoResponse> getTripInformation(@PathVariable long originId, @PathVariable long destinationId, @PathVariable String date) {
-        return demoService.getTripInfo(originId, destinationId, LocalDate.parse(date));
+    @GetMapping("/{origin}/{destination}/{date}")
+    public List<TripInfoResponse> getTripInformation(@PathVariable String origin, @PathVariable String destination, @PathVariable String date) {
+        return demoService.getTripInfo(origin, destination, LocalDate.parse(date));
     }
 }
