@@ -3,6 +3,8 @@ package com.hs.railway_stats.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ import jakarta.transaction.Transactional;
 @Service
 public class TripInfoServiceImpl implements TripInfoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TripInfoServiceImpl.class);
     private static final int MINUTE = 59;
     private static final int HOUR = 23;
     private static final String UPPSALA_NAME = "Uppsala C";
@@ -61,6 +64,7 @@ public class TripInfoServiceImpl implements TripInfoService {
                 .toList();
             saveTripInfoToDatabase(todayTrips, originId, destinationId);
         } catch (Exception e) {
+            logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
             throw new RuntimeException("Failed to fetch trip info", e);
         }
     }
@@ -101,8 +105,15 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Scheduled(cron = "59 40 23 * * ?")
     protected final void scheduleRun() {
-        collectTripInformation(UPPSALA_NAME, STOCKHOLM_NAME);
-        collectTripInformation(STOCKHOLM_NAME, UPPSALA_NAME);
+        logger.info("Starting scheduled trip information collection job");
+        try {
+            collectTripInformation(UPPSALA_NAME, STOCKHOLM_NAME);
+            collectTripInformation(STOCKHOLM_NAME, UPPSALA_NAME);
+            logger.info("Scheduled trip information collection job completed successfully");
+        } catch (Exception e) {
+            logger.error("Scheduled trip information collection job failed", e);
+            throw e;
+        }
     }
 
     private long stationNameToDestinationId(String stationName) {
