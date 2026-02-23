@@ -1,5 +1,6 @@
 package com.hs.railway_stats.view;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -70,8 +71,8 @@ public class TripInfoView extends VerticalLayout {
                     return;
                 }
                 
-                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation,
-                    destinationStation, java.time.LocalDate.now());
+                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
+                    destinationStation.toLowerCase(), LocalDate.now());
                 grid.setItems(trips);
             } catch (Exception e) {
                 Notification.show("Error fetching trips: " + e.getMessage());

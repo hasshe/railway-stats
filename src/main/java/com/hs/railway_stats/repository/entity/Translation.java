@@ -24,7 +24,7 @@ public class Translation {
     private Integer id;
 
     @Column(nullable = false)
-    private Integer destinationId;
+    private Integer stationId;
 
     @Column(nullable = false)
     private String stationName;

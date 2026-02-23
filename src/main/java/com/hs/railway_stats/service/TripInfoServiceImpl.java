@@ -108,13 +108,13 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     private long stationNameToDestinationId(String stationName) {
-        Translation translation = translationRepository.findByStationName(stationName)
+        Translation translation = translationRepository.findByStationName(stationName.toLowerCase())
             .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
-        return translation.getDestinationId();
+        return translation.getStationId();
     }
 
     private String destinationIdToStationName(int destinationId) {
-        Translation translation = translationRepository.findByDestinationId(destinationId)
+        Translation translation = translationRepository.findByStationId(destinationId)
             .orElseThrow(() -> new RuntimeException("Destination ID not found: " + destinationId));
         return translation.getStationName();
     }
