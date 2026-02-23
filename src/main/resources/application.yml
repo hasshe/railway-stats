@@ -6,3 +6,4 @@ spring:
 
 vaadin:
   launch-browser: true
+  production-mode: false

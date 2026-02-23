@@ -23,3 +23,7 @@ spring:
   h2:
     console:
       enabled: false
+
+vaadin:
+  launch-browser: false
+  production-mode: true
