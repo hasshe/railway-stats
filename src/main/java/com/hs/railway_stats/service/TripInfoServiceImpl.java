@@ -103,7 +103,7 @@ public class TripInfoServiceImpl implements TripInfoService {
         });
     }
 
-    @Scheduled(cron = "59 40 23 * * ?")
+    @Scheduled(cron = "59 50 23 * * ?", zone = "Europe/Stockholm")
     protected final void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");
         try {
