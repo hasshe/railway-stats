@@ -1,3 +1,8 @@
+app:
+  crypto:
+    secret: ${CRYPTO_SECRET}
+    salt: ${CRYPTO_SALT}
+
 spring:
   datasource:
     url: ${DB_URL}

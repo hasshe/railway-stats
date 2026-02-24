@@ -20,6 +20,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,9 +31,15 @@ import java.util.List;
 public class TripInfoView extends VerticalLayout {
 
     private final Grid<TripInfoResponse> grid;
+    private final String cryptoSecret;
+    private final String cryptoSalt;
 
-    public TripInfoView(final TripInfoService tripInfoService) {
+    public TripInfoView(final TripInfoService tripInfoService,
+                        @Value("${app.crypto.secret}") String cryptoSecret,
+                        @Value("${app.crypto.salt}") String cryptoSalt) {
         this.grid = new Grid<>(TripInfoResponse.class);
+        this.cryptoSecret = cryptoSecret;
+        this.cryptoSalt = cryptoSalt;
 
         setPadding(true);
         setSpacing(true);
@@ -189,9 +196,9 @@ public class TripInfoView extends VerticalLayout {
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
         loadProfileFromStorage(firstNameField, lastNameField, phoneField,
-                emailField, addressField, cityField, postalCodeField);
+                emailField, addressField, cityField, postalCodeField, cryptoSecret, cryptoSalt);
 
-        Button saveButton = getSaveUserInfoDialogButton(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField, dialog);
+        Button saveButton = getSaveUserInfoDialogButton(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField, dialog, cryptoSecret, cryptoSalt);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button cancelButton = getCancelUserInfoDialogButton(dialog);
@@ -206,44 +213,92 @@ public class TripInfoView extends VerticalLayout {
         return new Button("Cancel", clickEvent -> dialog.close());
     }
 
-    private static Button getSaveUserInfoDialogButton(TextField firstNameField, TextField lastNameField, TextField phoneField, TextField emailField, TextField addressField, TextField cityField, TextField postalCodeField, Dialog dialog) {
+    private static Button getSaveUserInfoDialogButton(TextField firstNameField, TextField lastNameField, TextField phoneField, TextField emailField, TextField addressField, TextField cityField, TextField postalCodeField, Dialog dialog, String cryptoSecret, String cryptoSalt) {
         return new Button("Save", clickEvent -> {
             saveProfileToStorage(
                     firstNameField.getValue(), lastNameField.getValue(),
                     phoneField.getValue(), emailField.getValue(),
                     addressField.getValue(), cityField.getValue(),
-                    postalCodeField.getValue()
+                    postalCodeField.getValue(), cryptoSecret, cryptoSalt
             );
             Notification.show("Profile saved");
             dialog.close();
         });
     }
 
+    private static String buildCryptoJs(String secret, String salt) {
+        return """
+                const APP_SECRET = '%s';
+                const SALT       = new TextEncoder().encode('%s');
+                
+                async function deriveKey() {
+                    const keyMaterial = await crypto.subtle.importKey(
+                        'raw', new TextEncoder().encode(APP_SECRET),
+                        'PBKDF2', false, ['deriveKey']
+                    );
+                    return crypto.subtle.deriveKey(
+                        { name: 'PBKDF2', salt: SALT, iterations: 100000, hash: 'SHA-256' },
+                        keyMaterial,
+                        { name: 'AES-GCM', length: 256 },
+                        false, ['encrypt', 'decrypt']
+                    );
+                }
+                
+                function toHex(buf) {
+                    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+                }
+                
+                function fromHex(hex) {
+                    const bytes = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i*2,2),16);
+                    return bytes;
+                }
+                """.formatted(secret, salt);
+    }
+
     private static void saveProfileToStorage(String firstName, String lastName,
                                              String phone, String email,
                                              String address, String city,
-                                             String postalCode) {
-        UI.getCurrent().getPage().executeJs("""
-                const profile = JSON.stringify({
-                    firstName: $0, lastName: $1,
-                    phone: $2, email: $3,
-                    address: $4, city: $5,
-                    postalCode: $6
-                });
-                localStorage.setItem('userProfile', btoa(unescape(encodeURIComponent(profile))));
+                                             String postalCode, String secret, String salt) {
+        UI.getCurrent().getPage().executeJs(buildCryptoJs(secret, salt) + """
+                (async () => {
+                    const profile = JSON.stringify({
+                        firstName: $0, lastName: $1,
+                        phone: $2, email: $3,
+                        address: $4, city: $5,
+                        postalCode: $6
+                    });
+                    const key = await deriveKey();
+                    const iv  = crypto.getRandomValues(new Uint8Array(12));
+                    const enc = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv },
+                        key,
+                        new TextEncoder().encode(profile)
+                    );
+                    localStorage.setItem('userProfile', toHex(iv) + ':' + toHex(enc));
+                })();
                 """, firstName, lastName, phone, email, address, city, postalCode);
     }
 
     private static void loadProfileFromStorage(TextField firstNameField, TextField lastNameField,
                                                TextField phoneField, TextField emailField,
                                                TextField addressField, TextField cityField,
-                                               TextField postalCodeField) {
-        UI.getCurrent().getPage().executeJs("""
-                const raw = localStorage.getItem('userProfile');
-                if (!raw) return '';
-                try {
-                    return decodeURIComponent(escape(atob(raw)));
-                } catch(e) { return ''; }
+                                               TextField postalCodeField, String secret, String salt) {
+        UI.getCurrent().getPage().executeJs(buildCryptoJs(secret, salt) + """
+                return (async () => {
+                    const raw = localStorage.getItem('userProfile');
+                    if (!raw || !raw.includes(':')) return '';
+                    try {
+                        const [ivHex, dataHex] = raw.split(':');
+                        const key = await deriveKey();
+                        const dec = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: fromHex(ivHex) },
+                            key,
+                            fromHex(dataHex)
+                        );
+                        return new TextDecoder().decode(dec);
+                    } catch(e) { return ''; }
+                })();
                 """).then(String.class, json -> {
             if (json == null || json.isBlank()) return;
             try {
