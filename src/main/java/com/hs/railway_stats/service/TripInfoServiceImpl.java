@@ -1,7 +1,9 @@
 package com.hs.railway_stats.service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -44,30 +46,34 @@ public class TripInfoServiceImpl implements TripInfoService {
         try {
             long originId = stationNameToDestinationId(originStationName);
             long destinationId = stationNameToDestinationId(destinationStationName);
-            
             String nextToken = null;
-            List<TripInfoResponse> allTrips = new java.util.ArrayList<>();
+            List<TripInfoResponse> allTrips = new ArrayList<>();
             LocalDate today = LocalDate.now();
-            boolean hasMoreData = true;
-            while(hasMoreData) {
-                TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
-                var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
-                allTrips.addAll(mappedTrips);
-
-                if (isLastTrainOfDay(response, today)) {
-                    hasMoreData = false;
-                }
-                nextToken = response != null ? response.nextToken() : null;
-            }
-            List<TripInfoResponse> todayTrips = allTrips.stream()
-                .filter(trip -> trip.initialDepartureTime() != null 
-                    && trip.initialDepartureTime().toLocalDate().equals(today))
-                .toList();
+            var todayTrips = findAndFilterTrips(originId, destinationId, nextToken, allTrips, today);
             saveTripInfoToDatabase(todayTrips, originId, destinationId);
         } catch (Exception e) {
             logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
             throw new RuntimeException("Failed to fetch trip info", e);
         }
+    }
+
+    private List<TripInfoResponse> findAndFilterTrips(long originId, long destinationId, String nextToken, List<TripInfoResponse> allTrips,
+            LocalDate today) throws IOException, InterruptedException {
+        boolean hasMoreData = true;
+        while(hasMoreData) {
+            TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
+            var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
+            allTrips.addAll(mappedTrips);
+
+            if (isLastTrainOfDay(response, today)) {
+                hasMoreData = false;
+            }
+            nextToken = response != null ? response.nextToken() : null;
+        }
+        return allTrips.stream()
+                .filter(trip -> trip.initialDepartureTime() != null 
+                    && trip.initialDepartureTime().toLocalDate().equals(today))
+                .toList();
     }
 
     @Override
