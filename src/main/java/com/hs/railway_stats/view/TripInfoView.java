@@ -39,7 +39,7 @@ public class TripInfoView extends VerticalLayout {
         Button profileButton = new Button(profileIcon);
         profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
         profileButton.getElement().setAttribute("aria-label", "Profile");
-        profileButton.addClickListener(e -> buildProfileDialog().open());
+        profileButton.addClickListener(clickEvent -> buildProfileDialog().open());
 
         com.vaadin.flow.component.orderedlayout.HorizontalLayout headerRow =
                 new com.vaadin.flow.component.orderedlayout.HorizontalLayout(
@@ -83,7 +83,7 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private Button getSwapButton(ComboBox<String> originField, ComboBox<String> destinationField) {
-        return new Button("⇄ Swap", event -> {
+        return new Button("⇄ Swap", clickEvent -> {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
             destinationField.setValue(temp);
@@ -116,13 +116,13 @@ public class TripInfoView extends VerticalLayout {
 
     private Button getSearchButton(final TripInfoService tripInfoService, ComboBox<String> originField,
                                    ComboBox<String> destinationField, DatePicker dateFilter) {
-        return new Button("Search", event -> refreshGrid(tripInfoService, originField, destinationField, dateFilter));
+        return new Button("Search", clickEvent -> refreshGrid(tripInfoService, originField, destinationField, dateFilter));
     }
 
     private Button getAdminCollectButton(final TripInfoService tripInfoService, ComboBox<String> originField,
                                          ComboBox<String> destinationField, DatePicker dateFilter) {
         Button collectButton = new Button("🔄 Collect (Admin)");
-        collectButton.addClickListener(event -> {
+        collectButton.addClickListener(clickEvent -> {
             try {
                 String originStation = originField.getValue();
                 String destinationStation = destinationField.getValue();
@@ -187,13 +187,13 @@ public class TripInfoView extends VerticalLayout {
         FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        Button saveButton = new Button("Save", e -> {
+        Button saveButton = new Button("Save", clickEvent -> {
             Notification.show("Profile saved");
             dialog.close();
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        Button cancelButton = new Button("Cancel", clickEvent -> dialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         dialog.add(form);
