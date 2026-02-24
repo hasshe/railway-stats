@@ -4,6 +4,7 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -38,13 +39,21 @@ public class TripInfoView extends VerticalLayout {
         destinationField.setItems(stationOptions);
         destinationField.setValue("Stockholm C");
 
+        DatePicker dateFilter = new DatePicker("Filter by Date");
+        dateFilter.setMax(LocalDate.now());
+        dateFilter.setValue(LocalDate.now());
+
         Button swapButton = getSwapButton(originField, destinationField);
 
-        Button searchButton = getSearchButton(tripInfoService, originField, destinationField);
-        Button adminCollectButton = getAdminCollectButton(tripInfoService, originField, destinationField);
+        Button searchButton = getSearchButton(tripInfoService, originField, destinationField, dateFilter);
+        Button adminCollectButton = getAdminCollectButton(tripInfoService, originField, destinationField, dateFilter);
+
+        dateFilter.addValueChangeListener(event ->
+                refreshGrid(tripInfoService, originField, destinationField, dateFilter));
+
         formatGrid();
 
-        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton, adminCollectButton);
+        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton, adminCollectButton, dateFilter);
         add(inputLayout, grid);
         setFlexGrow(1, grid);
     }
@@ -57,29 +66,37 @@ public class TripInfoView extends VerticalLayout {
         });
     }
 
-    private Button getSearchButton(final TripInfoService tripInfoService, ComboBox<String> originField,
-                                   ComboBox<String> destinationField) {
-        return new Button("Search", event -> {
-            try {
-                String originStation = originField.getValue();
-                String destinationStation = destinationField.getValue();
+    private void refreshGrid(TripInfoService tripInfoService, ComboBox<String> originField,
+                             ComboBox<String> destinationField, DatePicker dateFilter) {
+        try {
+            String originStation = originField.getValue();
+            String destinationStation = destinationField.getValue();
+            if (originStation == null || destinationStation == null) return;
 
-                if (originStation == null || destinationStation == null) {
-                    Notification.show("Please select both stations");
-                    return;
-                }
+            LocalDate selectedDate = dateFilter.getValue();
+            List<TripInfoResponse> trips = tripInfoService.getTripInfo(
+                    originStation.toLowerCase(), destinationStation.toLowerCase(), LocalDate.now());
 
-                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
-                        destinationStation.toLowerCase(), LocalDate.now());
-                grid.setItems(trips);
-            } catch (Exception e) {
-                Notification.show("Error fetching trips: " + e.getMessage());
+            if (selectedDate != null) {
+                trips = trips.stream()
+                        .filter(trip -> trip.initialDepartureTime() != null
+                                && trip.initialDepartureTime().toLocalDate().equals(selectedDate))
+                        .toList();
             }
-        });
+
+            grid.setItems(trips);
+        } catch (Exception e) {
+            Notification.show("Error filtering trips: " + e.getMessage());
+        }
+    }
+
+    private Button getSearchButton(final TripInfoService tripInfoService, ComboBox<String> originField,
+                                   ComboBox<String> destinationField, DatePicker dateFilter) {
+        return new Button("Search", event -> refreshGrid(tripInfoService, originField, destinationField, dateFilter));
     }
 
     private Button getAdminCollectButton(final TripInfoService tripInfoService, ComboBox<String> originField,
-                                         ComboBox<String> destinationField) {
+                                         ComboBox<String> destinationField, DatePicker dateFilter) {
         Button collectButton = new Button("🔄 Collect (Admin)");
         collectButton.addClickListener(event -> {
             try {
@@ -94,10 +111,7 @@ public class TripInfoView extends VerticalLayout {
                 tripInfoService.collectTripInformation(originStation, destinationStation);
                 Notification.show("Trip information collection started for " + originStation + " to " + destinationStation);
 
-                // Refresh the grid after collection
-                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
-                        destinationStation.toLowerCase(), LocalDate.now());
-                grid.setItems(trips);
+                refreshGrid(tripInfoService, originField, destinationField, dateFilter);
             } catch (Exception e) {
                 Notification.show("Error collecting trip information: " + e.getMessage());
             }
@@ -106,9 +120,9 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField, Button swapButton,
-                                            Button searchButton, Button adminCollectButton) {
+                                            Button searchButton, Button adminCollectButton, DatePicker dateFilter) {
         HorizontalLayout inputLayout =
-                new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton);
+                new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton, dateFilter);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
     }
