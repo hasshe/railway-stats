@@ -1,16 +1,5 @@
 package com.hs.railway_stats.service;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
 import com.hs.railway_stats.external.RestClient;
@@ -19,8 +8,17 @@ import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoRepository;
 import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfo;
-
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TripInfoServiceImpl implements TripInfoService {
@@ -58,9 +56,9 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     private List<TripInfoResponse> findAndFilterTrips(long originId, long destinationId, String nextToken, List<TripInfoResponse> allTrips,
-            LocalDate today) throws IOException, InterruptedException {
+                                                      LocalDate today) throws IOException, InterruptedException {
         boolean hasMoreData = true;
-        while(hasMoreData) {
+        while (hasMoreData) {
             TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
             var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
             allTrips.addAll(mappedTrips);
@@ -71,8 +69,8 @@ public class TripInfoServiceImpl implements TripInfoService {
             nextToken = response != null ? response.nextToken() : null;
         }
         return allTrips.stream()
-                .filter(trip -> trip.initialDepartureTime() != null 
-                    && trip.initialDepartureTime().toLocalDate().equals(today))
+                .filter(trip -> trip.initialDepartureTime() != null
+                        && trip.initialDepartureTime().toLocalDate().equals(today))
                 .toList();
     }
 
@@ -80,33 +78,33 @@ public class TripInfoServiceImpl implements TripInfoService {
     public List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date) {
         long originId = stationNameToDestinationId(originStationName);
         long destinationId = stationNameToDestinationId(destinationStationName);
-        
+
         List<TripInfo> tripInfos = tripInfoRepository.findAll();
         return tripInfos.stream()
-            .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
-            .filter(info -> info.getOriginalDepartureTime() != null && info.getOriginalDepartureTime().toLocalDate().equals(date))
-            .map(info -> new TripInfoResponse(
-                destinationIdToStationName(info.getOriginId()),
-                destinationIdToStationName(info.getDestinationId()),
-                info.getCanceled() == 1,
-                info.getMinutesLate(),
-                info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().toOffsetDateTime() : null,
-                info.getActualArrivalTime() != null ? info.getActualArrivalTime().toOffsetDateTime() : null
-            ))
-            .toList();
+                .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
+                .filter(info -> info.getOriginalDepartureTime() != null && info.getOriginalDepartureTime().toLocalDate().equals(date))
+                .map(info -> new TripInfoResponse(
+                        destinationIdToStationName(info.getOriginId()),
+                        destinationIdToStationName(info.getDestinationId()),
+                        info.getCanceled() == 1,
+                        info.getMinutesLate(),
+                        info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().toOffsetDateTime() : null,
+                        info.getActualArrivalTime() != null ? info.getActualArrivalTime().toOffsetDateTime() : null
+                ))
+                .toList();
     }
 
     private void saveTripInfoToDatabase(List<TripInfoResponse> trips, long originId, long destinationId) {
         ZoneId stockholmZone = ZoneId.of("Europe/Stockholm");
         trips.forEach(trip -> {
             TripInfo tripInfo = TripInfo.builder()
-                .originId((int) originId)
-                .destinationId((int) destinationId)
-                .originalDepartureTime(trip.initialDepartureTime() != null ? trip.initialDepartureTime().atZoneSameInstant(stockholmZone) : null)
-                .actualArrivalTime(trip.actualArrivalTime() != null ? trip.actualArrivalTime().atZoneSameInstant(stockholmZone) : null)
-                .canceled(trip.isCancelled() ? 1 : 0)
-                .minutesLate(trip.totalMinutesLate())
-                .build();
+                    .originId((int) originId)
+                    .destinationId((int) destinationId)
+                    .originalDepartureTime(trip.initialDepartureTime() != null ? trip.initialDepartureTime().atZoneSameInstant(stockholmZone) : null)
+                    .actualArrivalTime(trip.actualArrivalTime() != null ? trip.actualArrivalTime().atZoneSameInstant(stockholmZone) : null)
+                    .canceled(trip.isCancelled() ? 1 : 0)
+                    .minutesLate(trip.totalMinutesLate())
+                    .build();
             tripInfoRepository.save(tripInfo);
         });
     }
@@ -126,19 +124,19 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     private long stationNameToDestinationId(String stationName) {
         Translation translation = translationRepository.findByStationName(stationName.toLowerCase())
-            .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
+                .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
         return translation.getStationId();
     }
 
     private String destinationIdToStationName(int destinationId) {
         Translation translation = translationRepository.findByStationId(destinationId)
-            .orElseThrow(() -> new RuntimeException("Destination ID not found: " + destinationId));
+                .orElseThrow(() -> new RuntimeException("Destination ID not found: " + destinationId));
         return translation.getStationName();
     }
 
     private boolean isLastTrainOfDay(final TripResponse response, final LocalDate today) {
         if (response == null || response.trips() == null
-        || response.trips().isEmpty()) {
+                || response.trips().isEmpty()) {
             return false;
         }
         var lastTrip = response.trips().get(response.trips().size() - 1);

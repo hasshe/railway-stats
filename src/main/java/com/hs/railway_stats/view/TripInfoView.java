@@ -1,10 +1,5 @@
 package com.hs.railway_stats.view;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
@@ -15,15 +10,17 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+
 @Route("")
 public class TripInfoView extends VerticalLayout {
-
-    private final TripInfoService tripInfoService;
 
     private final Grid<TripInfoResponse> grid;
 
     public TripInfoView(final TripInfoService tripInfoService) {
-        this.tripInfoService = tripInfoService;
         this.grid = new Grid<>(TripInfoResponse.class);
 
         setPadding(true);
@@ -61,19 +58,19 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private Button getSearchButton(final TripInfoService tripInfoService, ComboBox<String> originField,
-            ComboBox<String> destinationField) {
+                                   ComboBox<String> destinationField) {
         return new Button("Search", event -> {
             try {
                 String originStation = originField.getValue();
                 String destinationStation = destinationField.getValue();
-                
+
                 if (originStation == null || destinationStation == null) {
                     Notification.show("Please select both stations");
                     return;
                 }
-                
+
                 List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
-                    destinationStation.toLowerCase(), LocalDate.now());
+                        destinationStation.toLowerCase(), LocalDate.now());
                 grid.setItems(trips);
             } catch (Exception e) {
                 Notification.show("Error fetching trips: " + e.getMessage());
@@ -82,24 +79,24 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private Button getAdminCollectButton(final TripInfoService tripInfoService, ComboBox<String> originField,
-            ComboBox<String> destinationField) {
+                                         ComboBox<String> destinationField) {
         Button collectButton = new Button("🔄 Collect (Admin)");
         collectButton.addClickListener(event -> {
             try {
                 String originStation = originField.getValue();
                 String destinationStation = destinationField.getValue();
-                
+
                 if (originStation == null || destinationStation == null) {
                     Notification.show("Please select both stations");
                     return;
                 }
-                
+
                 tripInfoService.collectTripInformation(originStation, destinationStation);
                 Notification.show("Trip information collection started for " + originStation + " to " + destinationStation);
-                
+
                 // Refresh the grid after collection
                 List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
-                    destinationStation.toLowerCase(), LocalDate.now());
+                        destinationStation.toLowerCase(), LocalDate.now());
                 grid.setItems(trips);
             } catch (Exception e) {
                 Notification.show("Error collecting trip information: " + e.getMessage());
@@ -109,9 +106,9 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField, Button swapButton,
-            Button searchButton, Button adminCollectButton) {
+                                            Button searchButton, Button adminCollectButton) {
         HorizontalLayout inputLayout =
-            new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton);
+                new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
     }
@@ -119,22 +116,22 @@ public class TripInfoView extends VerticalLayout {
     private void formatGrid() {
         grid.removeAllColumns();
         grid.addColumn(TripInfoResponse::startDestination)
-            .setHeader("Start");
+                .setHeader("Start");
         grid.addColumn(TripInfoResponse::endingDestination)
-            .setHeader("End");
+                .setHeader("End");
         grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No")
-            .setHeader("Cancelled");
+                .setHeader("Cancelled");
         grid.addColumn(TripInfoResponse::totalMinutesLate)
-            .setHeader("Minutes Late");
+                .setHeader("Minutes Late");
         DateTimeFormatter formatter = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd HH:mm");
+                .ofPattern("yyyy-MM-dd HH:mm");
         grid.addColumn(trip -> trip.initialDepartureTime() != null
-            ? trip.initialDepartureTime().format(formatter)
-            : "N/A")
-            .setHeader("Departure");
+                        ? trip.initialDepartureTime().format(formatter)
+                        : "N/A")
+                .setHeader("Departure");
         grid.addColumn(trip -> trip.actualArrivalTime() != null
-            ? trip.actualArrivalTime().format(formatter)
-            : "N/A")
-            .setHeader("Arrival");
+                        ? trip.actualArrivalTime().format(formatter)
+                        : "N/A")
+                .setHeader("Arrival");
     }
 }

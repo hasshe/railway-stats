@@ -1,5 +1,10 @@
 package com.hs.railway_stats.external;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hs.railway_stats.dto.TripRequest;
+import com.hs.railway_stats.dto.TripResponse;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,12 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-
-import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hs.railway_stats.dto.TripRequest;
-import com.hs.railway_stats.dto.TripResponse;
 
 @Component
 public class MalarDalenClient implements RestClient {
@@ -32,7 +31,7 @@ public class MalarDalenClient implements RestClient {
 
     @Override
     public TripResponse callSearch(long originId, long destinationId, String nextToken)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
 
         TripRequest requestBody = getRequestBody(originId, destinationId, nextToken);
 
@@ -41,11 +40,11 @@ public class MalarDalenClient implements RestClient {
         HttpRequest request = getRequest(json);
 
         HttpResponse<String> response =
-            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new RuntimeException(
-                "API call failed with status: " + response.statusCode()
+                    "API call failed with status: " + response.statusCode()
             );
         }
         return objectMapper.readValue(response.body(), TripResponse.class);
@@ -53,17 +52,17 @@ public class MalarDalenClient implements RestClient {
 
     private HttpRequest getRequest(String json) {
         return HttpRequest.newBuilder()
-            .uri(URI.create(BASE_URL))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .build();
+                .uri(URI.create(BASE_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
     }
 
     private TripRequest getRequestBody(long originId, long destinationId, String nextToken) {
         var start = OffsetDateTime.of(
-            LocalDate.now(),
-            LocalTime.of(1, 0, 0),
-            ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+                LocalDate.now(),
+                LocalTime.of(1, 0, 0),
+                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
         );
         return new TripRequest(
                 originId,
@@ -71,6 +70,6 @@ public class MalarDalenClient implements RestClient {
                 nextToken,
                 start.toString(),
                 false,
-     false);
+                false);
     }
 }
