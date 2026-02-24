@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -13,11 +14,13 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,13 +36,27 @@ public class TripInfoView extends VerticalLayout {
     private final Grid<TripInfoResponse> grid;
     private final String cryptoSecret;
     private final String cryptoSalt;
+    private final String adminPassword;
+    private final Span adminBanner;
 
     public TripInfoView(final TripInfoService tripInfoService,
                         @Value("${app.crypto.secret}") String cryptoSecret,
-                        @Value("${app.crypto.salt}") String cryptoSalt) {
+                        @Value("${app.crypto.salt}") String cryptoSalt,
+                        @Value("${app.admin.password}") String adminPassword) {
         this.grid = new Grid<>(TripInfoResponse.class);
         this.cryptoSecret = cryptoSecret;
         this.cryptoSalt = cryptoSalt;
+        this.adminPassword = adminPassword;
+
+        this.adminBanner = new Span("🔐 Admin Mode Active");
+        adminBanner.getStyle()
+                .set("background-color", "var(--lumo-error-color)")
+                .set("color", "var(--lumo-error-contrast-color)")
+                .set("padding", "0.4em 1em")
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("font-weight", "bold")
+                .set("font-size", "var(--lumo-font-size-s)");
+        adminBanner.setVisible(false);
 
         setPadding(true);
         setSpacing(true);
@@ -57,6 +74,7 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setAlignItems(Alignment.CENTER);
 
         add(headerRow);
+        add(adminBanner);
 
         List<String> stationOptions = Arrays.asList("Uppsala C", "Stockholm C");
 
@@ -73,16 +91,24 @@ public class TripInfoView extends VerticalLayout {
         dateFilter.setValue(LocalDate.now());
 
         Button swapButton = getSwapButton(originField, destinationField);
-
         Button searchButton = getSearchButton(tripInfoService, originField, destinationField, dateFilter);
+
         Button adminCollectButton = getAdminCollectButton(tripInfoService, originField, destinationField, dateFilter);
+        adminCollectButton.setVisible(false);
+
+        Button adminToggle = new Button("Toggle Admin Mode");
+        adminToggle.addClickListener(clickEvent -> buildAdminPasswordDialog(adminCollectButton, adminBanner).open());
+
+        restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt);
 
         dateFilter.addValueChangeListener(event ->
                 refreshGrid(tripInfoService, originField, destinationField, dateFilter));
 
         formatGrid();
 
-        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton, adminCollectButton, dateFilter);
+        HorizontalLayout inputLayout = getInputLayout(
+                originField, destinationField, swapButton, searchButton,
+                adminCollectButton, adminToggle, dateFilter);
 
         HorizontalLayout ticketLayout = buildTicketLayout();
 
@@ -151,12 +177,99 @@ public class TripInfoView extends VerticalLayout {
         return collectButton;
     }
 
-    private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField, Button swapButton,
-                                            Button searchButton, Button adminCollectButton, DatePicker dateFilter) {
+    private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField,
+                                            Button swapButton, Button searchButton,
+                                            Button adminCollectButton, Button adminToggle, DatePicker dateFilter) {
         HorizontalLayout inputLayout =
-                new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton, dateFilter);
+                new HorizontalLayout(originField, swapButton, destinationField, searchButton, dateFilter, adminToggle, adminCollectButton);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
+    }
+
+    private Dialog buildAdminPasswordDialog(Button adminCollectButton, Span adminBanner) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Admin Mode");
+        dialog.setWidth("360px");
+
+        PasswordField passwordField = new PasswordField("Admin Password");
+        passwordField.setPlaceholder("Enter password");
+        passwordField.setWidthFull();
+
+        dialog.addDialogCloseActionListener(closeActionEvent -> dialog.close());
+
+        Button confirmButton = new Button("Confirm", clickEvent -> {
+            if (adminPassword.equals(passwordField.getValue())) {
+                boolean nowVisible = !adminCollectButton.isVisible();
+                adminCollectButton.setVisible(nowVisible);
+                adminBanner.setVisible(nowVisible);
+                if (nowVisible) {
+                    saveAdminSession(cryptoSecret, cryptoSalt);
+                    Notification.show("Admin mode enabled");
+                } else {
+                    clearAdminSession();
+                    Notification.show("Admin mode disabled");
+                }
+            } else {
+                Notification.show("Incorrect password");
+                passwordField.setInvalid(true);
+                passwordField.setErrorMessage("Wrong password");
+            }
+            dialog.close();
+        });
+        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancelButton = new Button("Cancel", clickEvent -> dialog.close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        passwordField.addKeyDownListener(Key.ENTER,
+                keyDownEvent -> confirmButton.click());
+
+        dialog.add(passwordField);
+        dialog.getFooter().add(cancelButton, confirmButton);
+        return dialog;
+    }
+
+    private static void saveAdminSession(String secret, String salt) {
+        UI.getCurrent().getPage().executeJs(buildCryptoJs(secret, salt) + """
+                (async () => {
+                    const key = await deriveKey();
+                    const iv  = crypto.getRandomValues(new Uint8Array(12));
+                    const enc = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv },
+                        key,
+                        new TextEncoder().encode('admin-authenticated')
+                    );
+                    localStorage.setItem('adminSession', toHex(iv) + ':' + toHex(enc));
+                })();
+                """);
+    }
+
+    private static void clearAdminSession() {
+        UI.getCurrent().getPage().executeJs("localStorage.removeItem('adminSession');");
+    }
+
+    private static void restoreAdminSession(Button adminCollectButton, Span adminBanner, String secret, String salt) {
+        UI.getCurrent().getPage().executeJs(buildCryptoJs(secret, salt) + """
+                return (async () => {
+                    const raw = localStorage.getItem('adminSession');
+                    if (!raw || !raw.includes(':')) return 'false';
+                    try {
+                        const [ivHex, dataHex] = raw.split(':');
+                        const key = await deriveKey();
+                        const dec = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: fromHex(ivHex) },
+                            key,
+                            fromHex(dataHex)
+                        );
+                        return new TextDecoder().decode(dec) === 'admin-authenticated' ? 'true' : 'false';
+                    } catch(e) { return 'false'; }
+                })();
+                """).then(String.class, result -> {
+            if ("true".equals(result)) {
+                adminCollectButton.setVisible(true);
+                adminBanner.setVisible(true);
+            }
+        });
     }
 
     private Dialog buildProfileDialog() {
@@ -198,7 +311,8 @@ public class TripInfoView extends VerticalLayout {
         loadProfileFromStorage(firstNameField, lastNameField, phoneField,
                 emailField, addressField, cityField, postalCodeField, cryptoSecret, cryptoSalt);
 
-        Button saveButton = getSaveUserInfoDialogButton(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField, dialog, cryptoSecret, cryptoSalt);
+        Button saveButton = getSaveUserInfoDialogButton(firstNameField, lastNameField, phoneField, emailField,
+                addressField, cityField, postalCodeField, dialog, cryptoSecret, cryptoSalt);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button cancelButton = getCancelUserInfoDialogButton(dialog);
@@ -213,7 +327,11 @@ public class TripInfoView extends VerticalLayout {
         return new Button("Cancel", clickEvent -> dialog.close());
     }
 
-    private static Button getSaveUserInfoDialogButton(TextField firstNameField, TextField lastNameField, TextField phoneField, TextField emailField, TextField addressField, TextField cityField, TextField postalCodeField, Dialog dialog, String cryptoSecret, String cryptoSalt) {
+    private static Button getSaveUserInfoDialogButton(TextField firstNameField, TextField lastNameField,
+                                                      TextField phoneField, TextField emailField,
+                                                      TextField addressField, TextField cityField,
+                                                      TextField postalCodeField, Dialog dialog,
+                                                      String cryptoSecret, String cryptoSalt) {
         return new Button("Save", clickEvent -> {
             saveProfileToStorage(
                     firstNameField.getValue(), lastNameField.getValue(),
@@ -227,7 +345,7 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private static String buildCryptoJs(String secret, String salt) {
-        return """
+        return ("""
                 const APP_SECRET = '%s';
                 const SALT       = new TextEncoder().encode('%s');
                 
@@ -253,7 +371,7 @@ public class TripInfoView extends VerticalLayout {
                     for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i*2,2),16);
                     return bytes;
                 }
-                """.formatted(secret, salt);
+                """).formatted(secret, salt);
     }
 
     private static void saveProfileToStorage(String firstName, String lastName,
@@ -371,23 +489,16 @@ public class TripInfoView extends VerticalLayout {
 
     private void formatGrid() {
         grid.removeAllColumns();
-        grid.addColumn(TripInfoResponse::startDestination)
-                .setHeader("Start");
-        grid.addColumn(TripInfoResponse::endingDestination)
-                .setHeader("End");
-        grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No")
-                .setHeader("Cancelled");
-        grid.addColumn(TripInfoResponse::totalMinutesLate)
-                .setHeader("Minutes Late");
-        DateTimeFormatter formatter = DateTimeFormatter
-                .ofPattern("yyyy-MM-dd HH:mm");
+        grid.addColumn(TripInfoResponse::startDestination).setHeader("Start");
+        grid.addColumn(TripInfoResponse::endingDestination).setHeader("End");
+        grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No").setHeader("Cancelled");
+        grid.addColumn(TripInfoResponse::totalMinutesLate).setHeader("Minutes Late");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         grid.addColumn(trip -> trip.initialDepartureTime() != null
-                        ? trip.initialDepartureTime().format(formatter)
-                        : "N/A")
+                        ? trip.initialDepartureTime().format(formatter) : "N/A")
                 .setHeader("Departure");
         grid.addColumn(trip -> trip.actualArrivalTime() != null
-                        ? trip.actualArrivalTime().format(formatter)
-                        : "N/A")
+                        ? trip.actualArrivalTime().format(formatter) : "N/A")
                 .setHeader("Arrival");
     }
 }
