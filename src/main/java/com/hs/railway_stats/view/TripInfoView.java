@@ -1,5 +1,7 @@
 package com.hs.railway_stats.view;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.UI;
@@ -10,6 +12,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -41,9 +44,7 @@ public class TripInfoView extends VerticalLayout {
         profileButton.getElement().setAttribute("aria-label", "Profile");
         profileButton.addClickListener(clickEvent -> buildProfileDialog().open());
 
-        com.vaadin.flow.component.orderedlayout.HorizontalLayout headerRow =
-                new com.vaadin.flow.component.orderedlayout.HorizontalLayout(
-                        new com.vaadin.flow.component.html.H1("Trip Information"), profileButton);
+        HorizontalLayout headerRow = new HorizontalLayout(new H1("Trip Information"), profileButton);
         headerRow.setWidthFull();
         headerRow.setJustifyContentMode(JustifyContentMode.BETWEEN);
         headerRow.setAlignItems(Alignment.CENTER);
@@ -187,18 +188,77 @@ public class TripInfoView extends VerticalLayout {
         FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        Button saveButton = new Button("Save", clickEvent -> {
-            Notification.show("Profile saved");
-            dialog.close();
-        });
+        loadProfileFromStorage(firstNameField, lastNameField, phoneField,
+                emailField, addressField, cityField, postalCodeField);
+
+        Button saveButton = getSaveUserInfoDialogButton(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField, dialog);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        Button cancelButton = new Button("Cancel", clickEvent -> dialog.close());
+        Button cancelButton = getCancelUserInfoDialogButton(dialog);
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         dialog.add(form);
         dialog.getFooter().add(cancelButton, saveButton);
         return dialog;
+    }
+
+    private static Button getCancelUserInfoDialogButton(Dialog dialog) {
+        return new Button("Cancel", clickEvent -> dialog.close());
+    }
+
+    private static Button getSaveUserInfoDialogButton(TextField firstNameField, TextField lastNameField, TextField phoneField, TextField emailField, TextField addressField, TextField cityField, TextField postalCodeField, Dialog dialog) {
+        return new Button("Save", clickEvent -> {
+            saveProfileToStorage(
+                    firstNameField.getValue(), lastNameField.getValue(),
+                    phoneField.getValue(), emailField.getValue(),
+                    addressField.getValue(), cityField.getValue(),
+                    postalCodeField.getValue()
+            );
+            Notification.show("Profile saved");
+            dialog.close();
+        });
+    }
+
+    private static void saveProfileToStorage(String firstName, String lastName,
+                                             String phone, String email,
+                                             String address, String city,
+                                             String postalCode) {
+        UI.getCurrent().getPage().executeJs("""
+                const profile = JSON.stringify({
+                    firstName: $0, lastName: $1,
+                    phone: $2, email: $3,
+                    address: $4, city: $5,
+                    postalCode: $6
+                });
+                localStorage.setItem('userProfile', btoa(unescape(encodeURIComponent(profile))));
+                """, firstName, lastName, phone, email, address, city, postalCode);
+    }
+
+    private static void loadProfileFromStorage(TextField firstNameField, TextField lastNameField,
+                                               TextField phoneField, TextField emailField,
+                                               TextField addressField, TextField cityField,
+                                               TextField postalCodeField) {
+        UI.getCurrent().getPage().executeJs("""
+                const raw = localStorage.getItem('userProfile');
+                if (!raw) return '';
+                try {
+                    return decodeURIComponent(escape(atob(raw)));
+                } catch(e) { return ''; }
+                """).then(String.class, json -> {
+            if (json == null || json.isBlank()) return;
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode node = mapper.readTree(json);
+                firstNameField.setValue(node.path("firstName").asText(""));
+                lastNameField.setValue(node.path("lastName").asText(""));
+                phoneField.setValue(node.path("phone").asText(""));
+                emailField.setValue(node.path("email").asText(""));
+                addressField.setValue(node.path("address").asText(""));
+                cityField.setValue(node.path("city").asText(""));
+                postalCodeField.setValue(node.path("postalCode").asText(""));
+            } catch (Exception ignored) {
+            }
+        });
     }
 
     private HorizontalLayout buildTicketLayout() {
