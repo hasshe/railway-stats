@@ -2,6 +2,7 @@ package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -213,23 +214,44 @@ public class TripInfoView extends VerticalLayout {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.setVisible(false);
 
-        editButton.addClickListener(e -> {
+        editButton.addClickListener(clickEvent -> {
             ticketField.setReadOnly(false);
             ticketField.focus();
             editButton.setVisible(false);
             saveButton.setVisible(true);
         });
 
-        saveButton.addClickListener(e -> {
+        saveButton.addClickListener(clickEvent -> {
+            String value = ticketField.getValue();
+            setTicketNumberCookie(value);
             ticketField.setReadOnly(true);
             saveButton.setVisible(false);
             editButton.setVisible(true);
             Notification.show("Ticket number saved");
         });
 
+        fetchTicketNumberCookie(ticketField);
+
         HorizontalLayout layout = new HorizontalLayout(ticketField, editButton, saveButton);
         layout.setAlignItems(Alignment.BASELINE);
         return layout;
+    }
+
+    private static void setTicketNumberCookie(String value) {
+        UI.getCurrent().getPage().executeJs(
+                "document.cookie = 'ticketNumber=' + encodeURIComponent($0) + '; path=/; max-age=' + (365*24*60*60);",
+                value);
+    }
+
+    private static void fetchTicketNumberCookie(TextField ticketField) {
+        UI.getCurrent().getPage().executeJs(
+                        "const match = document.cookie.split('; ').find(r => r.startsWith('ticketNumber='));" +
+                                "return match ? decodeURIComponent(match.split('=')[1]) : '';")
+                .then(String.class, cookieValue -> {
+                    if (cookieValue != null && !cookieValue.isBlank()) {
+                        ticketField.setValue(cookieValue);
+                    }
+                });
     }
 
     private void formatGrid() {
