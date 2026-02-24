@@ -3,12 +3,16 @@ package com.hs.railway_stats.view;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 
 import java.time.LocalDate;
@@ -54,7 +58,10 @@ public class TripInfoView extends VerticalLayout {
         formatGrid();
 
         HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton, adminCollectButton, dateFilter);
-        add(inputLayout, grid);
+
+        HorizontalLayout ticketLayout = buildTicketLayout();
+
+        add(inputLayout, ticketLayout, grid);
         setFlexGrow(1, grid);
     }
 
@@ -125,6 +132,38 @@ public class TripInfoView extends VerticalLayout {
                 new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton, dateFilter);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
+    }
+
+    private HorizontalLayout buildTicketLayout() {
+        TextField ticketField = new TextField("Ticket Number");
+        ticketField.setPlaceholder("e.g. B123ABCG6");
+        ticketField.setReadOnly(true);
+
+        Button editButton = new Button(new Icon(VaadinIcon.PENCIL));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        editButton.getElement().setAttribute("aria-label", "Edit ticket number");
+
+        Button saveButton = new Button("Save");
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.setVisible(false);
+
+        editButton.addClickListener(e -> {
+            ticketField.setReadOnly(false);
+            ticketField.focus();
+            editButton.setVisible(false);
+            saveButton.setVisible(true);
+        });
+
+        saveButton.addClickListener(e -> {
+            ticketField.setReadOnly(true);
+            saveButton.setVisible(false);
+            editButton.setVisible(true);
+            Notification.show("Ticket number saved");
+        });
+
+        HorizontalLayout layout = new HorizontalLayout(ticketField, editButton, saveButton);
+        layout.setAlignItems(Alignment.BASELINE);
+        return layout;
     }
 
     private void formatGrid() {
