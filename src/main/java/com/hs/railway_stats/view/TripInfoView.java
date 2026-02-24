@@ -4,11 +4,13 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -31,7 +33,21 @@ public class TripInfoView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        add(new com.vaadin.flow.component.html.H1("Trip Information"));
+        Icon profileIcon = new Icon(VaadinIcon.USER);
+        profileIcon.setSize("2rem");
+        Button profileButton = new Button(profileIcon);
+        profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
+        profileButton.getElement().setAttribute("aria-label", "Profile");
+        profileButton.addClickListener(e -> buildProfileDialog().open());
+
+        com.vaadin.flow.component.orderedlayout.HorizontalLayout headerRow =
+                new com.vaadin.flow.component.orderedlayout.HorizontalLayout(
+                        new com.vaadin.flow.component.html.H1("Trip Information"), profileButton);
+        headerRow.setWidthFull();
+        headerRow.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        headerRow.setAlignItems(Alignment.CENTER);
+
+        add(headerRow);
 
         List<String> stationOptions = Arrays.asList("Uppsala C", "Stockholm C");
 
@@ -132,6 +148,56 @@ public class TripInfoView extends VerticalLayout {
                 new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton, dateFilter);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
+    }
+
+    private Dialog buildProfileDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Profile");
+        dialog.setWidth("480px");
+
+        TextField firstNameField = new TextField("First Name");
+        firstNameField.setPlaceholder("John");
+        firstNameField.setWidthFull();
+
+        TextField lastNameField = new TextField("Last Name");
+        lastNameField.setPlaceholder("Doe");
+        lastNameField.setWidthFull();
+
+        TextField phoneField = new TextField("Phone Number");
+        phoneField.setPlaceholder("+46 70 000 00 00");
+        phoneField.setWidthFull();
+
+        TextField emailField = new TextField("Email Address");
+        emailField.setPlaceholder("you@example.com");
+        emailField.setWidthFull();
+
+        TextField addressField = new TextField("Home Address");
+        addressField.setPlaceholder("123 Main Street");
+        addressField.setWidthFull();
+
+        TextField cityField = new TextField("City");
+        cityField.setPlaceholder("Stockholm");
+        cityField.setWidthFull();
+
+        TextField postalCodeField = new TextField("Postal Code");
+        postalCodeField.setPlaceholder("111 22");
+        postalCodeField.setWidthFull();
+
+        FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField);
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+
+        Button saveButton = new Button("Save", e -> {
+            Notification.show("Profile saved");
+            dialog.close();
+        });
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        dialog.add(form);
+        dialog.getFooter().add(cancelButton, saveButton);
+        return dialog;
     }
 
     private HorizontalLayout buildTicketLayout() {
