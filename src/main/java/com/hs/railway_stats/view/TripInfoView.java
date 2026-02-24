@@ -44,9 +44,10 @@ public class TripInfoView extends VerticalLayout {
         Button swapButton = getSwapButton(originField, destinationField);
 
         Button searchButton = getSearchButton(tripInfoService, originField, destinationField);
+        Button adminCollectButton = getAdminCollectButton(tripInfoService, originField, destinationField);
         formatGrid();
 
-        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton);
+        HorizontalLayout inputLayout = getInputLayout(originField, destinationField, swapButton, searchButton, adminCollectButton);
         add(inputLayout, grid);
         setFlexGrow(1, grid);
     }
@@ -80,10 +81,37 @@ public class TripInfoView extends VerticalLayout {
         });
     }
 
+    private Button getAdminCollectButton(final TripInfoService tripInfoService, ComboBox<String> originField,
+            ComboBox<String> destinationField) {
+        Button collectButton = new Button("🔄 Collect (Admin)");
+        collectButton.addClickListener(event -> {
+            try {
+                String originStation = originField.getValue();
+                String destinationStation = destinationField.getValue();
+                
+                if (originStation == null || destinationStation == null) {
+                    Notification.show("Please select both stations");
+                    return;
+                }
+                
+                tripInfoService.collectTripInformation(originStation, destinationStation);
+                Notification.show("Trip information collection started for " + originStation + " to " + destinationStation);
+                
+                // Refresh the grid after collection
+                List<TripInfoResponse> trips = tripInfoService.getTripInfo(originStation.toLowerCase(),
+                    destinationStation.toLowerCase(), LocalDate.now());
+                grid.setItems(trips);
+            } catch (Exception e) {
+                Notification.show("Error collecting trip information: " + e.getMessage());
+            }
+        });
+        return collectButton;
+    }
+
     private HorizontalLayout getInputLayout(ComboBox<String> originField, ComboBox<String> destinationField, Button swapButton,
-            Button searchButton) {
+            Button searchButton, Button adminCollectButton) {
         HorizontalLayout inputLayout =
-            new HorizontalLayout(originField, swapButton, destinationField, searchButton);
+            new HorizontalLayout(originField, swapButton, destinationField, searchButton, adminCollectButton);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
     }
