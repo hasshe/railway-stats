@@ -1,5 +1,6 @@
 package com.hs.railway_stats.service;
 
+import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
 import com.hs.railway_stats.external.RestClient;
@@ -27,8 +28,6 @@ public class TripInfoServiceImpl implements TripInfoService {
     private static final Logger logger = LoggerFactory.getLogger(TripInfoServiceImpl.class);
     private static final int MINUTE = 59;
     private static final int HOUR = 23;
-    private static final String UPPSALA_NAME = "Uppsala C";
-    private static final String STOCKHOLM_NAME = "Stockholm C";
     private final RestClient restClient;
     private final TripInfoRepository tripInfoRepository;
     private final TranslationRepository translationRepository;
@@ -118,8 +117,8 @@ public class TripInfoServiceImpl implements TripInfoService {
     protected final void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");
         try {
-            collectTripInformation(UPPSALA_NAME, STOCKHOLM_NAME);
-            collectTripInformation(STOCKHOLM_NAME, UPPSALA_NAME);
+            collectTripInformation(StationConstants.UPPSALA, StationConstants.STOCKHOLM);
+            collectTripInformation(StationConstants.STOCKHOLM, StationConstants.UPPSALA);
             logger.info("Scheduled trip information collection job completed successfully");
         } catch (Exception e) {
             logger.error("Scheduled trip information collection job failed", e);
