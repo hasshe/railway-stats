@@ -131,16 +131,9 @@ public class TripInfoView extends VerticalLayout {
             String destinationStation = destinationField.getValue();
             if (originStation == null || destinationStation == null) return;
 
-            LocalDate selectedDate = dateFilter.getValue();
+            LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
             List<TripInfoResponse> trips = tripInfoService.getTripInfo(
-                    originStation.toLowerCase(), destinationStation.toLowerCase(), LocalDate.now());
-
-            if (selectedDate != null) {
-                trips = trips.stream()
-                        .filter(trip -> trip.initialDepartureTime() != null
-                                && trip.initialDepartureTime().toLocalDate().equals(selectedDate))
-                        .toList();
-            }
+                    originStation, destinationStation, selectedDate);
 
             grid.setItems(trips);
         } catch (Exception e) {

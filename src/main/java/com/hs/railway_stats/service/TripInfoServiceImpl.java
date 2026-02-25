@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,11 +79,15 @@ public class TripInfoServiceImpl implements TripInfoService {
     public List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date) {
         long originId = stationNameToDestinationId(originStationName);
         long destinationId = stationNameToDestinationId(destinationStationName);
+        ZoneId stockholmZone = ZoneId.of("Europe/Stockholm");
 
-        List<TripInfo> tripInfos = tripInfoRepository.findAll();
+        ZonedDateTime startOfDay = date.atStartOfDay(stockholmZone);
+        ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(stockholmZone);
+
+        List<TripInfo> tripInfos = tripInfoRepository.findByOriginAndDestinationAndDate(
+                (int) originId, (int) destinationId, startOfDay, endOfDay);
+
         return tripInfos.stream()
-                .filter(info -> info.getOriginId() == originId && info.getDestinationId() == destinationId)
-                .filter(info -> info.getOriginalDepartureTime() != null && info.getOriginalDepartureTime().toLocalDate().equals(date))
                 .map(info -> new TripInfoResponse(
                         destinationIdToStationName(info.getOriginId()),
                         destinationIdToStationName(info.getDestinationId()),
