@@ -29,9 +29,9 @@ public class TripInfoServiceImpl implements TripInfoService {
     private static final int HOUR = 23;
     private static final String UPPSALA_NAME = "Uppsala C";
     private static final String STOCKHOLM_NAME = "Stockholm C";
-    private RestClient restClient;
-    private TripInfoRepository tripInfoRepository;
-    private TranslationRepository translationRepository;
+    private final RestClient restClient;
+    private final TripInfoRepository tripInfoRepository;
+    private final TranslationRepository translationRepository;
 
     public TripInfoServiceImpl(RestClient restClient, TripInfoRepository tripInfoRepository, TranslationRepository translationRepository) {
         this.restClient = restClient;
@@ -144,11 +144,11 @@ public class TripInfoServiceImpl implements TripInfoService {
                 || response.trips().isEmpty()) {
             return false;
         }
-        var lastTrip = response.trips().get(response.trips().size() - 1);
+        var lastTrip = response.trips().getLast();
         if (lastTrip.legs() == null || lastTrip.legs().isEmpty()) {
             return false;
         }
-        var lastLeg = lastTrip.legs().get(lastTrip.legs().size() - 1);
+        var lastLeg = lastTrip.legs().getLast();
         var plannedDeparture = lastLeg.origin().plannedDateTime();
         if (plannedDeparture == null) {
             return false;
