@@ -12,11 +12,11 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 600000
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -27,9 +27,23 @@ spring:
         jdbc:
           batch_size: 20
           fetch_size: 50
-  h2:
-    console:
-      enabled: false
+    open-in-view: false          # Prevents large persistence context from consuming memory
+    show-sql: false              # Disable SQL logging to save memory
+logging:
+  level:
+    org.hibernate.SQL: OFF        # Disable Hibernate SQL logs
+
+h2:
+  console:
+    enabled: false
+
+server:
+  tomcat:
+    threads:
+      min-spare: 1
+      max: 5
+    max-connections: 15          # Reduce max connections to limit memory spikes
+    accept-count: 10
 
 vaadin:
   launch-browser: false

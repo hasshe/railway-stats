@@ -18,3 +18,12 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
+
+server:
+  tomcat:
+    threads:
+      min-spare: 1
+      max: 4
+    max-connections: 20
+    accept-count: 5
+
