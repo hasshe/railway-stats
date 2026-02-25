@@ -92,16 +92,11 @@
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-spring-boot-starter</artifactId>
-			<version>24.4.11</version>
 		</dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-dev</artifactId>
 			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>com.vaadin</groupId>
-			<artifactId>vaadin-spring-boot-starter</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -141,6 +136,17 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<!-- Optimised JVM flags for a memory-constrained container (Java 21).
+					     ZGC (Generational) keeps GC overhead low, returns unused heap to the OS,
+					     and avoids the large remembered-set overhead of the default G1GC. -->
+					<jvmArguments>
+						-XX:+UseZGC
+						-XX:+UseContainerSupport
+						-XX:ZUncommitDelay=30
+						-Xms64m
+						-Xmx256m
+						-Xss512k
+					</jvmArguments>
 				</configuration>
 			</plugin>
 			<plugin>

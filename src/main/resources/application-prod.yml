@@ -34,3 +34,5 @@ spring:
 vaadin:
   launch-browser: false
   production-mode: true
+  heartbeat-interval: 300
+  close-idle-sessions: true
