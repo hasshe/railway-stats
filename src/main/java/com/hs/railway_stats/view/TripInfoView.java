@@ -8,6 +8,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -27,17 +28,22 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @Route("")
 public class TripInfoView extends VerticalLayout {
 
+    private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
+
     private final Grid<TripInfoResponse> grid;
     private final String cryptoSecret;
     private final String cryptoSalt;
     private final String adminPassword;
     private final Span adminBanner;
+    private final List<TripInfoResponse> allTrips = new ArrayList<>();
+    private final Checkbox reimbursableFilter = new Checkbox("Reimbursable only", true);
 
     public TripInfoView(final TripInfoService tripInfoService,
                         @Value("${app.crypto.secret}") String cryptoSecret,
@@ -104,6 +110,8 @@ public class TripInfoView extends VerticalLayout {
         dateFilter.addValueChangeListener(event ->
                 refreshGrid(tripInfoService, originField, destinationField, dateFilter));
 
+        reimbursableFilter.addValueChangeListener(event -> applyFilter());
+
         formatGrid();
 
         HorizontalLayout inputLayout = getInputLayout(
@@ -135,9 +143,21 @@ public class TripInfoView extends VerticalLayout {
             List<TripInfoResponse> trips = tripInfoService.getTripInfo(
                     originStation, destinationStation, selectedDate);
 
-            grid.setItems(trips);
+            allTrips.clear();
+            allTrips.addAll(trips);
+            applyFilter();
         } catch (Exception e) {
             Notification.show("Error filtering trips: " + e.getMessage());
+        }
+    }
+
+    private void applyFilter() {
+        if (reimbursableFilter.getValue()) {
+            grid.setItems(allTrips.stream()
+                    .filter(t -> t.isCancelled() || t.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD)
+                    .toList());
+        } else {
+            grid.setItems(allTrips);
         }
     }
 
@@ -174,7 +194,7 @@ public class TripInfoView extends VerticalLayout {
                                             Button swapButton, Button searchButton,
                                             Button adminCollectButton, Button adminToggle, DatePicker dateFilter) {
         HorizontalLayout inputLayout =
-                new HorizontalLayout(originField, swapButton, destinationField, searchButton, dateFilter, adminToggle, adminCollectButton);
+                new HorizontalLayout(originField, swapButton, destinationField, searchButton, dateFilter, reimbursableFilter, adminToggle, adminCollectButton);
         inputLayout.setAlignItems(Alignment.END);
         return inputLayout;
     }
