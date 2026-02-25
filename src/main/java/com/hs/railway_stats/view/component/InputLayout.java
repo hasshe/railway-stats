@@ -1,13 +1,16 @@
 package com.hs.railway_stats.view.component;
 
 import com.hs.railway_stats.config.StationConstants;
+import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.server.VaadinRequest;
 
 import java.time.LocalDate;
 
@@ -19,7 +22,8 @@ public class InputLayout extends HorizontalLayout {
 
     public InputLayout(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
                        AdminBanner adminBanner, String adminPassword,
-                       String cryptoSecret, String cryptoSalt) {
+                       String cryptoSecret, String cryptoSalt,
+                       RateLimiterService rateLimiterService) {
 
         originField = new ComboBox<>("Origin Station");
         originField.setItems(StationConstants.ALL_STATIONS);
@@ -37,11 +41,11 @@ public class InputLayout extends HorizontalLayout {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
             destinationField.setValue(temp);
-            refreshGrid(tripInfoService, tripInfoGrid);
+            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
         });
 
         Button searchButton = new Button("Search",
-                clickEvent -> refreshGrid(tripInfoService, tripInfoGrid));
+                clickEvent -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
 
         Button adminCollectButton = new Button("🔄 Collect (Admin)");
         adminCollectButton.setVisible(false);
@@ -55,7 +59,7 @@ public class InputLayout extends HorizontalLayout {
                 }
                 tripInfoService.collectTripInformation(origin, destination);
                 Notification.show("Trip information collection started for " + origin + " to " + destination);
-                refreshGrid(tripInfoService, tripInfoGrid);
+                refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
             } catch (Exception e) {
                 Notification.show("Error collecting trip information: " + e.getMessage());
             }
@@ -70,14 +74,23 @@ public class InputLayout extends HorizontalLayout {
 
         AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt);
 
-        dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid));
+        dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
 
         setAlignItems(Alignment.END);
         add(originField, swapButton, destinationField, searchButton, dateFilter,
                 tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
     }
 
-    private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid) {
+    private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+                              RateLimiterService rateLimiterService) {
+        String ip = getClientIp();
+        if (!rateLimiterService.tryConsume(ip)) {
+            long remaining = rateLimiterService.getRemainingBlockSeconds(ip);
+            Notification notification = Notification.show(
+                    "Too many requests. Please wait " + (remaining / 60) + " min " + (remaining % 60) + " sec before trying again.");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
         try {
             String origin = originField.getValue();
             String destination = destinationField.getValue();
@@ -88,5 +101,15 @@ public class InputLayout extends HorizontalLayout {
         } catch (Exception e) {
             Notification.show("Error filtering trips: " + e.getMessage());
         }
+    }
+
+    private String getClientIp() {
+        VaadinRequest request = VaadinRequest.getCurrent();
+        if (request == null) return "unknown";
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

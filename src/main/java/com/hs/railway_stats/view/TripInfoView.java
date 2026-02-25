@@ -1,5 +1,6 @@
 package com.hs.railway_stats.view;
 
+import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.hs.railway_stats.view.component.AdminBanner;
 import com.hs.railway_stats.view.component.InputLayout;
@@ -22,7 +23,8 @@ public class TripInfoView extends VerticalLayout {
     public TripInfoView(final TripInfoService tripInfoService,
                         @Value("${app.crypto.secret}") String cryptoSecret,
                         @Value("${app.crypto.salt}") String cryptoSalt,
-                        @Value("${app.admin.password}") String adminPassword) {
+                        @Value("${app.admin.password}") String adminPassword,
+                        RateLimiterService rateLimiterService) {
 
         setPadding(true);
         setSpacing(true);
@@ -42,7 +44,7 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setAlignItems(Alignment.CENTER);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminBanner, adminPassword, cryptoSecret, cryptoSalt);
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminBanner, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
         TicketLayout ticketLayout = new TicketLayout();
 
         add(headerRow, adminBanner, inputLayout, ticketLayout, tripInfoGrid);
