@@ -40,15 +40,7 @@ public class InputLayout extends FormLayout {
         dateFilter.setMax(LocalDate.now());
         //dateFilter.setValue(LocalDate.now());
 
-        Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
-            String temp = originField.getValue();
-            originField.setValue(destinationField.getValue());
-            destinationField.setValue(temp);
-            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
-        });
-        swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        swapButton.setWidth("auto");
-        swapButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
+        Button swapButton = getSwapButton(tripInfoService, tripInfoGrid, rateLimiterService);
 
         originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
         destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
@@ -67,6 +59,19 @@ public class InputLayout extends FormLayout {
         add(originField, swapButton, destinationField);
         add(dateAndFilterRow, adminControls);
         setColspan(dateAndFilterRow, 4);
+    }
+
+    private Button getSwapButton(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid, RateLimiterService rateLimiterService) {
+        Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
+            String temp = originField.getValue();
+            originField.setValue(destinationField.getValue());
+            destinationField.setValue(temp);
+            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+        });
+        swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        swapButton.setWidth("auto");
+        swapButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
+        return swapButton;
     }
 
     public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,

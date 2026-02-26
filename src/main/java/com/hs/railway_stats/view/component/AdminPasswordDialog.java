@@ -16,15 +16,26 @@ public class AdminPasswordDialog extends Dialog {
         setHeaderTitle("Admin Mode");
         setWidth("360px");
 
-        PasswordField passwordField = new PasswordField("Admin Password");
-        passwordField.setPlaceholder("Enter password");
-        passwordField.setWidthFull();
+        PasswordField passwordField = getPasswordField();
 
         FormLayout formLayout = new FormLayout(passwordField);
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
         addDialogCloseActionListener(closeActionEvent -> close());
 
+        Button confirmButton = getConfirmButton(adminPassword, adminCollectButton, adminBanner, onEnable, onDisable, passwordField);
+        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancelButton = new Button("Cancel", clickEvent -> close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        passwordField.addKeyDownListener(Key.ENTER, keyDownEvent -> confirmButton.click());
+
+        add(formLayout);
+        getFooter().add(cancelButton, confirmButton);
+    }
+
+    private Button getConfirmButton(String adminPassword, Button adminCollectButton, Span adminBanner, Runnable onEnable, Runnable onDisable, PasswordField passwordField) {
         Button confirmButton = new Button("Confirm", clickEvent -> {
             if (adminPassword.equals(passwordField.getValue())) {
                 boolean nowVisible = !adminCollectButton.isVisible();
@@ -44,15 +55,14 @@ public class AdminPasswordDialog extends Dialog {
             }
             close();
         });
-        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        return confirmButton;
+    }
 
-        Button cancelButton = new Button("Cancel", clickEvent -> close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        passwordField.addKeyDownListener(Key.ENTER, keyDownEvent -> confirmButton.click());
-
-        add(formLayout);
-        getFooter().add(cancelButton, confirmButton);
+    private static PasswordField getPasswordField() {
+        PasswordField passwordField = new PasswordField("Admin Password");
+        passwordField.setPlaceholder("Enter password");
+        passwordField.setWidthFull();
+        return passwordField;
     }
 }
 
