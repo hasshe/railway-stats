@@ -14,6 +14,9 @@ A self-hosted web application for tracking train punctuality on the **Uppsala C 
 | **Swap button** | Quickly swap origin and destination to view the return leg. |
 | **Profile drawer** | Optionally save your personal details (name, address, ticket number, etc.) in the browser for convenience when filing claims. All data is encrypted client-side. |
 | **Rate limiter** | IP-based rate limiter (20 requests / 5 minutes, 15-minute block) protects the API endpoint from abuse. |
+| **Admin mode** | Password-protected admin mode unlocked via the Profile drawer. Persists across page refreshes using encrypted `localStorage`. |
+| **Collect (Admin)** | Manually triggers the trip data collection job on demand without waiting for the nightly scheduler. |
+| **Add Station (Admin)** | Adds a new station (TransitHub station ID + display name) to the translation table directly from the UI. |
 
 ---
 
@@ -62,6 +65,7 @@ You can inspect the database at **http://localhost:8080/h2-console** with:
 | Crypto secret | `railway-stats-key-v1` |
 | Crypto salt | `railway-stats-salt` |
 | Admin password | `admin123` |
+| Admin username | `Admin` |
 | Rate limiter max requests | `20` |
 | Rate limiter window | `300` s (5 min) |
 | Rate limiter block duration | `900` s (15 min) |
@@ -90,6 +94,7 @@ The prod profile expects the following **environment variables**:
 | `CRYPTO_SECRET` | Secret key used to encrypt the browser profile (change from dev default!) |
 | `CRYPTO_SALT` | Salt used in PBKDF2 key derivation (change from dev default!) |
 | `ADMIN_PASSWORD` | Password for the admin panel |
+| `ADMIN_USERNAME` | First name value that reveals the admin toggle in the Profile drawer |
 | `RATE_LIMITER_MAX_REQUESTS` | *(optional)* Max requests per IP per window — default `20` |
 | `RATE_LIMITER_WINDOW_SECONDS` | *(optional)* Sliding window size in seconds — default `300` (5 min) |
 | `RATE_LIMITER_TIMEOUT_SECONDS` | *(optional)* Block duration in seconds after limit exceeded — default `900` (15 min) |
@@ -108,8 +113,40 @@ SPRING_PROFILES_ACTIVE=prod \
   CRYPTO_SECRET=my-strong-secret \
   CRYPTO_SALT=my-unique-salt \
   ADMIN_PASSWORD=changeme \
+  ADMIN_USERNAME=YourName \
   java -jar target/railway-stats-*.jar
 ```
+
+---
+
+## Admin mode
+
+Admin mode unlocks two extra controls in the toolbar: **Collect (Admin)** and **Add Station (Admin)**.
+
+### Enabling / disabling
+
+1. Open the **Profile drawer** (hamburger menu, top-left).
+2. Type the configured `ADMIN_USERNAME` value into the **First Name** field — the **Toggle Admin Mode** button appears.
+3. Click **Toggle Admin Mode** and enter the `ADMIN_PASSWORD`.
+4. On success the 🔐 **Admin Mode Active** banner appears and both admin buttons are shown.
+5. Clicking **Toggle Admin Mode** again (with the correct password) disables admin mode.
+
+Admin mode is persisted across page refreshes via an encrypted `localStorage` entry (`adminSession`). The session is cleared on explicit toggle-off.
+
+### Collect (Admin)
+
+Manually triggers the same trip-data collection job that normally runs on the nightly schedule (every day at **23:50 Europe/Stockholm**). Useful after adding a new station or to back-fill data without restarting the server.
+
+### Add Station (Admin)
+
+Opens a dialog to register a new station in the translation table:
+
+| Field | Description |
+|---|---|
+| **Station ID** | The numeric TransitHub station ID (e.g. `74100` for Arlanda C) |
+| **Station Name** | Human-readable display name shown in the UI |
+
+Duplicate station IDs and duplicate station names are both rejected with an error notification.
 
 ---
 
