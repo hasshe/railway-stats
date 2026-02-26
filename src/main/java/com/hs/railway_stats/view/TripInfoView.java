@@ -2,6 +2,7 @@ package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
+import com.hs.railway_stats.view.component.GitHubLink;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDrawer;
 import com.hs.railway_stats.view.component.TripInfoGrid;
@@ -11,6 +12,7 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
@@ -24,6 +26,7 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.crypto.secret}") String cryptoSecret,
                         @Value("${app.crypto.salt}") String cryptoSalt,
                         @Value("${app.admin.password}") String adminPassword,
+                        @Value("${app.version}") String appVersion,
                         RateLimiterService rateLimiterService) {
 
         addClassName("trip-info-view");
@@ -55,9 +58,12 @@ public class TripInfoView extends VerticalLayout {
         titleGroup.setAlignItems(Alignment.CENTER);
         titleGroup.setSpacing(true);
 
-        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleGroup);
+        GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
+
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleGroup, githubLink);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
+        headerRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
         InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, null, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
