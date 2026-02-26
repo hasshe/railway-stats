@@ -3,7 +3,7 @@ package com.hs.railway_stats.view;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.hs.railway_stats.view.component.InputLayout;
-import com.hs.railway_stats.view.component.ProfileDialog;
+import com.hs.railway_stats.view.component.ProfileDrawer;
 import com.hs.railway_stats.view.component.TripInfoGrid;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -30,18 +30,17 @@ public class TripInfoView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        // AdminBanner adminBanner = new AdminBanner();
+        ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt);
 
-        Icon profileIcon = new Icon(VaadinIcon.USER);
+        Icon profileIcon = new Icon(VaadinIcon.MENU);
         profileIcon.setSize("2rem");
         Button profileButton = new Button(profileIcon);
         profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
         profileButton.getElement().setAttribute("aria-label", "Profile");
-        profileButton.addClickListener(clickEvent -> new ProfileDialog(cryptoSecret, cryptoSalt).open());
+        profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
-        HorizontalLayout headerRow = new HorizontalLayout(new H1("Trip Information"), profileButton);
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, new H1("Trip Information"));
         headerRow.setWidthFull();
-        headerRow.setJustifyContentMode(JustifyContentMode.BETWEEN);
         headerRow.setAlignItems(Alignment.CENTER);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
@@ -49,7 +48,7 @@ public class TripInfoView extends VerticalLayout {
         inputLayout.setMaxWidth("700px");
         inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
-        add(headerRow, inputLayout, tripInfoGrid);
+        add(profileDrawer, headerRow, inputLayout, tripInfoGrid);
         setFlexGrow(1, tripInfoGrid);
         setAlignItems(Alignment.CENTER);
         setAlignSelf(Alignment.STRETCH, headerRow, tripInfoGrid);

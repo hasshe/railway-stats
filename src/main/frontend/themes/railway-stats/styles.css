@@ -112,83 +112,116 @@ body {
     background: rgba(106, 163, 255, 0.12) !important;
 }
 
-/* ── Profile Dialog ─────────────────────────────────────── */
-[theme~="profile-dialog"] {
-    --lumo-base-color: #2c3350;
+/* ── Profile Drawer ─────────────────────────────────────── */
+.profile-drawer {
     --lumo-primary-color: #6aa3ff;
     --lumo-primary-text-color: #6aa3ff;
     --lumo-body-text-color: #e8edf5;
-    --lumo-secondary-text-color: #b0bdd0;
-    --lumo-header-text-color: #e8edf5;
-    --lumo-contrast-10pct: rgba(255, 255, 255, 0.10);
-    --lumo-contrast-20pct: rgba(255, 255, 255, 0.18);
-    --lumo-tint-5pct: rgba(255, 255, 255, 0.07);
-    /* Make field labels clearly visible */
     --lumo-contrast-60pct: rgba(232, 237, 245, 0.85);
     --lumo-contrast-70pct: rgba(232, 237, 245, 0.90);
     --lumo-contrast-90pct: #e8edf5;
 }
 
-[theme~="profile-dialog"]::part(overlay) {
-    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%);
-    border: 1px solid rgba(106, 163, 255, 0.30);
-    border-radius: 12px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(106, 163, 255, 0.12);
+/* Backdrop */
+.profile-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
-[theme~="profile-dialog"]::part(header) {
+.profile-drawer--open .profile-drawer-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Sliding panel */
+.profile-drawer-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    width: 360px;
+    max-width: 100vw;
+    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%);
+    border-right: 1px solid rgba(106, 163, 255, 0.30);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.40);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.profile-drawer--open .profile-drawer-panel {
+    transform: translateX(0);
+}
+
+.profile-drawer--closed .profile-drawer-panel {
+    transform: translateX(-100%);
+}
+
+/* Header */
+.profile-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 16px;
     background: rgba(106, 163, 255, 0.10);
     border-bottom: 2px solid rgba(106, 163, 255, 0.25);
-    padding: var(--lumo-space-xl) var(--lumo-space-l);
-    position: relative;
-    justify-content: center;
-    min-height: 72px;
+    flex-shrink: 0;
 }
 
-[theme~="profile-dialog"]::part(header-content) {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
-
-[theme~="profile-dialog"]::part(title) {
-    color: #e8edf5;
-    font-weight: 700;
-    font-size: 1.2rem;
+.profile-drawer-title {
+    color: #e8edf5 !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
     letter-spacing: 0.03em;
-    text-align: center;
-    width: 100%;
+    margin: 0 !important;
 }
 
-[theme~="profile-dialog"]::part(footer) {
-    background: rgba(106, 163, 255, 0.10);
+.profile-drawer-close-btn {
+    color: #b0bdd0 !important;
+    --lumo-contrast-60pct: rgba(176, 189, 208, 0.85);
+}
+
+.profile-drawer-close-btn:hover {
+    color: #e8edf5 !important;
+    background: rgba(106, 163, 255, 0.12) !important;
+}
+
+/* Scrollable content */
+.profile-drawer-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.profile-drawer-form {
+    --lumo-body-text-color: #e8edf5;
+}
+
+/* Footer */
+.profile-drawer-footer {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    background: rgba(106, 163, 255, 0.08);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    min-height: 35px;
 }
 
-/* ── Profile Dialog – Phone / small screens ─────────────── */
+.profile-drawer-save-btn {
+    margin: 0 !important;
+}
+
+/* ── Profile Drawer – Phone / small screens ─────────────── */
 @media (max-width: 600px) {
-    [theme~="profile-dialog"] {
-        --vaadin-dialog-width: 100vw !important;
-        --vaadin-dialog-height: 100dvh !important;
-    }
-
-    [theme~="profile-dialog"]::part(overlay) {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        border-radius: 0 !important;
-    }
-
-    [theme~="profile-dialog"]::part(content) {
-        flex: 1 1 auto !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    [theme~="profile-dialog"]::part(backdrop) {
-        display: none !important;
+    .profile-drawer-panel {
+        width: 100vw;
     }
 }
 
