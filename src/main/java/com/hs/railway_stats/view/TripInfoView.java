@@ -39,7 +39,15 @@ public class TripInfoView extends VerticalLayout {
         profileButton.getElement().setAttribute("aria-label", "Profile");
         profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
-        HorizontalLayout headerRow = new HorizontalLayout(profileButton, new H1("Trip Information"));
+        H1 heading = new H1("Trip Information");
+        heading.getStyle()
+                .set("color", "#e8edf5")
+                .set("font-weight", "700")
+                .set("letter-spacing", "0.02em")
+                .set("margin", "0")
+                .set("text-shadow", "0 2px 12px rgba(106, 163, 255, 0.20)");
+
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, heading);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
 

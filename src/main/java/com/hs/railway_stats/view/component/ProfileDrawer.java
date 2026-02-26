@@ -13,7 +13,9 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
+import lombok.Getter;
 
+@Getter
 public class ProfileDrawer extends Div {
 
     private static final String STORAGE_KEY = "userProfile";
@@ -29,29 +31,37 @@ public class ProfileDrawer extends Div {
 
     public ProfileDrawer(String cryptoSecret, String cryptoSalt) {
         addClassName("profile-drawer");
+        getStyle()
+                .set("--lumo-primary-color", "#6aa3ff")
+                .set("--lumo-primary-text-color", "#6aa3ff")
+                .set("--lumo-body-text-color", "#e8edf5")
+                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
+                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
+                .set("--lumo-contrast-90pct", "#e8edf5");
 
-        // ── Backdrop ────────────────────────────────────────────
         Div backdrop = new Div();
         backdrop.addClassName("profile-drawer-backdrop");
         backdrop.addClickListener(e -> close());
 
-        // ── Panel ────────────────────────────────────────────────
         Div panel = new Div();
         panel.addClassName("profile-drawer-panel");
 
-        // Header row inside panel
         H2 title = new H2("Profile");
-        title.addClassName("profile-drawer-title");
+        title.getStyle()
+                .set("color", "#e8edf5")
+                .set("font-size", "1.2rem")
+                .set("font-weight", "700")
+                .set("letter-spacing", "0.03em")
+                .set("margin", "0");
 
         Button closeBtn = new Button(new Icon(VaadinIcon.CLOSE));
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        closeBtn.addClassName("profile-drawer-close-btn");
+        closeBtn.getStyle().set("color", "#b0bdd0");
         closeBtn.addClickListener(e -> close());
 
         Div header = new Div(title, closeBtn);
         header.addClassName("profile-drawer-header");
 
-        // Form fields
         TextField firstNameField = styledField("First Name", "John");
         TextField lastNameField = styledField("Last Name", "Doe");
         TextField phoneField = styledField("Phone Number", "+46 70 000 00 00");
@@ -67,8 +77,8 @@ public class ProfileDrawer extends Div {
                 addressField, cityField, postalCodeField, ticketNumberField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.addClassName("profile-drawer-form");
+        form.getStyle().set("--lumo-body-text-color", "#e8edf5");
 
-        // Load saved data
         BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, cryptoSecret, cryptoSalt, json -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -99,7 +109,7 @@ public class ProfileDrawer extends Div {
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.setWidthFull();
-        saveButton.addClassName("profile-drawer-save-btn");
+        saveButton.getStyle().set("margin", "0");
 
         Div content = new Div(form);
         content.addClassName("profile-drawer-content");
@@ -109,20 +119,12 @@ public class ProfileDrawer extends Div {
 
         panel.add(header, content, footer);
         add(backdrop, panel);
-
-        // Close on Escape key
-        getElement().executeJs(
-            "document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $0.dispatchEvent(new CustomEvent('close-drawer')); } });",
-            getElement()
-        );
-        addClassName("profile-drawer--closed");
     }
 
     public void open() {
         open = true;
         removeClassName("profile-drawer--closed");
         addClassName("profile-drawer--open");
-        // Lock body scroll
         UI.getCurrent().getPage().executeJs("document.body.style.overflow='hidden';");
     }
 
@@ -133,8 +135,5 @@ public class ProfileDrawer extends Div {
         UI.getCurrent().getPage().executeJs("document.body.style.overflow='';");
     }
 
-    public boolean isOpen() {
-        return open;
-    }
 }
 
