@@ -19,12 +19,14 @@ public final class AdminSessionUtils {
         BrowserStorageUtils.localStorageRemove(STORAGE_KEY);
     }
 
+
     public static void restoreAdminSession(Button adminCollectButton, AdminBanner adminBanner,
-                                           String secret, String salt) {
+                                           String secret, String salt, Runnable onRestore) {
         BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, secret, salt, result -> {
             if (ADMIN_TOKEN.equals(result)) {
                 adminCollectButton.setVisible(true);
                 adminBanner.setVisible(true);
+                onRestore.run();
             }
         });
     }

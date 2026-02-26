@@ -114,8 +114,7 @@ public class ProfileDrawer extends Div {
         button.getStyle().set("margin-top", "20px");
         button.addClickListener(e -> new AdminPasswordDialog(
                 adminPassword,
-                adminControls.getAdminCollectButton(),
-                adminControls.getAdminBanner(),
+                adminControls,
                 () -> AdminSessionUtils.saveAdminSession(cryptoSecret, cryptoSalt),
                 AdminSessionUtils::clearAdminSession
         ).open());

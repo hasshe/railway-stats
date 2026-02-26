@@ -1,6 +1,7 @@
 package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.service.RateLimiterService;
+import com.hs.railway_stats.service.TranslationService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.hs.railway_stats.view.component.AdminBanner;
 import com.hs.railway_stats.view.component.AdminControls;
@@ -30,7 +31,8 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.admin.password}") String adminPassword,
                         @Value("${app.admin.username}") String adminUsername,
                         @Value("${app.version}") String appVersion,
-                        RateLimiterService rateLimiterService) {
+                        RateLimiterService rateLimiterService,
+                        TranslationService translationService) {
 
         addClassName("trip-info-view");
         setPadding(true);
@@ -70,7 +72,7 @@ public class TripInfoView extends VerticalLayout {
 
         Runnable[] collectHolder = {() -> {}};
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
-                () -> collectHolder[0].run());
+                () -> collectHolder[0].run(), translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
         profileButton.addClickListener(clickEvent -> profileDrawer.open());

@@ -5,13 +5,12 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.PasswordField;
 
 public class AdminPasswordDialog extends Dialog {
 
-    public AdminPasswordDialog(String adminPassword, Button adminCollectButton, Span adminBanner,
+    public AdminPasswordDialog(String adminPassword, AdminControls adminControls,
                                Runnable onEnable, Runnable onDisable) {
         setHeaderTitle("Admin Mode");
         setWidth("360px");
@@ -23,7 +22,7 @@ public class AdminPasswordDialog extends Dialog {
 
         addDialogCloseActionListener(closeActionEvent -> close());
 
-        Button confirmButton = getConfirmButton(adminPassword, adminCollectButton, adminBanner, onEnable, onDisable, passwordField);
+        Button confirmButton = getConfirmButton(adminPassword, adminControls, onEnable, onDisable, passwordField);
         confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button cancelButton = new Button("Cancel", clickEvent -> close());
@@ -35,12 +34,12 @@ public class AdminPasswordDialog extends Dialog {
         getFooter().add(cancelButton, confirmButton);
     }
 
-    private Button getConfirmButton(String adminPassword, Button adminCollectButton, Span adminBanner, Runnable onEnable, Runnable onDisable, PasswordField passwordField) {
+    private Button getConfirmButton(String adminPassword, AdminControls adminControls,
+                                    Runnable onEnable, Runnable onDisable, PasswordField passwordField) {
         Button confirmButton = new Button("Confirm", clickEvent -> {
             if (adminPassword.equals(passwordField.getValue())) {
-                boolean nowVisible = !adminCollectButton.isVisible();
-                adminCollectButton.setVisible(nowVisible);
-                adminBanner.setVisible(nowVisible);
+                boolean nowVisible = !adminControls.getAdminCollectButton().isVisible();
+                adminControls.setAdminVisible(nowVisible);
                 if (nowVisible) {
                     onEnable.run();
                     Notification.show("Admin mode enabled");
@@ -65,4 +64,3 @@ public class AdminPasswordDialog extends Dialog {
         return passwordField;
     }
 }
-
