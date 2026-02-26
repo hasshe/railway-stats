@@ -2,6 +2,7 @@ package com.hs.railway_stats.view.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -22,78 +23,57 @@ public class ProfileDrawer extends Div {
     private static final String STORAGE_KEY = "userProfile";
     private boolean open = false;
 
-    private static TextField styledField(String label, String placeholder) {
-        TextField field = new TextField(label);
-        field.setPlaceholder(placeholder);
-        field.setWidthFull();
-        field.getStyle().set("--vaadin-input-field-label-color", "#ffffff");
-        return field;
-    }
-
-    private static void addValidation(TextField field, String regex, String errorMessage) {
-        field.addValueChangeListener(e -> {
-            String v = e.getValue();
-            if (!v.isBlank() && !v.matches(regex)) {
-                field.setErrorMessage(errorMessage);
-                field.setInvalid(true);
-            } else {
-                field.setInvalid(false);
-            }
-        });
-    }
-
-    public ProfileDrawer(String cryptoSecret, String cryptoSalt) {
+    public ProfileDrawer(String cryptoSecret, String cryptoSalt,
+                         AdminControls adminControls, String adminPassword,
+                         String adminUsername) {
         addClassName("profile-drawer");
         applyDrawerStyles();
 
-        Div backdrop = new Div();
-        backdrop.addClassName("profile-drawer-backdrop");
-        backdrop.addClickListener(e -> close());
-
+        Div backdrop = buildBackdrop();
         Div panel = new Div();
         panel.addClassName("profile-drawer-panel");
 
-        TextField firstNameField = styledField("First Name", "John");
-        TextField lastNameField = styledField("Last Name", "Doe");
-        TextField phoneField = styledField("Phone Number", "+46 70 000 00 00");
-        TextField emailField = styledField("Email Address", "you@example.com");
-        TextField addressField = styledField("Home Address", "123 Main Street");
-        TextField cityField = styledField("City", "Stockholm");
-        TextField postalCodeField = styledField("Postal Code", "111 22");
-        TextField ticketNumberField = styledField("Ticket Number", "e.g. B123ABCG6");
+        ProfileFields fields = new ProfileFields();
+        fields.firstName.getStyle().set("margin-top", "20px");
+        fields.ticketNumber.getStyle().set("margin-bottom", "20px");
 
-        firstNameField.getStyle().set("margin-top", "20px");
+        applyValidations(fields);
 
-        applyValidations(firstNameField, lastNameField, emailField, phoneField, postalCodeField, addressField);
-        loadFromStorage(cryptoSecret, cryptoSalt, firstNameField, lastNameField, phoneField,
-                emailField, addressField, cityField, postalCodeField, ticketNumberField);
+        Button adminToggleButton = buildAdminToggleButton(adminPassword, adminControls, cryptoSecret, cryptoSalt);
+        wireAdminToggleVisibility(adminToggleButton, fields.firstName, adminUsername);
+
+        loadFromStorage(cryptoSecret, cryptoSalt, fields, () -> {
+            boolean matches = fields.firstName.getValue().trim().equalsIgnoreCase(adminUsername);
+            adminToggleButton.setVisible(matches);
+        });
 
         Div header = buildHeader();
-        FormLayout form = buildForm(firstNameField, lastNameField, phoneField, emailField,
-                addressField, cityField, postalCodeField, ticketNumberField);
-        Button saveButton = buildSaveButton(cryptoSecret, cryptoSalt, firstNameField, lastNameField,
-                phoneField, emailField, addressField, cityField, postalCodeField, ticketNumberField);
-
+        FormLayout form = buildForm(fields);
+        Button saveButton = buildSaveButton(cryptoSecret, cryptoSalt, fields);
+        Div footer = buildFooter(saveButton, adminToggleButton);
         Div content = new Div(form);
         content.addClassName("profile-drawer-content");
-
-        Div footer = new Div(saveButton);
-        footer.addClassName("profile-drawer-footer");
 
         panel.add(header, content, footer);
         add(backdrop, panel);
     }
 
-    private void applyDrawerStyles() {
-        getStyle()
-                .set("--lumo-primary-color", "#6aa3ff")
-                .set("--lumo-primary-text-color", "#6aa3ff")
-                .set("--lumo-body-text-color", "#e8edf5")
-                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
-                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
-                .set("--lumo-contrast-90pct", "#e8edf5")
-                .set("--lumo-error-text-color", "#ff6b6b")
-                .set("--lumo-error-color", "#ff6b6b");
+    private static class ProfileFields {
+        final TextField firstName = styledField("First Name", "John");
+        final TextField lastName = styledField("Last Name", "Doe");
+        final TextField phone = styledField("Phone Number", "+46 70 000 00 00");
+        final TextField email = styledField("Email Address", "you@example.com");
+        final TextField address = styledField("Home Address", "123 Main Street");
+        final TextField city = styledField("City", "Stockholm");
+        final TextField postalCode = styledField("Postal Code", "111 22");
+        final TextField ticketNumber = styledField("Ticket Number", "e.g. B123ABCG6");
+    }
+
+    private Div buildBackdrop() {
+        Div backdrop = new Div();
+        backdrop.addClassName("profile-drawer-backdrop");
+        backdrop.addClickListener(e -> close());
+        return backdrop;
     }
 
     private Div buildHeader() {
@@ -115,81 +95,62 @@ public class ProfileDrawer extends Div {
         return header;
     }
 
-    private static void applyValidations(TextField firstNameField, TextField lastNameField,
-                                         TextField emailField, TextField phoneField,
-                                         TextField postalCodeField, TextField addressField) {
-        addValidation(firstNameField,
-                "^[\\p{L}\\s\\-']+$",
-                "First name must contain letters only");
-        addValidation(lastNameField,
-                "^[\\p{L}\\s\\-']+$",
-                "Last name must contain letters only");
-        addValidation(emailField,
-                "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)*\\.[a-zA-Z]{2,}$",
-                "Enter a valid email address (e.g. you@example.com)");
-        addValidation(phoneField,
-                "^[+]?[\\d\\s\\-().]{6,20}$",
-                "Enter a valid phone number (e.g. +46 70 000 00 00)");
-        addValidation(postalCodeField,
-                "^[\\w\\s\\-]{3,10}$",
-                "Enter a valid postal code (e.g. 111 22)");
-        addValidation(addressField,
-                "^[\\p{L}\\d\\s\\-,.']+$",
-                "Enter a valid home address (e.g. 123 Main Street)");
-    }
-
-    private static FormLayout buildForm(TextField firstNameField, TextField lastNameField,
-                                        TextField phoneField, TextField emailField,
-                                        TextField addressField, TextField cityField,
-                                        TextField postalCodeField, TextField ticketNumberField) {
-        FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField,
-                addressField, cityField, postalCodeField, ticketNumberField);
+    private static FormLayout buildForm(ProfileFields fields) {
+        FormLayout form = new FormLayout(
+                fields.firstName, fields.lastName, fields.phone, fields.email,
+                fields.address, fields.city, fields.postalCode, fields.ticketNumber);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.addClassName("profile-drawer-form");
         form.getStyle().set("--lumo-body-text-color", "#e8edf5");
         return form;
     }
 
-    private static void loadFromStorage(String cryptoSecret, String cryptoSalt,
-                                        TextField firstNameField, TextField lastNameField,
-                                        TextField phoneField, TextField emailField,
-                                        TextField addressField, TextField cityField,
-                                        TextField postalCodeField, TextField ticketNumberField) {
-        BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, cryptoSecret, cryptoSalt, json -> {
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode node = mapper.readTree(json);
-                firstNameField.setValue(node.path("firstName").asText(""));
-                lastNameField.setValue(node.path("lastName").asText(""));
-                phoneField.setValue(node.path("phone").asText(""));
-                emailField.setValue(node.path("email").asText(""));
-                addressField.setValue(node.path("address").asText(""));
-                cityField.setValue(node.path("city").asText(""));
-                postalCodeField.setValue(node.path("postalCode").asText(""));
-                ticketNumberField.setValue(node.path("ticketNumber").asText(""));
-            } catch (Exception ignored) {
-            }
+    private static Button buildAdminToggleButton(String adminPassword, AdminControls adminControls,
+                                                 String cryptoSecret, String cryptoSalt) {
+        Button button = new Button("Toggle Admin Mode");
+        button.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        button.setWidthFull();
+        button.setVisible(false);
+        button.getStyle().set("margin-top", "20px");
+        button.addClickListener(e -> new AdminPasswordDialog(
+                adminPassword,
+                adminControls.getAdminCollectButton(),
+                adminControls.getAdminBanner(),
+                () -> AdminSessionUtils.saveAdminSession(cryptoSecret, cryptoSalt),
+                AdminSessionUtils::clearAdminSession
+        ).open());
+        return button;
+    }
+
+    private static void wireAdminToggleVisibility(Button adminToggleButton,
+                                                  TextField firstNameField,
+                                                  String adminUsername) {
+        firstNameField.addValueChangeListener(e -> {
+            boolean matches = e.getValue().trim().equalsIgnoreCase(adminUsername);
+            adminToggleButton.setVisible(matches);
         });
     }
 
-    private Button buildSaveButton(String cryptoSecret, String cryptoSalt,
-                                   TextField firstNameField, TextField lastNameField,
-                                   TextField phoneField, TextField emailField,
-                                   TextField addressField, TextField cityField,
-                                   TextField postalCodeField, TextField ticketNumberField) {
+    private static Div buildFooter(Button saveButton, Button adminToggleButton) {
+        Div footer = new Div(saveButton, adminToggleButton);
+        footer.addClassName("profile-drawer-footer");
+        return footer;
+    }
+
+    private Button buildSaveButton(String cryptoSecret, String cryptoSalt, ProfileFields fields) {
         Button saveButton = new Button("Save", clickEvent -> {
-            if (firstNameField.isInvalid() || lastNameField.isInvalid() || emailField.isInvalid()
-                    || phoneField.isInvalid() || postalCodeField.isInvalid() || addressField.isInvalid()) {
+            if (fields.firstName.isInvalid() || fields.lastName.isInvalid() || fields.email.isInvalid()
+                    || fields.phone.isInvalid() || fields.postalCode.isInvalid() || fields.address.isInvalid()) {
                 Notification error = Notification.show("Please fix the validation errors before saving.");
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
             String profile = String.format(
                     "{\"firstName\":\"%s\",\"lastName\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"address\":\"%s\",\"city\":\"%s\",\"postalCode\":\"%s\",\"ticketNumber\":\"%s\"}",
-                    firstNameField.getValue(), lastNameField.getValue(),
-                    phoneField.getValue(), emailField.getValue(),
-                    addressField.getValue(), cityField.getValue(),
-                    postalCodeField.getValue(), ticketNumberField.getValue()
+                    fields.firstName.getValue(), fields.lastName.getValue(),
+                    fields.phone.getValue(), fields.email.getValue(),
+                    fields.address.getValue(), fields.city.getValue(),
+                    fields.postalCode.getValue(), fields.ticketNumber.getValue()
             );
             BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profile, cryptoSecret, cryptoSalt);
             Notification.show("Profile saved");
@@ -199,6 +160,67 @@ public class ProfileDrawer extends Div {
         saveButton.setWidthFull();
         saveButton.getStyle().set("margin", "0");
         return saveButton;
+    }
+
+    private static void loadFromStorage(String cryptoSecret, String cryptoSalt,
+                                        ProfileFields fields, Runnable onLoaded) {
+        BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, cryptoSecret, cryptoSalt, json -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode node = mapper.readTree(json);
+                fields.firstName.setValue(node.path("firstName").asText(""));
+                fields.lastName.setValue(node.path("lastName").asText(""));
+                fields.phone.setValue(node.path("phone").asText(""));
+                fields.email.setValue(node.path("email").asText(""));
+                fields.address.setValue(node.path("address").asText(""));
+                fields.city.setValue(node.path("city").asText(""));
+                fields.postalCode.setValue(node.path("postalCode").asText(""));
+                fields.ticketNumber.setValue(node.path("ticketNumber").asText(""));
+            } catch (Exception ignored) {
+            }
+            onLoaded.run();
+        });
+    }
+
+    private static void applyValidations(ProfileFields fields) {
+        addValidation(fields.firstName, "^[\\p{L}\\s\\-']+$", "First name must contain letters only");
+        addValidation(fields.lastName, "^[\\p{L}\\s\\-']+$", "Last name must contain letters only");
+        addValidation(fields.email, "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)*\\.[a-zA-Z]{2,}$", "Enter a valid email address (e.g. you@example.com)");
+        addValidation(fields.phone, "^[+]?[\\d\\s\\-().]{6,20}$", "Enter a valid phone number (e.g. +46 70 000 00 00)");
+        addValidation(fields.postalCode, "^[\\w\\s\\-]{3,10}$", "Enter a valid postal code (e.g. 111 22)");
+        addValidation(fields.address, "^[\\p{L}\\d\\s\\-,.']+$", "Enter a valid home address (e.g. 123 Main Street)");
+    }
+
+    private static void addValidation(TextField field, String regex, String errorMessage) {
+        field.addValueChangeListener(e -> {
+            String v = e.getValue();
+            if (!v.isBlank() && !v.matches(regex)) {
+                field.setErrorMessage(errorMessage);
+                field.setInvalid(true);
+            } else {
+                field.setInvalid(false);
+            }
+        });
+    }
+
+    private void applyDrawerStyles() {
+        getStyle()
+                .set("--lumo-primary-color", "#6aa3ff")
+                .set("--lumo-primary-text-color", "#6aa3ff")
+                .set("--lumo-body-text-color", "#e8edf5")
+                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
+                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
+                .set("--lumo-contrast-90pct", "#e8edf5")
+                .set("--lumo-error-text-color", "#ff6b6b")
+                .set("--lumo-error-color", "#ff6b6b");
+    }
+
+    private static TextField styledField(String label, String placeholder) {
+        TextField field = new TextField(label);
+        field.setPlaceholder(placeholder);
+        field.setWidthFull();
+        field.getStyle().set("--vaadin-input-field-label-color", "#ffffff");
+        return field;
     }
 
     public void open() {
@@ -214,6 +236,4 @@ public class ProfileDrawer extends Div {
         addClassName("profile-drawer--closed");
         UI.getCurrent().getPage().executeJs("document.body.style.overflow='';");
     }
-
 }
-

@@ -2,6 +2,8 @@ package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
+import com.hs.railway_stats.view.component.AdminBanner;
+import com.hs.railway_stats.view.component.AdminControls;
 import com.hs.railway_stats.view.component.GitHubLink;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDrawer;
@@ -26,6 +28,7 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.crypto.secret}") String cryptoSecret,
                         @Value("${app.crypto.salt}") String cryptoSalt,
                         @Value("${app.admin.password}") String adminPassword,
+                        @Value("${app.admin.username}") String adminUsername,
                         @Value("${app.version}") String appVersion,
                         RateLimiterService rateLimiterService) {
 
@@ -33,14 +36,11 @@ public class TripInfoView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt);
-
         Icon profileIcon = new Icon(VaadinIcon.MENU);
         profileIcon.setSize("2rem");
         Button profileButton = new Button(profileIcon);
         profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
         profileButton.getElement().setAttribute("aria-label", "Profile");
-        profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
         Icon trainIcon = new Icon(VaadinIcon.TRAIN);
         trainIcon.setSize("2rem");
@@ -66,11 +66,22 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, null, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
+        AdminBanner adminBanner = new AdminBanner();
+
+        Runnable[] collectHolder = {() -> {}};
+        AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
+                () -> collectHolder[0].run());
+
+        ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
+        profileButton.addClickListener(clickEvent -> profileDrawer.open());
+
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService);
+        collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
+
         inputLayout.setMaxWidth("700px");
         inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
-        add(profileDrawer, headerRow, inputLayout, tripInfoGrid);
+        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoGrid);
         setFlexGrow(1, tripInfoGrid);
         setAlignItems(Alignment.CENTER);
         setAlignSelf(Alignment.STRETCH, headerRow, tripInfoGrid);

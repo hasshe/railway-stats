@@ -8,12 +8,12 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.server.VaadinRequest;
 
 import java.time.LocalDate;
@@ -25,8 +25,7 @@ public class InputLayout extends FormLayout {
     private final DatePicker dateFilter;
 
     public InputLayout(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
-                       AdminBanner adminBanner, String adminPassword,
-                       String cryptoSecret, String cryptoSalt,
+                       AdminControls adminControls,
                        RateLimiterService rateLimiterService) {
 
         originField = new ComboBox<>("From:");
@@ -37,9 +36,9 @@ public class InputLayout extends FormLayout {
         destinationField.setItems(StationConstants.ALL_STATIONS);
         destinationField.setValue(StationConstants.STOCKHOLM);
 
-        dateFilter = new DatePicker("Filter by Date");
+        dateFilter = new DatePicker("Date:");
         dateFilter.setMax(LocalDate.now());
-        dateFilter.setValue(LocalDate.now());
+        //dateFilter.setValue(LocalDate.now());
 
         Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
             String temp = originField.getValue();
@@ -51,40 +50,6 @@ public class InputLayout extends FormLayout {
         swapButton.setWidth("auto");
         swapButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
 
-/**
-        Button searchButton = new Button("Search", new Icon(VaadinIcon.SEARCH),
-                clickEvent -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
-        searchButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        searchButton.setWidth("auto");
-        searchButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
-
-        Button adminCollectButton = new Button("🔄 Collect (Admin)");
-        adminCollectButton.setVisible(false);
-        adminCollectButton.addClickListener(clickEvent -> {
-            try {
-                String origin = originField.getValue();
-                String destination = destinationField.getValue();
-                if (origin == null || destination == null) {
-                    Notification.show("Please select both stations");
-                    return;
-                }
-                tripInfoService.collectTripInformation(origin, destination);
-                Notification.show("Trip information collection started for " + origin + " to " + destination);
-                refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
-            } catch (Exception e) {
-                Notification.show("Error collecting trip information: " + e.getMessage());
-            }
-        });
-
-        Button adminToggle = new Button("Toggle Admin Mode");
-        adminToggle.addClickListener(clickEvent -> new AdminPasswordDialog(
-                adminPassword, adminCollectButton, adminBanner,
-                () -> AdminSessionUtils.saveAdminSession(cryptoSecret, cryptoSalt),
-                AdminSessionUtils::clearAdminSession
-        ).open());
-
-        AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt);
-**/
         originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
         destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
@@ -100,8 +65,23 @@ public class InputLayout extends FormLayout {
         );
 
         add(originField, swapButton, destinationField);
-        add(dateAndFilterRow);
+        add(dateAndFilterRow, adminControls);
         setColspan(dateAndFilterRow, 4);
+    }
+
+    public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+                                         RateLimiterService rateLimiterService) {
+        return () -> {
+            String origin = originField.getValue();
+            String destination = destinationField.getValue();
+            if (origin == null || destination == null) {
+                Notification.show("Please select both stations");
+                return;
+            }
+            tripInfoService.collectTripInformation(origin, destination);
+            Notification.show("Trip information collection started for " + origin + " to " + destination);
+            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+        };
     }
 
     private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,

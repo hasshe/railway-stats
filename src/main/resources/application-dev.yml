@@ -4,6 +4,7 @@ app:
     salt: railway-stats-salt
   admin:
     password: admin123
+    username: Admin
   rate-limiter:
     max-requests: 20      # max requests per IP within the window
     window-seconds: 300   # sliding window size (5 minutes)
