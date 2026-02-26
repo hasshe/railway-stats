@@ -12,6 +12,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import lombok.Getter;
 
@@ -29,15 +30,21 @@ public class ProfileDrawer extends Div {
         return field;
     }
 
+    private static void addValidation(TextField field, String regex, String errorMessage) {
+        field.addValueChangeListener(e -> {
+            String v = e.getValue();
+            if (!v.isBlank() && !v.matches(regex)) {
+                field.setErrorMessage(errorMessage);
+                field.setInvalid(true);
+            } else {
+                field.setInvalid(false);
+            }
+        });
+    }
+
     public ProfileDrawer(String cryptoSecret, String cryptoSalt) {
         addClassName("profile-drawer");
-        getStyle()
-                .set("--lumo-primary-color", "#6aa3ff")
-                .set("--lumo-primary-text-color", "#6aa3ff")
-                .set("--lumo-body-text-color", "#e8edf5")
-                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
-                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
-                .set("--lumo-contrast-90pct", "#e8edf5");
+        applyDrawerStyles();
 
         Div backdrop = new Div();
         backdrop.addClassName("profile-drawer-backdrop");
@@ -46,6 +53,50 @@ public class ProfileDrawer extends Div {
         Div panel = new Div();
         panel.addClassName("profile-drawer-panel");
 
+        TextField firstNameField = styledField("First Name", "John");
+        TextField lastNameField = styledField("Last Name", "Doe");
+        TextField phoneField = styledField("Phone Number", "+46 70 000 00 00");
+        TextField emailField = styledField("Email Address", "you@example.com");
+        TextField addressField = styledField("Home Address", "123 Main Street");
+        TextField cityField = styledField("City", "Stockholm");
+        TextField postalCodeField = styledField("Postal Code", "111 22");
+        TextField ticketNumberField = styledField("Ticket Number", "e.g. B123ABCG6");
+
+        firstNameField.getStyle().set("margin-top", "20px");
+
+        applyValidations(firstNameField, lastNameField, emailField, phoneField, postalCodeField, addressField);
+        loadFromStorage(cryptoSecret, cryptoSalt, firstNameField, lastNameField, phoneField,
+                emailField, addressField, cityField, postalCodeField, ticketNumberField);
+
+        Div header = buildHeader();
+        FormLayout form = buildForm(firstNameField, lastNameField, phoneField, emailField,
+                addressField, cityField, postalCodeField, ticketNumberField);
+        Button saveButton = buildSaveButton(cryptoSecret, cryptoSalt, firstNameField, lastNameField,
+                phoneField, emailField, addressField, cityField, postalCodeField, ticketNumberField);
+
+        Div content = new Div(form);
+        content.addClassName("profile-drawer-content");
+
+        Div footer = new Div(saveButton);
+        footer.addClassName("profile-drawer-footer");
+
+        panel.add(header, content, footer);
+        add(backdrop, panel);
+    }
+
+    private void applyDrawerStyles() {
+        getStyle()
+                .set("--lumo-primary-color", "#6aa3ff")
+                .set("--lumo-primary-text-color", "#6aa3ff")
+                .set("--lumo-body-text-color", "#e8edf5")
+                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
+                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
+                .set("--lumo-contrast-90pct", "#e8edf5")
+                .set("--lumo-error-text-color", "#ff6b6b")
+                .set("--lumo-error-color", "#ff6b6b");
+    }
+
+    private Div buildHeader() {
         H2 title = new H2("Profile");
         title.getStyle()
                 .set("color", "#e8edf5")
@@ -61,24 +112,49 @@ public class ProfileDrawer extends Div {
 
         Div header = new Div(title, closeBtn);
         header.addClassName("profile-drawer-header");
+        return header;
+    }
 
-        TextField firstNameField = styledField("First Name", "John");
-        TextField lastNameField = styledField("Last Name", "Doe");
-        TextField phoneField = styledField("Phone Number", "+46 70 000 00 00");
-        TextField emailField = styledField("Email Address", "you@example.com");
-        TextField addressField = styledField("Home Address", "123 Main Street");
-        TextField cityField = styledField("City", "Stockholm");
-        TextField postalCodeField = styledField("Postal Code", "111 22");
-        TextField ticketNumberField = styledField("Ticket Number", "e.g. B123ABCG6");
+    private static void applyValidations(TextField firstNameField, TextField lastNameField,
+                                         TextField emailField, TextField phoneField,
+                                         TextField postalCodeField, TextField addressField) {
+        addValidation(firstNameField,
+                "^[\\p{L}\\s\\-']+$",
+                "First name must contain letters only");
+        addValidation(lastNameField,
+                "^[\\p{L}\\s\\-']+$",
+                "Last name must contain letters only");
+        addValidation(emailField,
+                "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)*\\.[a-zA-Z]{2,}$",
+                "Enter a valid email address (e.g. you@example.com)");
+        addValidation(phoneField,
+                "^[+]?[\\d\\s\\-().]{6,20}$",
+                "Enter a valid phone number (e.g. +46 70 000 00 00)");
+        addValidation(postalCodeField,
+                "^[\\w\\s\\-]{3,10}$",
+                "Enter a valid postal code (e.g. 111 22)");
+        addValidation(addressField,
+                "^[\\p{L}\\d\\s\\-,.']+$",
+                "Enter a valid home address (e.g. 123 Main Street)");
+    }
 
-        firstNameField.getStyle().set("margin-top", "8px");
-
+    private static FormLayout buildForm(TextField firstNameField, TextField lastNameField,
+                                        TextField phoneField, TextField emailField,
+                                        TextField addressField, TextField cityField,
+                                        TextField postalCodeField, TextField ticketNumberField) {
         FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField,
                 addressField, cityField, postalCodeField, ticketNumberField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.addClassName("profile-drawer-form");
         form.getStyle().set("--lumo-body-text-color", "#e8edf5");
+        return form;
+    }
 
+    private static void loadFromStorage(String cryptoSecret, String cryptoSalt,
+                                        TextField firstNameField, TextField lastNameField,
+                                        TextField phoneField, TextField emailField,
+                                        TextField addressField, TextField cityField,
+                                        TextField postalCodeField, TextField ticketNumberField) {
         BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, cryptoSecret, cryptoSalt, json -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -94,8 +170,20 @@ public class ProfileDrawer extends Div {
             } catch (Exception ignored) {
             }
         });
+    }
 
+    private Button buildSaveButton(String cryptoSecret, String cryptoSalt,
+                                   TextField firstNameField, TextField lastNameField,
+                                   TextField phoneField, TextField emailField,
+                                   TextField addressField, TextField cityField,
+                                   TextField postalCodeField, TextField ticketNumberField) {
         Button saveButton = new Button("Save", clickEvent -> {
+            if (firstNameField.isInvalid() || lastNameField.isInvalid() || emailField.isInvalid()
+                    || phoneField.isInvalid() || postalCodeField.isInvalid() || addressField.isInvalid()) {
+                Notification error = Notification.show("Please fix the validation errors before saving.");
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
             String profile = String.format(
                     "{\"firstName\":\"%s\",\"lastName\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"address\":\"%s\",\"city\":\"%s\",\"postalCode\":\"%s\",\"ticketNumber\":\"%s\"}",
                     firstNameField.getValue(), lastNameField.getValue(),
@@ -110,15 +198,7 @@ public class ProfileDrawer extends Div {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.setWidthFull();
         saveButton.getStyle().set("margin", "0");
-
-        Div content = new Div(form);
-        content.addClassName("profile-drawer-content");
-
-        Div footer = new Div(saveButton);
-        footer.addClassName("profile-drawer-footer");
-
-        panel.add(header, content, footer);
-        add(backdrop, panel);
+        return saveButton;
     }
 
     public void open() {

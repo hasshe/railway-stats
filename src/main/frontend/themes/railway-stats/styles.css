@@ -127,6 +127,16 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Error messages inside the profile drawer */
+.profile-drawer-panel vaadin-text-field::part(error-message) {
+    color: #ff6b6b;
+}
+
+.profile-drawer-panel vaadin-text-field[invalid]::part(input-field) {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 1px #ff6b6b;
+}
+
 
 /* ── Profile Drawer – Phone / small screens ─────────────── */
 @media (max-width: 600px) {
