@@ -72,6 +72,8 @@ public class ProfileDialog extends Dialog {
             close();
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.setWidthFull();
+        saveButton.getStyle().set("margin-top", "16px").set("margin-bottom", "8px");
 
         add(form);
         getFooter().add(saveButton);
