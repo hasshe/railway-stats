@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -18,6 +19,9 @@ public class AdminPasswordDialog extends Dialog {
         PasswordField passwordField = new PasswordField("Admin Password");
         passwordField.setPlaceholder("Enter password");
         passwordField.setWidthFull();
+
+        FormLayout formLayout = new FormLayout(passwordField);
+        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
         addDialogCloseActionListener(closeActionEvent -> close());
 
@@ -47,7 +51,7 @@ public class AdminPasswordDialog extends Dialog {
 
         passwordField.addKeyDownListener(Key.ENTER, keyDownEvent -> confirmButton.click());
 
-        add(passwordField);
+        add(formLayout);
         getFooter().add(cancelButton, confirmButton);
     }
 }

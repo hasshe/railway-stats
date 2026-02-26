@@ -7,14 +7,14 @@ import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.server.VaadinRequest;
 
 import java.time.LocalDate;
 
-public class InputLayout extends HorizontalLayout {
+public class InputLayout extends FormLayout {
 
     private final ComboBox<String> originField;
     private final ComboBox<String> destinationField;
@@ -76,9 +76,14 @@ public class InputLayout extends HorizontalLayout {
 
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
 
-        setAlignItems(Alignment.END);
-        add(originField, swapButton, destinationField, searchButton, dateFilter,
-                tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
+        setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("400px", 2),
+                new FormLayout.ResponsiveStep("800px", 4)
+        );
+
+        add(originField, swapButton, destinationField, searchButton);
+        add(dateFilter, tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
     }
 
     private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,

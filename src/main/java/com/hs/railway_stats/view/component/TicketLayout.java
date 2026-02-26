@@ -3,13 +3,13 @@ package com.hs.railway_stats.view.component;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 
-public class TicketLayout extends HorizontalLayout {
+public class TicketLayout extends FormLayout {
 
     private static final String COOKIE_KEY = "ticketNumber";
 
@@ -43,7 +43,10 @@ public class TicketLayout extends HorizontalLayout {
 
         BrowserStorageUtils.cookieLoadIntoField(COOKIE_KEY, ticketField);
 
-        setAlignItems(Alignment.BASELINE);
+        setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("400px", 3)
+        );
         add(ticketField, editButton, saveButton);
     }
 }
