@@ -32,7 +32,7 @@ public class TripInfoView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        AdminBanner adminBanner = new AdminBanner();
+        // AdminBanner adminBanner = new AdminBanner();
 
         Icon profileIcon = new Icon(VaadinIcon.USER);
         profileIcon.setSize("2rem");
@@ -47,10 +47,12 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setAlignItems(Alignment.CENTER);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminBanner, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
+        // InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminBanner, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, null, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
         TicketLayout ticketLayout = new TicketLayout();
 
-        add(headerRow, adminBanner, inputLayout, ticketLayout, tripInfoGrid);
+        // add(headerRow, adminBanner, inputLayout, ticketLayout, tripInfoGrid);
+        add(headerRow, inputLayout, ticketLayout, tripInfoGrid);
         setFlexGrow(1, tripInfoGrid);
     }
 }

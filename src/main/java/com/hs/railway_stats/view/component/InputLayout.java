@@ -46,7 +46,7 @@ public class InputLayout extends FormLayout {
 
         Button searchButton = new Button("Search",
                 clickEvent -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
-
+/*
         Button adminCollectButton = new Button("🔄 Collect (Admin)");
         adminCollectButton.setVisible(false);
         adminCollectButton.addClickListener(clickEvent -> {
@@ -73,7 +73,7 @@ public class InputLayout extends FormLayout {
         ).open());
 
         AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt);
-
+*/
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
 
         setResponsiveSteps(
@@ -83,11 +83,12 @@ public class InputLayout extends FormLayout {
         );
 
         add(originField, swapButton, destinationField, searchButton);
-        add(dateFilter, tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
+        // add(dateFilter, tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
+        add(dateFilter, tripInfoGrid.reimbursableFilter);
     }
 
     private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
-                              RateLimiterService rateLimiterService) {
+                             RateLimiterService rateLimiterService) {
         String ip = getClientIp();
         if (!rateLimiterService.tryConsume(ip)) {
             long remaining = rateLimiterService.getRemainingBlockSeconds(ip);
