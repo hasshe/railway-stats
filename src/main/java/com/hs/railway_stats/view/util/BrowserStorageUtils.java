@@ -1,7 +1,6 @@
 package com.hs.railway_stats.view.util;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.textfield.TextField;
 
 import java.util.function.Consumer;
 
@@ -85,28 +84,5 @@ public final class BrowserStorageUtils {
 
     public static void localStorageRemove(String key) {
         UI.getCurrent().getPage().executeJs("localStorage.removeItem($0);", key);
-    }
-
-    // ── Cookie storage ────────────────────────────────────────────────────────
-
-    public static void cookieSave(String key, String value) {
-        UI.getCurrent().getPage().executeJs(
-                "document.cookie = $0 + '=' + encodeURIComponent($1) + '; path=/; max-age=' + (365*24*60*60);",
-                key, value);
-    }
-
-    public static void cookieLoad(String key, Consumer<String> onSuccess) {
-        UI.getCurrent().getPage().executeJs(
-                        "const match = document.cookie.split('; ').find(r => r.startsWith($0 + '='));" +
-                                "return match ? decodeURIComponent(match.split('=')[1]) : '';", key)
-                .then(String.class, value -> {
-                    if (value != null && !value.isBlank()) {
-                        onSuccess.accept(value);
-                    }
-                });
-    }
-
-    public static void cookieLoadIntoField(String key, TextField field) {
-        cookieLoad(key, field::setValue);
     }
 }

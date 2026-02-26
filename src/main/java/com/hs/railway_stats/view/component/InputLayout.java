@@ -3,11 +3,15 @@ package com.hs.railway_stats.view.component;
 import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
-import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.server.VaadinRequest;
@@ -25,11 +29,11 @@ public class InputLayout extends FormLayout {
                        String cryptoSecret, String cryptoSalt,
                        RateLimiterService rateLimiterService) {
 
-        originField = new ComboBox<>("Origin Station");
+        originField = new ComboBox<>("From:");
         originField.setItems(StationConstants.ALL_STATIONS);
         originField.setValue(StationConstants.UPPSALA);
 
-        destinationField = new ComboBox<>("Destination Station");
+        destinationField = new ComboBox<>("To:");
         destinationField.setItems(StationConstants.ALL_STATIONS);
         destinationField.setValue(StationConstants.STOCKHOLM);
 
@@ -37,16 +41,23 @@ public class InputLayout extends FormLayout {
         dateFilter.setMax(LocalDate.now());
         dateFilter.setValue(LocalDate.now());
 
-        Button swapButton = new Button("⇄ Swap", clickEvent -> {
+        Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
             destinationField.setValue(temp);
             refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
         });
+        swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        swapButton.setWidth("auto");
+        swapButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
 
-        Button searchButton = new Button("Search",
+/**
+        Button searchButton = new Button("Search", new Icon(VaadinIcon.SEARCH),
                 clickEvent -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
-/*
+        searchButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        searchButton.setWidth("auto");
+        searchButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
+
         Button adminCollectButton = new Button("🔄 Collect (Admin)");
         adminCollectButton.setVisible(false);
         adminCollectButton.addClickListener(clickEvent -> {
@@ -73,8 +84,14 @@ public class InputLayout extends FormLayout {
         ).open());
 
         AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt);
-*/
+**/
+        originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
+        destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
+
+        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoGrid.reimbursableFilter);
+        dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
+        dateAndFilterRow.setSpacing(true);
 
         setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
@@ -82,9 +99,9 @@ public class InputLayout extends FormLayout {
                 new FormLayout.ResponsiveStep("800px", 4)
         );
 
-        add(originField, swapButton, destinationField, searchButton);
-        // add(dateFilter, tripInfoGrid.reimbursableFilter, adminToggle, adminCollectButton);
-        add(dateFilter, tripInfoGrid.reimbursableFilter);
+        add(originField, swapButton, destinationField);
+        add(dateAndFilterRow);
+        setColspan(dateAndFilterRow, 4);
     }
 
     private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,

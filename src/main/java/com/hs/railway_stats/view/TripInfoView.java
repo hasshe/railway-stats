@@ -2,19 +2,17 @@ package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
-import com.hs.railway_stats.view.component.AdminBanner;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDialog;
-import com.hs.railway_stats.view.component.TicketLayout;
 import com.hs.railway_stats.view.component.TripInfoGrid;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -47,12 +45,13 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setAlignItems(Alignment.CENTER);
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
-        // InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminBanner, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
         InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, null, adminPassword, cryptoSecret, cryptoSalt, rateLimiterService);
-        TicketLayout ticketLayout = new TicketLayout();
+        inputLayout.setMaxWidth("700px");
+        inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
-        // add(headerRow, adminBanner, inputLayout, ticketLayout, tripInfoGrid);
-        add(headerRow, inputLayout, ticketLayout, tripInfoGrid);
+        add(headerRow, inputLayout, tripInfoGrid);
         setFlexGrow(1, tripInfoGrid);
+        setAlignItems(Alignment.CENTER);
+        setAlignSelf(Alignment.STRETCH, headerRow, tripInfoGrid);
     }
 }

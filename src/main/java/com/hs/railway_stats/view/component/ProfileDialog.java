@@ -35,11 +35,12 @@ public class ProfileDialog extends Dialog {
         TextField addressField = styledField("Home Address", "123 Main Street");
         TextField cityField = styledField("City", "Stockholm");
         TextField postalCodeField = styledField("Postal Code", "111 22");
+        TextField ticketNumberField = styledField("Ticket Number", "e.g. B123ABCG6");
 
         firstNameField.getStyle().set("margin-top", "20px");
-        postalCodeField.getStyle().set("margin-bottom", "20px");
+        ticketNumberField.getStyle().set("margin-bottom", "20px");
 
-        FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField);
+        FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField, ticketNumberField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
         BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, cryptoSecret, cryptoSalt, json -> {
@@ -53,17 +54,18 @@ public class ProfileDialog extends Dialog {
                 addressField.setValue(node.path("address").asText(""));
                 cityField.setValue(node.path("city").asText(""));
                 postalCodeField.setValue(node.path("postalCode").asText(""));
+                ticketNumberField.setValue(node.path("ticketNumber").asText(""));
             } catch (Exception ignored) {
             }
         });
 
         Button saveButton = new Button("Save", clickEvent -> {
             String profile = String.format(
-                    "{\"firstName\":\"%s\",\"lastName\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"address\":\"%s\",\"city\":\"%s\",\"postalCode\":\"%s\"}",
+                    "{\"firstName\":\"%s\",\"lastName\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"address\":\"%s\",\"city\":\"%s\",\"postalCode\":\"%s\",\"ticketNumber\":\"%s\"}",
                     firstNameField.getValue(), lastNameField.getValue(),
                     phoneField.getValue(), emailField.getValue(),
                     addressField.getValue(), cityField.getValue(),
-                    postalCodeField.getValue()
+                    postalCodeField.getValue(), ticketNumberField.getValue()
             );
             BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profile, cryptoSecret, cryptoSalt);
             Notification.show("Profile saved");
