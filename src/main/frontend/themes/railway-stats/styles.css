@@ -1,3 +1,117 @@
+/* ── Main View Background ───────────────────────────────── */
+body, html {
+    margin: 0;
+    padding: 0;
+    background: #1a1f36;
+}
+
+vaadin-app-layout,
+vaadin-vertical-layout[class~="trip-info-view"],
+.v-system-error {
+    background: transparent;
+}
+
+/* Target the root route outlet / host page background */
+:host {
+    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
+}
+
+/* Full page background applied via the vaadin-router-outlet or body */
+body {
+    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
+    min-height: 100vh;
+}
+
+/* ── Trip Info View ─────────────────────────────────────── */
+.trip-info-view {
+    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
+    min-height: 100vh;
+    color: #e8edf5;
+}
+
+.trip-info-view h1 {
+    color: #e8edf5;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0;
+    text-shadow: 0 2px 12px rgba(106, 163, 255, 0.20);
+}
+
+/* ── Field Labels ───────────────────────────────────────── */
+.trip-info-view vaadin-combo-box::part(label),
+.trip-info-view vaadin-date-picker::part(label),
+.trip-info-view vaadin-text-field::part(label),
+.trip-info-view vaadin-combo-box [slot="label"],
+.trip-info-view vaadin-date-picker [slot="label"],
+.trip-info-view vaadin-text-field [slot="label"] {
+    color: #ffffff;
+}
+
+.trip-info-view vaadin-checkbox::part(label),
+.trip-info-view vaadin-checkbox [slot="label"] {
+    color: #ffffff;
+}
+
+.trip-info-view {
+    --lumo-body-text-color: #e8edf5;
+    --lumo-secondary-text-color: #b0bdd0;
+    --lumo-contrast-60pct: rgba(255, 255, 255, 0.90);
+    --lumo-contrast-70pct: rgba(255, 255, 255, 0.95);
+    --lumo-contrast-90pct: #e8edf5;
+}
+
+/* ── Grid ───────────────────────────────────────────────── */
+.trip-info-view vaadin-grid {
+    --lumo-base-color: #ffffff;
+    --lumo-body-text-color: #000000;
+    --lumo-secondary-text-color: #333333;
+    --lumo-contrast-90pct: #000000;
+    --lumo-contrast-70pct: #333333;
+    --lumo-contrast-60pct: #444444;
+    background: #ffffff;
+    color: #000000;
+    border-radius: 8px;
+    border: 1px solid rgba(106, 163, 255, 0.30);
+}
+
+.trip-info-view vaadin-grid::part(row),
+.trip-info-view vaadin-grid::part(body-cell),
+.trip-info-view vaadin-grid::part(first-body-cell) {
+    background: #ffffff;
+    color: #000000;
+}
+
+.trip-info-view vaadin-grid::part(row):hover {
+    background: #f0f4ff;
+}
+
+.trip-info-view vaadin-grid::part(odd-row) {
+    background: #f7f9ff;
+}
+
+.trip-info-view vaadin-grid::part(header-cell) {
+    background: #e8edf5;
+    color: #000000;
+    font-weight: 700;
+}
+
+/* ── Edit Ticket Button ─────────────────────────────────── */
+.edit-ticket-btn {
+    color: #6aa3ff !important;
+    --lumo-primary-color: #6aa3ff;
+    --lumo-primary-text-color: #6aa3ff;
+    --lumo-contrast-60pct: rgba(106, 163, 255, 0.9);
+}
+
+.edit-ticket-btn::part(label) {
+    color: #6aa3ff !important;
+}
+
+.edit-ticket-btn:hover {
+    color: #a0c4ff !important;
+    background: rgba(106, 163, 255, 0.12) !important;
+}
+
 /* ── Profile Dialog ─────────────────────────────────────── */
 [theme~="profile-dialog"] {
     --lumo-base-color: #2c3350;

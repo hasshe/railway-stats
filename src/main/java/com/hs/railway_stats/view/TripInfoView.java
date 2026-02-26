@@ -28,6 +28,7 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.admin.password}") String adminPassword,
                         RateLimiterService rateLimiterService) {
 
+        addClassName("trip-info-view");
         setPadding(true);
         setSpacing(true);
 
