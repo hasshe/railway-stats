@@ -14,37 +14,30 @@ public class ProfileDialog extends Dialog {
 
     private static final String STORAGE_KEY = "userProfile";
 
+    private static TextField styledField(String label, String placeholder) {
+        TextField field = new TextField(label);
+        field.setPlaceholder(placeholder);
+        field.setWidthFull();
+        field.getStyle().set("--vaadin-input-field-label-color", "#ffffff");
+        return field;
+    }
+
     public ProfileDialog(String cryptoSecret, String cryptoSalt) {
         setHeaderTitle("Profile");
+        getElement().getThemeList().add("profile-dialog");
         setWidth("480px");
+        setCloseOnEsc(true);
 
-        TextField firstNameField = new TextField("First Name");
-        firstNameField.setPlaceholder("John");
-        firstNameField.setWidthFull();
+        TextField firstNameField = styledField("First Name", "John");
+        TextField lastNameField = styledField("Last Name", "Doe");
+        TextField phoneField = styledField("Phone Number", "+46 70 000 00 00");
+        TextField emailField = styledField("Email Address", "you@example.com");
+        TextField addressField = styledField("Home Address", "123 Main Street");
+        TextField cityField = styledField("City", "Stockholm");
+        TextField postalCodeField = styledField("Postal Code", "111 22");
 
-        TextField lastNameField = new TextField("Last Name");
-        lastNameField.setPlaceholder("Doe");
-        lastNameField.setWidthFull();
-
-        TextField phoneField = new TextField("Phone Number");
-        phoneField.setPlaceholder("+46 70 000 00 00");
-        phoneField.setWidthFull();
-
-        TextField emailField = new TextField("Email Address");
-        emailField.setPlaceholder("you@example.com");
-        emailField.setWidthFull();
-
-        TextField addressField = new TextField("Home Address");
-        addressField.setPlaceholder("123 Main Street");
-        addressField.setWidthFull();
-
-        TextField cityField = new TextField("City");
-        cityField.setPlaceholder("Stockholm");
-        cityField.setWidthFull();
-
-        TextField postalCodeField = new TextField("Postal Code");
-        postalCodeField.setPlaceholder("111 22");
-        postalCodeField.setWidthFull();
+        firstNameField.getStyle().set("margin-top", "20px");
+        postalCodeField.getStyle().set("margin-bottom", "20px");
 
         FormLayout form = new FormLayout(firstNameField, lastNameField, phoneField, emailField, addressField, cityField, postalCodeField);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
@@ -78,10 +71,7 @@ public class ProfileDialog extends Dialog {
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        Button cancelButton = new Button("Cancel", clickEvent -> close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
         add(form);
-        getFooter().add(cancelButton, saveButton);
+        getFooter().add(saveButton);
     }
 }

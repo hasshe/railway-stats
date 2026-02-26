@@ -1,0 +1,53 @@
+/* ── Profile Dialog ─────────────────────────────────────── */
+[theme~="profile-dialog"] {
+    --lumo-base-color: #2c3350;
+    --lumo-primary-color: #6aa3ff;
+    --lumo-primary-text-color: #6aa3ff;
+    --lumo-body-text-color: #e8edf5;
+    --lumo-secondary-text-color: #b0bdd0;
+    --lumo-header-text-color: #e8edf5;
+    --lumo-contrast-10pct: rgba(255, 255, 255, 0.10);
+    --lumo-contrast-20pct: rgba(255, 255, 255, 0.18);
+    --lumo-tint-5pct: rgba(255, 255, 255, 0.07);
+    /* Make field labels clearly visible */
+    --lumo-contrast-60pct: rgba(232, 237, 245, 0.85);
+    --lumo-contrast-70pct: rgba(232, 237, 245, 0.90);
+    --lumo-contrast-90pct: #e8edf5;
+}
+
+[theme~="profile-dialog"]::part(overlay) {
+    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%);
+    border: 1px solid rgba(106, 163, 255, 0.30);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(106, 163, 255, 0.12);
+}
+
+[theme~="profile-dialog"]::part(header) {
+    background: rgba(106, 163, 255, 0.10);
+    border-bottom: 2px solid rgba(106, 163, 255, 0.25);
+    padding: var(--lumo-space-xl) var(--lumo-space-l);
+    position: relative;
+    justify-content: center;
+    min-height: 72px;
+}
+
+[theme~="profile-dialog"]::part(header-content) {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+[theme~="profile-dialog"]::part(title) {
+    color: #e8edf5;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.03em;
+    text-align: center;
+    width: 100%;
+}
+
+[theme~="profile-dialog"]::part(footer) {
+    background: rgba(106, 163, 255, 0.10);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 35px;
+}
