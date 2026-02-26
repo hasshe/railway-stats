@@ -179,15 +179,6 @@ body {
         height: 100dvh !important;
         max-height: 100dvh !important;
         border-radius: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        top: 0 !important;
-        left: 0 !important;
-        position: fixed !important;
-        margin: 0 !important;
-        transform: none !important;
-        display: flex !important;
-        flex-direction: column !important;
     }
 
     [theme~="profile-dialog"]::part(content) {
