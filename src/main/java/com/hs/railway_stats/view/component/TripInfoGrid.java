@@ -57,16 +57,13 @@ public class TripInfoGrid extends VerticalLayout {
         getStyle().set("min-width", "0").set("overflow", "hidden");
         grid.setWidthFull();
         grid.getStyle()
-                .set("--lumo-base-color", "#ffffff")
-                .set("--lumo-body-text-color", "#111827")
-                .set("--lumo-secondary-text-color", "#374151")
-                .set("--lumo-contrast-90pct", "#111827")
-                .set("--lumo-contrast-70pct", "#374151")
-                .set("--lumo-contrast-60pct", "#6b7280")
-                .set("background", "#ffffff")
-                .set("color", "#111827")
-                .set("border-radius", "10px")
-                .set("border", "1px solid rgba(255, 255, 255, 0.10)")
+                .set("--lumo-base-color", "#121a14")
+                .set("--lumo-body-text-color", "#ffffff")
+                .set("--lumo-secondary-text-color", "#ffffff")
+                .set("--lumo-contrast-90pct", "#ffffff")
+                .set("--lumo-contrast-70pct", "rgba(255, 255, 255, 0.85)")
+                .set("--lumo-contrast-60pct", "rgba(255, 255, 255, 0.70)")
+                .set("color", "#ffffff")
                 .set("min-width", "0");
     }
 
