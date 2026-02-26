@@ -34,8 +34,6 @@ public class ProfileDrawer extends Div {
         panel.addClassName("profile-drawer-panel");
 
         ProfileFields fields = new ProfileFields();
-        fields.firstName.getStyle().set("margin-top", "20px");
-        fields.ticketNumber.getStyle().set("margin-bottom", "20px");
 
         applyValidations(fields);
 
@@ -79,15 +77,15 @@ public class ProfileDrawer extends Div {
     private Div buildHeader() {
         H2 title = new H2("Profile");
         title.getStyle()
-                .set("color", "#e8edf5")
-                .set("font-size", "1.2rem")
-                .set("font-weight", "700")
-                .set("letter-spacing", "0.03em")
+                .set("color", "#e2ede6")
+                .set("font-size", "1.05rem")
+                .set("font-weight", "600")
+                .set("letter-spacing", "-0.01em")
                 .set("margin", "0");
 
         Button closeBtn = new Button(new Icon(VaadinIcon.CLOSE));
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        closeBtn.getStyle().set("color", "#b0bdd0");
+        closeBtn.getStyle().set("color", "#4d6654");
         closeBtn.addClickListener(e -> close());
 
         Div header = new Div(title, closeBtn);
@@ -204,21 +202,21 @@ public class ProfileDrawer extends Div {
 
     private void applyDrawerStyles() {
         getStyle()
-                .set("--lumo-primary-color", "#6aa3ff")
-                .set("--lumo-primary-text-color", "#6aa3ff")
-                .set("--lumo-body-text-color", "#e8edf5")
-                .set("--lumo-contrast-60pct", "rgba(232, 237, 245, 0.85)")
-                .set("--lumo-contrast-70pct", "rgba(232, 237, 245, 0.90)")
-                .set("--lumo-contrast-90pct", "#e8edf5")
-                .set("--lumo-error-text-color", "#ff6b6b")
-                .set("--lumo-error-color", "#ff6b6b");
+                .set("--lumo-primary-color", "#4caf7d")
+                .set("--lumo-primary-text-color", "#4caf7d")
+                .set("--lumo-body-text-color", "#e2ede6")
+                .set("--lumo-contrast-60pct", "rgba(226, 237, 230, 0.80)")
+                .set("--lumo-contrast-70pct", "rgba(226, 237, 230, 0.90)")
+                .set("--lumo-contrast-90pct", "#e2ede6")
+                .set("--lumo-error-text-color", "#ff5f6d")
+                .set("--lumo-error-color", "#ff5f6d");
     }
 
     private static TextField styledField(String label, String placeholder) {
         TextField field = new TextField(label);
         field.setPlaceholder(placeholder);
         field.setWidthFull();
-        field.getStyle().set("--vaadin-input-field-label-color", "#ffffff");
+        field.getStyle().set("--vaadin-input-field-label-color", "#8aaa92");
         return field;
     }
 

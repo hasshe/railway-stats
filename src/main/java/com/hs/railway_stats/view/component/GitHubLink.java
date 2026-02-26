@@ -34,15 +34,15 @@ public class GitHubLink extends Anchor {
         Span versionLabel = new Span("v" + version);
         versionLabel.getStyle()
                 .set("font-size", "0.65rem")
-                .set("color", "#7a8a9a")
+                .set("color", "#5a6478")
                 .set("letter-spacing", "0.04em");
         return versionLabel;
     }
 
     private static SvgIcon getGithubIcon() {
         SvgIcon githubIcon = new SvgIcon("icons/github.svg");
-        githubIcon.setSize("1.8rem");
-        githubIcon.getStyle().set("color", "#b0bdd0");
+        githubIcon.setSize("1.7rem");
+        githubIcon.getStyle().set("color", "#5a6478");
         return githubIcon;
     }
 

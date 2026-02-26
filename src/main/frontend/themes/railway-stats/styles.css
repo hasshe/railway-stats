@@ -1,8 +1,41 @@
-/* ── Main View Background ───────────────────────────────── */
+/* ── Design Tokens ──────────────────────────────────────── */
+:root {
+    --bg-base:        #0d1410;
+    --bg-surface:     #121a14;
+    --bg-elevated:    #1a241c;
+    --bg-card:        rgba(255, 255, 255, 0.04);
+    --accent:         #4caf7d;
+    --accent-glow:    rgba(76, 175, 125, 0.20);
+    --accent-subtle:  rgba(76, 175, 125, 0.10);
+    --text-primary:   #e2ede6;
+    --text-secondary: #8aaa92;
+    --text-muted:     #4d6654;
+    --border:         rgba(255, 255, 255, 0.07);
+    --border-focus:   rgba(76, 175, 125, 0.50);
+    --error:          #ff5f6d;
+    --radius-sm:      6px;
+    --radius-md:      10px;
+    --radius-lg:      14px;
+    --shadow-sm:      0 1px 4px rgba(0,0,0,0.35);
+    --shadow-md:      0 4px 20px rgba(0,0,0,0.45);
+    --shadow-lg:      0 8px 40px rgba(0,0,0,0.60);
+    --transition:     0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 body, html {
     margin: 0;
     padding: 0;
-    background: #1a1f36;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 vaadin-app-layout,
@@ -11,24 +44,66 @@ vaadin-vertical-layout[class~="trip-info-view"],
     background: transparent;
 }
 
-/* Target the root route outlet / host page background */
 :host {
-    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
-}
-
-/* Full page background applied via the vaadin-router-outlet or body */
-body {
-    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
-    min-height: 100vh;
+    background: var(--bg-base);
 }
 
 /* ── Trip Info View ─────────────────────────────────────── */
 .trip-info-view {
-    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%) fixed;
+    background: var(--bg-base);
     min-height: 100vh;
-    color: #e8edf5;
+    color: var(--text-primary);
+    max-width: 100vw;
+    overflow-x: hidden;
+    /* Tight padding on mobile, roomier on desktop */
+    padding: 12px !important;
+    box-sizing: border-box;
 }
 
+@media (min-width: 600px) {
+    .trip-info-view {
+        padding: 20px !important;
+    }
+}
+
+/* Lumo token overrides scoped to the view */
+.trip-info-view {
+    --lumo-base-color:           var(--bg-surface);
+    --lumo-body-text-color:      var(--text-primary);
+    --lumo-secondary-text-color: var(--text-secondary);
+    --lumo-contrast-60pct:       rgba(226, 237, 230, 0.80);
+    --lumo-contrast-70pct:       rgba(226, 237, 230, 0.90);
+    --lumo-contrast-90pct:       var(--text-primary);
+    --lumo-primary-color:        var(--accent);
+    --lumo-primary-text-color:   var(--accent);
+    --lumo-border-radius-m:      var(--radius-md);
+}
+
+/* ── Input Card ─────────────────────────────────────────── */
+.trip-info-view vaadin-form-layout {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 14px 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition), border-color var(--transition);
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+@media (min-width: 600px) {
+    .trip-info-view vaadin-form-layout {
+        padding: 20px 24px 16px;
+    }
+}
+
+.trip-info-view vaadin-form-layout:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 1px var(--border-focus), var(--shadow-md);
+}
 
 /* ── Field Labels ───────────────────────────────────────── */
 .trip-info-view vaadin-combo-box::part(label),
@@ -37,20 +112,94 @@ body {
 .trip-info-view vaadin-combo-box [slot="label"],
 .trip-info-view vaadin-date-picker [slot="label"],
 .trip-info-view vaadin-text-field [slot="label"] {
-    color: #ffffff;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
+/* ── Input Fields ───────────────────────────────────────── */
+.trip-info-view vaadin-combo-box::part(input-field),
+.trip-info-view vaadin-date-picker::part(input-field),
+.trip-info-view vaadin-text-field::part(input-field) {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.trip-info-view vaadin-combo-box::part(input-field):focus-within,
+.trip-info-view vaadin-date-picker::part(input-field):focus-within,
+.trip-info-view vaadin-text-field::part(input-field):focus-within {
+    background: rgba(76, 175, 125, 0.06);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    outline: none;
+}
+
+.trip-info-view vaadin-combo-box::part(input-field):hover,
+.trip-info-view vaadin-date-picker::part(input-field):hover,
+.trip-info-view vaadin-text-field::part(input-field):hover {
+    border-color: rgba(76, 175, 125, 0.35);
+}
+
+/* ── Checkbox ───────────────────────────────────────────── */
 .trip-info-view vaadin-checkbox::part(label),
 .trip-info-view vaadin-checkbox [slot="label"] {
-    color: #ffffff;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
 }
 
-.trip-info-view {
-    --lumo-body-text-color: #e8edf5;
-    --lumo-secondary-text-color: #b0bdd0;
-    --lumo-contrast-60pct: rgba(255, 255, 255, 0.90);
-    --lumo-contrast-70pct: rgba(255, 255, 255, 0.95);
-    --lumo-contrast-90pct: #e8edf5;
+.trip-info-view vaadin-checkbox::part(checkbox) {
+    border-radius: var(--radius-sm);
+    border-color: var(--border);
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.trip-info-view vaadin-button[theme~="primary"]::part(label),
+.trip-info-view vaadin-button[theme~="primary"] {
+    background: var(--accent);
+    border-radius: var(--radius-md);
+}
+
+/* Swap button */
+.trip-info-view vaadin-button[theme~="small"]::part(label) {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* ── Grid responsive containment ───────────────────────── */
+.trip-info-view vaadin-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+/* Cells: never overflow their column, truncate if needed */
+.trip-info-view vaadin-grid::part(cell),
+.trip-info-view vaadin-grid::part(header-cell) {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+    .trip-info-view vaadin-grid::part(cell),
+    .trip-info-view vaadin-grid::part(header-cell) {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Ensure the VerticalLayout wrapper around the grid never overflows */
+.trip-info-view > * {
+    min-width: 0;
+    max-width: 100%;
 }
 
 
@@ -60,7 +209,9 @@ body {
 .profile-drawer-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 999;
     opacity: 0;
     pointer-events: none;
@@ -80,9 +231,9 @@ body {
     height: 100dvh;
     width: 360px;
     max-width: 100vw;
-    background: linear-gradient(160deg, #2c3350 0%, #323a5a 100%);
-    border-right: 1px solid rgba(106, 163, 255, 0.30);
-    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.40);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -105,8 +256,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 20px 20px 16px;
-    background: rgba(106, 163, 255, 0.10);
-    border-bottom: 2px solid rgba(106, 163, 255, 0.25);
+    background: rgba(76, 175, 125, 0.06);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
@@ -114,27 +265,64 @@ body {
 .profile-drawer-content {
     flex: 1 1 auto;
     overflow-y: auto;
-    padding: 0 20px;
+    padding: 20px 20px 20px;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
+.profile-drawer-content::-webkit-scrollbar {
+    width: 4px;
+}
+.profile-drawer-content::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+}
+
+/* Profile drawer field labels */
+.profile-drawer-panel vaadin-text-field::part(label) {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Profile drawer input fields */
+.profile-drawer-panel vaadin-text-field::part(input-field) {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.profile-drawer-panel vaadin-text-field::part(input-field):focus-within {
+    background: rgba(76, 175, 125, 0.06);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.profile-drawer-panel vaadin-text-field::part(input-field):hover {
+    border-color: rgba(76, 175, 125, 0.35);
+}
 
 /* Footer */
 .profile-drawer-footer {
     flex-shrink: 0;
     padding: 16px 20px;
-    background: rgba(106, 163, 255, 0.08);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(76, 175, 125, 0.04);
+    border-top: 1px solid var(--border);
 }
 
 /* Error messages inside the profile drawer */
 .profile-drawer-panel vaadin-text-field::part(error-message) {
-    color: #ff6b6b;
+    color: var(--error);
 }
 
 .profile-drawer-panel vaadin-text-field[invalid]::part(input-field) {
-    border-color: #ff6b6b;
-    box-shadow: 0 0 0 1px #ff6b6b;
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(255, 95, 109, 0.18);
 }
 
 

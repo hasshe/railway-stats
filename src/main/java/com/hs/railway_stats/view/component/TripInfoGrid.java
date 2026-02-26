@@ -53,17 +53,21 @@ public class TripInfoGrid extends VerticalLayout {
     }
 
     private void styleGrid() {
+        setWidthFull();
+        getStyle().set("min-width", "0").set("overflow", "hidden");
+        grid.setWidthFull();
         grid.getStyle()
                 .set("--lumo-base-color", "#ffffff")
-                .set("--lumo-body-text-color", "#000000")
-                .set("--lumo-secondary-text-color", "#333333")
-                .set("--lumo-contrast-90pct", "#000000")
-                .set("--lumo-contrast-70pct", "#333333")
-                .set("--lumo-contrast-60pct", "#444444")
+                .set("--lumo-body-text-color", "#111827")
+                .set("--lumo-secondary-text-color", "#374151")
+                .set("--lumo-contrast-90pct", "#111827")
+                .set("--lumo-contrast-70pct", "#374151")
+                .set("--lumo-contrast-60pct", "#6b7280")
                 .set("background", "#ffffff")
-                .set("color", "#000000")
-                .set("border-radius", "8px")
-                .set("border", "1px solid rgba(106, 163, 255, 0.30)");
+                .set("color", "#111827")
+                .set("border-radius", "10px")
+                .set("border", "1px solid rgba(255, 255, 255, 0.10)")
+                .set("min-width", "0");
     }
 
     private void formatGrid() {
@@ -72,14 +76,25 @@ public class TripInfoGrid extends VerticalLayout {
 
         grid.addColumn(trip -> trip.initialDepartureTime() != null
                         ? trip.initialDepartureTime().format(timeFmt) : "N/A")
-                .setHeader("Departure");
+                .setHeader("Departure")
+                .setFlexGrow(1)
+                .setAutoWidth(false);
 
         grid.addColumn(trip -> trip.actualArrivalTime() != null
                         ? trip.actualArrivalTime().format(timeFmt) : "N/A")
-                .setHeader("Arrival");
+                .setHeader("Arrival")
+                .setFlexGrow(1)
+                .setAutoWidth(false);
 
-        grid.addColumn(TripInfoResponse::totalMinutesLate).setHeader("Min. Late");
-        grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No").setHeader("Cancelled");
+        grid.addColumn(TripInfoResponse::totalMinutesLate)
+                .setHeader("Min. Late")
+                .setFlexGrow(1)
+                .setAutoWidth(false);
+
+        grid.addColumn(trip -> trip.isCancelled() ? "Yes" : "No")
+                .setHeader("Cancelled")
+                .setFlexGrow(1)
+                .setAutoWidth(false);
     }
 }
 

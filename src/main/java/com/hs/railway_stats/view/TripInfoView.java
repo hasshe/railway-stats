@@ -35,7 +35,7 @@ public class TripInfoView extends VerticalLayout {
                         TranslationService translationService) {
 
         addClassName("trip-info-view");
-        setPadding(true);
+        setPadding(false);   // handled in CSS per breakpoint
         setSpacing(true);
 
         Icon profileIcon = new Icon(VaadinIcon.MENU);
@@ -45,16 +45,16 @@ public class TripInfoView extends VerticalLayout {
         profileButton.getElement().setAttribute("aria-label", "Profile");
 
         Icon trainIcon = new Icon(VaadinIcon.TRAIN);
-        trainIcon.setSize("2rem");
-        trainIcon.getStyle().set("color", "#e8edf5");
+        trainIcon.setSize("1.9rem");
+        trainIcon.getStyle().set("color", "#4caf7d");
 
         H1 heading = new H1("Movingo Tracker");
         heading.getStyle()
-                .set("color", "#e8edf5")
-                .set("font-weight", "700")
-                .set("letter-spacing", "0.02em")
-                .set("margin", "0")
-                .set("text-shadow", "0 2px 12px rgba(106, 163, 255, 0.20)");
+                .set("color", "#e2ede6")
+                .set("font-size", "1.45rem")
+                .set("font-weight", "600")
+                .set("letter-spacing", "-0.01em")
+                .set("margin", "0");
 
         HorizontalLayout titleGroup = new HorizontalLayout(trainIcon, heading);
         titleGroup.setAlignItems(Alignment.CENTER);
@@ -66,6 +66,10 @@ public class TripInfoView extends VerticalLayout {
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
         headerRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        headerRow.getStyle()
+                .set("max-width", "100%")
+                .set("overflow", "hidden")
+                .set("flex-shrink", "0");
 
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
         AdminBanner adminBanner = new AdminBanner();
@@ -80,6 +84,7 @@ public class TripInfoView extends VerticalLayout {
         InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService);
         collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
 
+        inputLayout.setWidthFull();
         inputLayout.setMaxWidth("700px");
         inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
