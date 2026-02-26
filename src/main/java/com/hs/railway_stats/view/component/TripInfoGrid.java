@@ -39,10 +39,15 @@ public class TripInfoGrid extends VerticalLayout {
 
     public void applyFilter() {
         if (reimbursableFilter.getValue()) {
-            grid.setItems(allTrips.stream()
+            List<TripInfoResponse> claimable = allTrips.stream()
                     .filter(t -> t.isCancelled() || t.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD)
-                    .toList());
+                    .toList();
+            grid.setEmptyStateText(allTrips.isEmpty()
+                    ? "No trips found for the selected route and date."
+                    : "No claimable trips found. All trains were on time!");
+            grid.setItems(claimable);
         } else {
+            grid.setEmptyStateText("No trips found for the selected route and date.");
             grid.setItems(allTrips);
         }
     }
