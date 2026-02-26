@@ -8,6 +8,7 @@ import com.hs.railway_stats.view.component.AdminControls;
 import com.hs.railway_stats.view.component.GitHubLink;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDrawer;
+import com.hs.railway_stats.view.component.ScheduledJobTimer;
 import com.hs.railway_stats.view.component.TripInfoGrid;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -62,6 +63,8 @@ public class TripInfoView extends VerticalLayout {
 
         GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
 
+        ScheduledJobTimer scheduledJobTimer = new ScheduledJobTimer();
+
         HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleGroup, githubLink);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
@@ -74,14 +77,15 @@ public class TripInfoView extends VerticalLayout {
         TripInfoGrid tripInfoGrid = new TripInfoGrid();
         AdminBanner adminBanner = new AdminBanner();
 
-        Runnable[] collectHolder = {() -> {}};
+        Runnable[] collectHolder = {() -> {
+        }};
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
                 () -> collectHolder[0].run(), translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
         profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService);
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService, scheduledJobTimer);
         collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
 
         inputLayout.setWidthFull();

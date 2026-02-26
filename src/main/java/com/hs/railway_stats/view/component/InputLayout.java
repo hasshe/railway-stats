@@ -26,7 +26,7 @@ public class InputLayout extends FormLayout {
 
     public InputLayout(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
                        AdminControls adminControls,
-                       RateLimiterService rateLimiterService) {
+                       RateLimiterService rateLimiterService, ScheduledJobTimer scheduledJobTimer) {
 
         originField = new ComboBox<>("From:");
         originField.setItems(StationConstants.ALL_STATIONS);
@@ -37,7 +37,7 @@ public class InputLayout extends FormLayout {
         destinationField.setValue(StationConstants.STOCKHOLM);
 
         dateFilter = new DatePicker("Date:");
-        dateFilter.setMax(LocalDate.now());
+        dateFilter.setMax(LocalDate.now().minusDays(1));
         //dateFilter.setValue(LocalDate.now());
 
         Button swapButton = getSwapButton(tripInfoService, tripInfoGrid, rateLimiterService);
@@ -57,7 +57,7 @@ public class InputLayout extends FormLayout {
         );
 
         add(originField, swapButton, destinationField);
-        add(dateAndFilterRow, adminControls);
+        add(dateAndFilterRow, scheduledJobTimer, adminControls);
         setColspan(dateAndFilterRow, 4);
     }
 
