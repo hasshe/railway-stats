@@ -39,7 +39,11 @@ public class TripInfoView extends VerticalLayout {
         profileButton.getElement().setAttribute("aria-label", "Profile");
         profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
-        H1 heading = new H1("Trip Information");
+        Icon trainIcon = new Icon(VaadinIcon.TRAIN);
+        trainIcon.setSize("2rem");
+        trainIcon.getStyle().set("color", "#e8edf5");
+
+        H1 heading = new H1("Movingo Tracker");
         heading.getStyle()
                 .set("color", "#e8edf5")
                 .set("font-weight", "700")
@@ -47,7 +51,11 @@ public class TripInfoView extends VerticalLayout {
                 .set("margin", "0")
                 .set("text-shadow", "0 2px 12px rgba(106, 163, 255, 0.20)");
 
-        HorizontalLayout headerRow = new HorizontalLayout(profileButton, heading);
+        HorizontalLayout titleGroup = new HorizontalLayout(trainIcon, heading);
+        titleGroup.setAlignItems(Alignment.CENTER);
+        titleGroup.setSpacing(true);
+
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleGroup);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
 

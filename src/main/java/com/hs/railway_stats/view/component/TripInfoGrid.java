@@ -17,7 +17,7 @@ public class TripInfoGrid extends VerticalLayout {
     @Getter
     private final Grid<TripInfoResponse> grid = new Grid<>(TripInfoResponse.class);
     private final List<TripInfoResponse> allTrips = new ArrayList<>();
-    public final Checkbox reimbursableFilter = new Checkbox("Reimbursable only", true);
+    public final Checkbox reimbursableFilter = new Checkbox("Claimable", true);
 
     public TripInfoGrid() {
         setPadding(false);
