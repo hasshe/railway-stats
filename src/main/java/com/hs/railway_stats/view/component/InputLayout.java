@@ -69,8 +69,17 @@ public class InputLayout extends FormLayout {
             refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
         });
         swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        swapButton.addClassName("swap-button");
         swapButton.setWidth("auto");
-        swapButton.getStyle().set("align-self", "flex-end").set("max-width", "fit-content").set("white-space", "nowrap");
+        swapButton.getStyle()
+                .set("align-self", "flex-end")
+                .set("max-width", "fit-content")
+                .set("white-space", "nowrap")
+                .set("background", "rgba(76, 175, 125, 0.12)")
+                .set("color", "#4caf7d")
+                .set("border", "1px solid rgba(76, 175, 125, 0.35)")
+                .set("border-radius", "10px")
+                .set("transition", "background 0.2s ease, box-shadow 0.2s ease");
         return swapButton;
     }
 

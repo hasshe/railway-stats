@@ -126,8 +126,22 @@ vaadin-vertical-layout[class~="trip-info-view"],
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    color: var(--text-primary);
+    color: #ffffff;
+    --vaadin-input-field-value-color: #ffffff;
+    --vaadin-input-field-placeholder-color: rgba(255, 255, 255, 0.40);
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.trip-info-view vaadin-combo-box::part(value),
+.trip-info-view vaadin-date-picker::part(value),
+.trip-info-view vaadin-text-field::part(value) {
+    color: #ffffff;
+}
+
+.trip-info-view vaadin-combo-box::part(placeholder),
+.trip-info-view vaadin-date-picker::part(placeholder),
+.trip-info-view vaadin-text-field::part(placeholder) {
+    color: rgba(255, 255, 255, 0.35);
 }
 
 .trip-info-view vaadin-combo-box::part(input-field):focus-within,
@@ -169,6 +183,16 @@ vaadin-vertical-layout[class~="trip-info-view"],
     font-size: 0.78rem;
     font-weight: 500;
     letter-spacing: 0.02em;
+}
+
+.swap-button:hover {
+    background: rgba(76, 175, 125, 0.22) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.18) !important;
+}
+
+.swap-button:active {
+    background: rgba(76, 175, 125, 0.30) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.28) !important;
 }
 
 /* ── Grid responsive containment ───────────────────────── */
@@ -293,8 +317,18 @@ vaadin-vertical-layout[class~="trip-info-view"],
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    color: var(--text-primary);
+    color: #ffffff;
+    --vaadin-input-field-value-color: #ffffff;
+    --vaadin-input-field-placeholder-color: rgba(255, 255, 255, 0.40);
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.profile-drawer-panel vaadin-text-field::part(value) {
+    color: #ffffff;
+}
+
+.profile-drawer-panel vaadin-text-field::part(placeholder) {
+    color: rgba(255, 255, 255, 0.35);
 }
 
 .profile-drawer-panel vaadin-text-field::part(input-field):focus-within {
