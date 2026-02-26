@@ -1,5 +1,6 @@
 package com.hs.railway_stats.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -11,18 +12,28 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple in-memory rate limiter.
- * Allows at most MAX_REQUESTS within a WINDOW_SECONDS sliding window.
- * IPs that exceed the limit are blocked for TIMEOUT_SECONDS.
+ * Allows at most {@code app.rate-limiter.max-requests} within a
+ * {@code app.rate-limiter.window-seconds} sliding window.
+ * IPs that exceed the limit are blocked for {@code app.rate-limiter.timeout-seconds}.
  */
 @Service
 public class RateLimiterServiceImpl implements RateLimiterService {
 
-    private static final int MAX_REQUESTS = 20;
-    private static final long WINDOW_SECONDS = 5 * 60L;   // 5 minutes
-    private static final long TIMEOUT_SECONDS = 15 * 60L; // 15 minutes
+    private final int maxRequests;
+    private final long windowSeconds;
+    private final long timeoutSeconds;
 
     private final Map<String, Deque<Instant>> requestLog = new ConcurrentHashMap<>();
     private final Map<String, Instant> blockedUntil = new ConcurrentHashMap<>();
+
+    public RateLimiterServiceImpl(
+            @Value("${app.rate-limiter.max-requests:20}") int maxRequests,
+            @Value("${app.rate-limiter.window-seconds:300}") long windowSeconds,
+            @Value("${app.rate-limiter.timeout-seconds:900}") long timeoutSeconds) {
+        this.maxRequests = maxRequests;
+        this.windowSeconds = windowSeconds;
+        this.timeoutSeconds = timeoutSeconds;
+    }
 
     @Override
     public synchronized boolean tryConsume(String ip) {
@@ -39,15 +50,15 @@ public class RateLimiterServiceImpl implements RateLimiterService {
 
         Deque<Instant> timestamps = requestLog.computeIfAbsent(ip, k -> new ArrayDeque<>());
 
-        Instant windowStart = now.minusSeconds(WINDOW_SECONDS);
+        Instant windowStart = now.minusSeconds(windowSeconds);
         while (!timestamps.isEmpty() && timestamps.peekFirst().isBefore(windowStart)) {
             timestamps.pollFirst();
         }
 
         timestamps.addLast(now);
 
-        if (timestamps.size() > MAX_REQUESTS) {
-            blockedUntil.put(ip, now.plusSeconds(TIMEOUT_SECONDS));
+        if (timestamps.size() > maxRequests) {
+            blockedUntil.put(ip, now.plusSeconds(timeoutSeconds));
             requestLog.remove(ip);
             return false;
         }

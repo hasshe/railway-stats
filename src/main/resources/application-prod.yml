@@ -4,6 +4,10 @@ app:
     salt: ${CRYPTO_SALT}
   admin:
     password: ${ADMIN_PASSWORD}
+  rate-limiter:
+    max-requests: ${RATE_LIMITER_MAX_REQUESTS:20}
+    window-seconds: ${RATE_LIMITER_WINDOW_SECONDS:300}
+    timeout-seconds: ${RATE_LIMITER_TIMEOUT_SECONDS:900}
 
 spring:
   datasource:

@@ -4,6 +4,10 @@ app:
     salt: railway-stats-salt
   admin:
     password: admin123
+  rate-limiter:
+    max-requests: 20      # max requests per IP within the window
+    window-seconds: 300   # sliding window size (5 minutes)
+    timeout-seconds: 900  # block duration after limit exceeded (15 minutes)
 
 spring:
   datasource:

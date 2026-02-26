@@ -62,6 +62,9 @@ You can inspect the database at **http://localhost:8080/h2-console** with:
 | Crypto secret | `railway-stats-key-v1` |
 | Crypto salt | `railway-stats-salt` |
 | Admin password | `admin123` |
+| Rate limiter max requests | `20` |
+| Rate limiter window | `300` s (5 min) |
+| Rate limiter block duration | `900` s (15 min) |
 
 ---
 
@@ -87,6 +90,9 @@ The prod profile expects the following **environment variables**:
 | `CRYPTO_SECRET` | Secret key used to encrypt the browser profile (change from dev default!) |
 | `CRYPTO_SALT` | Salt used in PBKDF2 key derivation (change from dev default!) |
 | `ADMIN_PASSWORD` | Password for the admin panel |
+| `RATE_LIMITER_MAX_REQUESTS` | *(optional)* Max requests per IP per window — default `20` |
+| `RATE_LIMITER_WINDOW_SECONDS` | *(optional)* Sliding window size in seconds — default `300` (5 min) |
+| `RATE_LIMITER_TIMEOUT_SECONDS` | *(optional)* Block duration in seconds after limit exceeded — default `900` (15 min) |
 
 Activate the prod profile by setting `spring.profiles.active=prod` (or via `SPRING_PROFILES_ACTIVE=prod`).
 
