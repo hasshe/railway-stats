@@ -125,21 +125,27 @@ public class TripInfoCard extends VerticalLayout {
 
         infoSection.add(timeRow, badgeRow);
 
-        // ── action button ──────────────────────────────────────────
-        Button actionBtn = new Button(new Icon(VaadinIcon.ELLIPSIS_DOTS_V));
-        actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        actionBtn.addClassName("trip-card-action-btn");
-        actionBtn.addClickListener(e -> {
-            Notification notification = Notification.show(
-                    "Trip " + departure + " → " + arrival,
-                    3000,
-                    Notification.Position.BOTTOM_END
-            );
-            notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
-        });
+        // ── action button (only for reimbursable trips) ────────────
+        boolean reimbursable = cancelled || minsLate >= REIMBURSABLE_MINUTES_THRESHOLD;
+        HorizontalLayout card;
+        if (reimbursable) {
+            Button actionBtn = new Button("Claim", new Icon(VaadinIcon.CHECK));
+            actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+            actionBtn.addClassName("trip-card-action-btn");
+            actionBtn.addClickListener(clickEvent -> {
+                Notification notification = Notification.show(
+                        "https://evf-regionsormland.preciocloudapp.net/trains",
+                        3000,
+                        Notification.Position.BOTTOM_END
+                );
+                notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+            });
+            card = new HorizontalLayout(infoSection, actionBtn);
+        } else {
+            card = new HorizontalLayout(infoSection);
+        }
 
         // ── card wrapper ───────────────────────────────────────────
-        HorizontalLayout card = new HorizontalLayout(infoSection, actionBtn);
         card.addClassName("trip-card");
         if (cancelled) card.addClassName("trip-card--cancelled");
         else if (minsLate >= REIMBURSABLE_MINUTES_THRESHOLD) card.addClassName("trip-card--late");
