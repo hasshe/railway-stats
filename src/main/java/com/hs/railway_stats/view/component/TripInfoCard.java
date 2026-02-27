@@ -1,6 +1,9 @@
 package com.hs.railway_stats.view.component;
 
 import com.hs.railway_stats.dto.TripInfoResponse;
+import com.hs.railway_stats.dto.UserProfile;
+import com.hs.railway_stats.view.util.BrowserStorageUtils;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -9,7 +12,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
@@ -28,7 +30,12 @@ public class TripInfoCard extends VerticalLayout {
 
     private String emptyStateMessage = "No trips found for the selected route and date.";
 
-    public TripInfoCard() {
+    private final String cryptoSecret;
+    private final String cryptoSalt;
+
+    public TripInfoCard(String cryptoSecret, String cryptoSalt) {
+        this.cryptoSecret = cryptoSecret;
+        this.cryptoSalt = cryptoSalt;
         setPadding(false);
         setSpacing(false);
         setWidthFull();
@@ -133,12 +140,32 @@ public class TripInfoCard extends VerticalLayout {
             actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
             actionBtn.addClassName("trip-card-action-btn");
             actionBtn.addClickListener(clickEvent -> {
-                Notification notification = Notification.show(
-                        "https://evf-regionsormland.preciocloudapp.net/trains",
-                        3000,
-                        Notification.Position.BOTTOM_END
-                );
-                notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+                String storageKey = "userProfile";
+                BrowserStorageUtils.encryptedLocalStorageLoad(storageKey, cryptoSecret, cryptoSalt, profileJson -> {
+                    if (profileJson == null) {
+                        UI.getCurrent().access(() -> {
+                            Notification.show("Please set up your profile before claiming a trip.");
+                        });
+                        return;
+                    }
+                    UserProfile profile = UserProfile.fromJson(profileJson);
+                    if (profile == null || !profile.isComplete()) {
+                        UI.getCurrent().access(() -> {
+                            Notification.show("Please complete your profile before claiming a trip.");
+                        });
+                        return;
+                    }
+                    UI.getCurrent().getPage().open(
+                            "https://evf-regionsormland.preciocloudapp.net/trains?fname=" + profile.firstName() +
+                                    "&lname=" + profile.lastName() +
+                                    "&email=" + profile.email() +
+                                    "&date=" + (trip.initialDepartureTime() != null ? trip.initialDepartureTime().toLocalDate().toString() : "") +
+                                    "&departure=" + departure +
+                                    "&from=" + trip.startDestination() +
+                                    "&to=" + trip.endingDestination(),
+                            "_blank"
+                    );
+                });
             });
             card = new HorizontalLayout(infoSection, actionBtn);
         } else {
@@ -157,4 +184,3 @@ public class TripInfoCard extends VerticalLayout {
         return card;
     }
 }
-

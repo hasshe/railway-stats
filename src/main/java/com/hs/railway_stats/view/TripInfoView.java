@@ -74,7 +74,7 @@ public class TripInfoView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("flex-shrink", "0");
 
-        TripInfoCard tripInfoCard = new TripInfoCard();
+        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt);
         AdminBanner adminBanner = new AdminBanner();
 
         Runnable[] collectHolder = {() -> {
