@@ -1,0 +1,66 @@
+/* ── Grid responsive containment ───────────────────────── */
+.trip-info-view vaadin-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(76, 175, 125, 0.18);
+    box-shadow: 0 0 0 1px rgba(76, 175, 125, 0.06), var(--shadow-md);
+    background: #121a14 !important;
+    --lumo-base-color: #121a14;
+    --lumo-body-text-color: #ffffff;
+    --lumo-secondary-text-color: #ffffff;
+    color: #ffffff;
+}
+
+/* Force dark background on ALL cell parts – prevents white bleed */
+.trip-info-view vaadin-grid::part(cell),
+.trip-info-view vaadin-grid::part(body-cell),
+.trip-info-view vaadin-grid::part(first-body-cell),
+.trip-info-view vaadin-grid::part(last-body-cell),
+.trip-info-view vaadin-grid::part(row),
+.trip-info-view vaadin-grid::part(first-row-cell),
+.trip-info-view vaadin-grid::part(last-row-cell),
+.trip-info-view vaadin-grid::part(odd-row-cell),
+.trip-info-view vaadin-grid::part(even-row-cell) {
+    background: #121a14;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(76, 175, 125, 0.08);
+}
+
+/* Even rows – subtle green tint */
+.trip-info-view vaadin-grid::part(even-row-cell) {
+    background: #131c15;
+}
+
+/* Row hover */
+.trip-info-view vaadin-grid::part(odd-row-cell):hover,
+.trip-info-view vaadin-grid::part(even-row-cell):hover,
+.trip-info-view vaadin-grid::part(body-cell):hover {
+    background: rgba(76, 175, 125, 0.12) !important;
+}
+
+/* Selected row */
+.trip-info-view vaadin-grid::part(selected-row-cell) {
+    background: rgba(76, 175, 125, 0.18) !important;
+}
+
+/* Cells: never overflow their column, truncate if needed */
+.trip-info-view vaadin-grid::part(cell),
+.trip-info-view vaadin-grid::part(header-cell) {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+    .trip-info-view vaadin-grid::part(cell),
+    .trip-info-view vaadin-grid::part(header-cell) {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
+}
+

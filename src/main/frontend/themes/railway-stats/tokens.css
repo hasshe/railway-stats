@@ -1,0 +1,24 @@
+/* ── Design Tokens ──────────────────────────────────────── */
+:root {
+    --bg-base:        #0d1410;
+    --bg-surface:     #121a14;
+    --bg-elevated:    #1a241c;
+    --bg-card:        rgba(255, 255, 255, 0.04);
+    --accent:         #4caf7d;
+    --accent-glow:    rgba(76, 175, 125, 0.20);
+    --accent-subtle:  rgba(76, 175, 125, 0.10);
+    --text-primary:   #e2ede6;
+    --text-secondary: #8aaa92;
+    --text-muted:     #4d6654;
+    --border:         rgba(255, 255, 255, 0.07);
+    --border-focus:   rgba(76, 175, 125, 0.50);
+    --error:          #ff5f6d;
+    --radius-sm:      6px;
+    --radius-md:      10px;
+    --radius-lg:      14px;
+    --shadow-sm:      0 1px 4px rgba(0,0,0,0.35);
+    --shadow-md:      0 4px 20px rgba(0,0,0,0.45);
+    --shadow-lg:      0 8px 40px rgba(0,0,0,0.60);
+    --transition:     0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

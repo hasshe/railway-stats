@@ -1,0 +1,62 @@
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+vaadin-app-layout,
+vaadin-vertical-layout[class~="trip-info-view"],
+.v-system-error {
+    background: transparent;
+}
+
+:host {
+    background: var(--bg-base);
+}
+
+/* ── Trip Info View ─────────────────────────────────────── */
+.trip-info-view {
+    background: var(--bg-base);
+    min-height: 100vh;
+    color: var(--text-primary);
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding: 12px !important;
+    box-sizing: border-box;
+}
+
+@media (min-width: 600px) {
+    .trip-info-view {
+        padding: 20px !important;
+    }
+}
+
+/* Lumo token overrides scoped to the view */
+.trip-info-view {
+    --lumo-base-color:           var(--bg-surface);
+    --lumo-body-text-color:      var(--text-primary);
+    --lumo-secondary-text-color: var(--text-secondary);
+    --lumo-contrast-60pct:       rgba(226, 237, 230, 0.80);
+    --lumo-contrast-70pct:       rgba(226, 237, 230, 0.90);
+    --lumo-contrast-90pct:       var(--text-primary);
+    --lumo-primary-color:        var(--accent);
+    --lumo-primary-text-color:   var(--accent);
+    --lumo-border-radius-m:      var(--radius-md);
+}
+
+/* Ensure no child overflows the view */
+.trip-info-view > * {
+    min-width: 0;
+    max-width: 100%;
+}
+

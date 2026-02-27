@@ -1,0 +1,63 @@
+/* ── Buttons ────────────────────────────────────────────── */
+.trip-info-view vaadin-button[theme~="primary"]::part(label),
+.trip-info-view vaadin-button[theme~="primary"] {
+    background: var(--accent);
+    border-radius: var(--radius-md);
+}
+
+/* Swap button */
+.trip-info-view vaadin-button[theme~="small"]::part(label) {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.swap-button:hover {
+    background: rgba(76, 175, 125, 0.22) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.18) !important;
+}
+
+.swap-button:active {
+    background: rgba(76, 175, 125, 0.30) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.28) !important;
+}
+
+/* ── Admin Controls ─────────────────────────────────────── */
+.trip-info-view .admin-controls-btn {
+    background: rgba(76, 175, 125, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(76, 175, 125, 0.35);
+    border-radius: var(--radius-md);
+    transition: background var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.trip-info-view .admin-controls-btn::part(label) {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.trip-info-view .admin-controls-btn::part(prefix) {
+    color: var(--accent);
+}
+
+.trip-info-view .admin-controls-btn:hover {
+    background: rgba(76, 175, 125, 0.22) !important;
+    border-color: rgba(76, 175, 125, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.15) !important;
+}
+
+.trip-info-view .admin-controls-btn:active {
+    background: rgba(76, 175, 125, 0.30) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.25) !important;
+}
+
+@media (max-width: 600px) {
+    .trip-info-view .admin-controls-btn {
+        width: 100%;
+    }
+    .trip-info-view .admin-controls-btn::part(label) {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
