@@ -1,6 +1,7 @@
 package com.hs.railway_stats.external;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripRequest;
 import com.hs.railway_stats.dto.TripResponse;
 import org.springframework.stereotype.Component;
@@ -73,5 +74,20 @@ public class MalarDalenClient implements RestClient {
                 start.toString(),
                 false,
                 false);
+    }
+
+    @Override
+    public void callClaim(ClaimRequest body) throws IOException, InterruptedException {
+        String url = "https://evf-regionsormland.preciocloudapp.net/api/Claims";
+        String json = objectMapper.writeValueAsString(body);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new RuntimeException("Claim API call failed with status: " + response.statusCode());
+        }
     }
 }

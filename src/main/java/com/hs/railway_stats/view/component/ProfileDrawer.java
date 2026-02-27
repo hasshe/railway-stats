@@ -65,6 +65,7 @@ public class ProfileDrawer extends Div {
         final TextField city = styledField("City", "Stockholm");
         final TextField postalCode = styledField("Postal Code", "111 22");
         final TextField ticketNumber = styledField("Ticket Number", "e.g. B123ABCG6");
+        final TextField identityNumber = new TextField("Identity Number");
     }
 
     private Div buildBackdrop() {
@@ -96,7 +97,7 @@ public class ProfileDrawer extends Div {
     private static FormLayout buildForm(ProfileFields fields) {
         FormLayout form = new FormLayout(
                 fields.firstName, fields.lastName, fields.phone, fields.email,
-                fields.address, fields.city, fields.postalCode, fields.ticketNumber);
+                fields.address, fields.city, fields.postalCode, fields.ticketNumber, fields.identityNumber);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.addClassName("profile-drawer-form");
         form.getStyle().set("--lumo-body-text-color", "#e8edf5");
@@ -135,28 +136,36 @@ public class ProfileDrawer extends Div {
     }
 
     private Button buildSaveButton(String cryptoSecret, String cryptoSalt, ProfileFields fields) {
-        Button saveButton = new Button("Save", clickEvent -> {
+        Button saveButton = getSaveButton(cryptoSecret, cryptoSalt, fields);
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.setWidthFull();
+        saveButton.getStyle().set("margin", "0");
+        return saveButton;
+    }
+
+    private Button getSaveButton(String cryptoSecret, String cryptoSalt, ProfileFields fields) {
+        return new Button("Save", clickEvent -> {
             if (fields.firstName.isInvalid() || fields.lastName.isInvalid() || fields.email.isInvalid()
                     || fields.phone.isInvalid() || fields.postalCode.isInvalid() || fields.address.isInvalid()) {
                 Notification error = Notification.show("Please fix the validation errors before saving.");
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
-            String profile = String.format(
-                    "{\"firstName\":\"%s\",\"lastName\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"address\":\"%s\",\"city\":\"%s\",\"postalCode\":\"%s\",\"ticketNumber\":\"%s\"}",
-                    fields.firstName.getValue(), fields.lastName.getValue(),
-                    fields.phone.getValue(), fields.email.getValue(),
-                    fields.address.getValue(), fields.city.getValue(),
-                    fields.postalCode.getValue(), fields.ticketNumber.getValue()
-            );
-            BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profile, cryptoSecret, cryptoSalt);
+            String profileJson = "{" +
+                    "\"firstName\":\"" + fields.firstName.getValue() + "\"," +
+                    "\"lastName\":\"" + fields.lastName.getValue() + "\"," +
+                    "\"phone\":\"" + fields.phone.getValue() + "\"," +
+                    "\"email\":\"" + fields.email.getValue() + "\"," +
+                    "\"address\":\"" + fields.address.getValue() + "\"," +
+                    "\"city\":\"" + fields.city.getValue() + "\"," +
+                    "\"postalCode\":\"" + fields.postalCode.getValue() + "\"," +
+                    "\"ticketNumber\":\"" + fields.ticketNumber.getValue() + "\"," +
+                    "\"identityNumber\":\"" + fields.identityNumber.getValue() + "\"" +
+                    "}";
+            BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profileJson, cryptoSecret, cryptoSalt);
             Notification.show("Profile saved");
             close();
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        saveButton.setWidthFull();
-        saveButton.getStyle().set("margin", "0");
-        return saveButton;
     }
 
     private static void loadFromStorage(String cryptoSecret, String cryptoSalt,
@@ -173,6 +182,7 @@ public class ProfileDrawer extends Div {
                 fields.city.setValue(node.path("city").asText(""));
                 fields.postalCode.setValue(node.path("postalCode").asText(""));
                 fields.ticketNumber.setValue(node.path("ticketNumber").asText(""));
+                fields.identityNumber.setValue(node.path("identityNumber").asText(""));
             } catch (Exception ignored) {
             }
             onLoaded.run();
@@ -186,6 +196,7 @@ public class ProfileDrawer extends Div {
         addValidation(fields.phone, "^[+]?[\\d\\s\\-().]{6,20}$", "Enter a valid phone number (e.g. +46 70 000 00 00)");
         addValidation(fields.postalCode, "^[\\w\\s\\-]{3,10}$", "Enter a valid postal code (e.g. 111 22)");
         addValidation(fields.address, "^[\\p{L}\\d\\s\\-,.']+$", "Enter a valid home address (e.g. 123 Main Street)");
+        addValidation(fields.identityNumber, "^\\d{8}-\\d{4}$", "Identity number must be in the format YYYYMMDD-XXXX");
     }
 
     private static void addValidation(TextField field, String regex, String errorMessage) {

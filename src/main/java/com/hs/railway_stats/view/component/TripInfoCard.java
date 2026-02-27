@@ -1,7 +1,9 @@
 package com.hs.railway_stats.view.component;
 
+import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.UserProfile;
+import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -23,6 +25,7 @@ public class TripInfoCard extends VerticalLayout {
 
     private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    public static final String UUID = "00000000-0000-0000-0000-000000000000";
 
     private final VerticalLayout cardsContainer = new VerticalLayout();
     private final List<TripInfoResponse> allTrips = new ArrayList<>();
@@ -32,10 +35,12 @@ public class TripInfoCard extends VerticalLayout {
 
     private final String cryptoSecret;
     private final String cryptoSalt;
+    private final ClaimsService claimsService;
 
-    public TripInfoCard(String cryptoSecret, String cryptoSalt) {
+    public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService) {
         this.cryptoSecret = cryptoSecret;
         this.cryptoSalt = cryptoSalt;
+        this.claimsService = claimsService;
         setPadding(false);
         setSpacing(false);
         setWidthFull();
@@ -155,16 +160,23 @@ public class TripInfoCard extends VerticalLayout {
                         });
                         return;
                     }
-                    UI.getCurrent().getPage().open(
-                            "https://evf-regionsormland.preciocloudapp.net/trains?fname=" + profile.firstName() +
-                                    "&lname=" + profile.lastName() +
-                                    "&email=" + profile.email() +
-                                    "&date=" + (trip.initialDepartureTime() != null ? trip.initialDepartureTime().toLocalDate().toString() : "") +
-                                    "&departure=" + departure +
-                                    "&from=" + trip.startDestination() +
-                                    "&to=" + trip.endingDestination(),
-                            "_blank"
+                    // Build ClaimRequest
+                    ClaimRequest.Customer customer = getCustomer(profile);
+                    ClaimRequest.RefundType refundType = new ClaimRequest.RefundType(
+                            "00000000-0000-0000-0000-000000000000",
+                            "Payment via Swedbank SUS"
                     );
+                    ClaimRequest claimRequest = getClaimRequest(trip, customer, profile, refundType);
+                    try {
+                        claimsService.submitClaim(claimRequest);
+                        UI.getCurrent().access(() -> {
+                            Notification.show("Claim submitted successfully!");
+                        });
+                    } catch (Exception ex) {
+                        UI.getCurrent().access(() -> {
+                            Notification.show("Claim submission failed: " + ex.getMessage());
+                        });
+                    }
                 });
             });
             card = new HorizontalLayout(infoSection, actionBtn);
@@ -182,5 +194,39 @@ public class TripInfoCard extends VerticalLayout {
         card.setFlexGrow(1, infoSection);
 
         return card;
+    }
+
+    private static ClaimRequest getClaimRequest(TripInfoResponse trip, ClaimRequest.Customer customer, UserProfile profile, ClaimRequest.RefundType refundType) {
+        return new ClaimRequest(
+                UUID,
+                null,
+                "SWISH",
+                customer,
+                profile.ticketNumber(),
+                1,
+                trip.startDestination(),
+                trip.endingDestination(),
+                trip.initialDepartureTime(),
+                "",
+                0,
+                0,
+                refundType,
+                List.of()
+        );
+    }
+
+    private static ClaimRequest.Customer getCustomer(UserProfile profile) {
+        return new ClaimRequest.Customer(
+                UUID,
+                profile.firstName(),
+                profile.lastName(),
+                profile.city(),
+                profile.postalCode(),
+                profile.address(),
+                profile.identityNumber(),
+                profile.phone(),
+                profile.email(),
+                true
+        );
     }
 }

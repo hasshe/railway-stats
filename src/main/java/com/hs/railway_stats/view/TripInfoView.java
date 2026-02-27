@@ -1,5 +1,6 @@
 package com.hs.railway_stats.view;
 
+import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TranslationService;
 import com.hs.railway_stats.service.TripInfoService;
@@ -33,7 +34,8 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.admin.username}") String adminUsername,
                         @Value("${app.version}") String appVersion,
                         RateLimiterService rateLimiterService,
-                        TranslationService translationService) {
+                        TranslationService translationService,
+                        ClaimsService claimsService) {
 
         addClassName("trip-info-view");
         setPadding(false);   // handled in CSS per breakpoint
@@ -74,7 +76,7 @@ public class TripInfoView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("flex-shrink", "0");
 
-        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt);
+        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService);
         AdminBanner adminBanner = new AdminBanner();
 
         Runnable[] collectHolder = {() -> {
