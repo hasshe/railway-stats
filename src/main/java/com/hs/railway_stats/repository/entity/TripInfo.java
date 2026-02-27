@@ -50,6 +50,6 @@ public class TripInfo {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = ZonedDateTime.now(ZoneId.systemDefault());
+        createdAt = ZonedDateTime.now(ZoneId.of("Europe/Stockholm"));
     }
 }

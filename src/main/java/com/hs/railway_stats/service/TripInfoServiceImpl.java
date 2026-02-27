@@ -28,6 +28,7 @@ public class TripInfoServiceImpl implements TripInfoService {
     private static final Logger logger = LoggerFactory.getLogger(TripInfoServiceImpl.class);
     private static final int MINUTE = 59;
     private static final int HOUR = 23;
+    public static final String ZONE_ID = "Europe/Stockholm";
     private final RestClient restClient;
     private final TripInfoRepository tripInfoRepository;
     private final TranslationRepository translationRepository;
@@ -44,10 +45,10 @@ public class TripInfoServiceImpl implements TripInfoService {
         try {
             long originId = stationNameToDestinationId(originStationName);
             long destinationId = stationNameToDestinationId(destinationStationName);
-            String nextToken = null;
             List<TripInfoResponse> allTrips = new ArrayList<>();
-            LocalDate today = LocalDate.now();
-            var todayTrips = findAndFilterTrips(originId, destinationId, nextToken, allTrips, today);
+            ZoneId stockholmZone = ZoneId.of(ZONE_ID);
+            LocalDate today = LocalDate.now(stockholmZone);
+            var todayTrips = findAndFilterTrips(originId, destinationId, allTrips, today);
             saveTripInfoToDatabase(todayTrips, originId, destinationId);
         } catch (Exception e) {
             logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
@@ -55,9 +56,11 @@ public class TripInfoServiceImpl implements TripInfoService {
         }
     }
 
-    private List<TripInfoResponse> findAndFilterTrips(long originId, long destinationId, String nextToken, List<TripInfoResponse> allTrips,
+    private List<TripInfoResponse> findAndFilterTrips(long originId, long destinationId, List<TripInfoResponse> allTrips,
                                                       LocalDate today) throws IOException, InterruptedException {
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
         boolean hasMoreData = true;
+        String nextToken = null;
         while (hasMoreData) {
             TripResponse response = restClient.callSearch(originId, destinationId, nextToken);
             var mappedTrips = TripInfoMapper.mapFromTripResponse(response);
@@ -70,7 +73,7 @@ public class TripInfoServiceImpl implements TripInfoService {
         }
         return allTrips.stream()
                 .filter(trip -> trip.initialDepartureTime() != null
-                        && trip.initialDepartureTime().toLocalDate().equals(today))
+                        && trip.initialDepartureTime().atZoneSameInstant(stockholmZone).toLocalDate().equals(today))
                 .toList();
     }
 
@@ -78,7 +81,7 @@ public class TripInfoServiceImpl implements TripInfoService {
     public List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date) {
         long originId = stationNameToDestinationId(originStationName);
         long destinationId = stationNameToDestinationId(destinationStationName);
-        ZoneId stockholmZone = ZoneId.of("Europe/Stockholm");
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
 
         ZonedDateTime startOfDay = date.atStartOfDay(stockholmZone);
         ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(stockholmZone);
@@ -92,14 +95,14 @@ public class TripInfoServiceImpl implements TripInfoService {
                         destinationIdToStationName(info.getDestinationId()),
                         info.getCanceled() == 1,
                         info.getMinutesLate(),
-                        info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().toOffsetDateTime() : null,
-                        info.getActualArrivalTime() != null ? info.getActualArrivalTime().toOffsetDateTime() : null
+                        info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null,
+                        info.getActualArrivalTime() != null ? info.getActualArrivalTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null
                 ))
                 .toList();
     }
 
     private void saveTripInfoToDatabase(List<TripInfoResponse> trips, long originId, long destinationId) {
-        ZoneId stockholmZone = ZoneId.of("Europe/Stockholm");
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
         trips.forEach(trip -> {
             TripInfo tripInfo = TripInfo.builder()
                     .originId((int) originId)
@@ -113,7 +116,7 @@ public class TripInfoServiceImpl implements TripInfoService {
         });
     }
 
-    @Scheduled(cron = "59 50 23 * * ?", zone = "Europe/Stockholm")
+    @Scheduled(cron = "59 50 23 * * ?", zone = ZONE_ID)
     protected final void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");
         try {
@@ -152,11 +155,13 @@ public class TripInfoServiceImpl implements TripInfoService {
         if (plannedDeparture == null) {
             return false;
         }
-        LocalDate departureDate = plannedDeparture.toLocalDate();
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
+        var plannedDepartureStockholm = plannedDeparture.atZoneSameInstant(stockholmZone);
+        LocalDate departureDate = plannedDepartureStockholm.toLocalDate();
         if (!departureDate.equals(today)) {
             return true;
         }
-        var endOfDay = plannedDeparture.toLocalDate().atTime(HOUR, MINUTE);
-        return !plannedDeparture.toLocalDateTime().isBefore(endOfDay);
+        var endOfDay = departureDate.atTime(HOUR, MINUTE);
+        return !plannedDepartureStockholm.toLocalDateTime().isBefore(endOfDay);
     }
 }

@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -18,6 +19,7 @@ import java.time.ZoneId;
 @Component
 public class MalarDalenClient implements RestClient {
 
+    public static final String ZONE_ID = "Europe/Stockholm";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private static final String BASE_URL =
@@ -62,7 +64,7 @@ public class MalarDalenClient implements RestClient {
         var start = OffsetDateTime.of(
                 LocalDate.now(),
                 LocalTime.of(1, 0, 0),
-                ZoneId.systemDefault().getRules().getOffset(java.time.Instant.now())
+                ZoneId.of(ZONE_ID).getRules().getOffset(Instant.now())
         );
         return new TripRequest(
                 originId,

@@ -37,7 +37,7 @@ public class InputLayout extends FormLayout {
         destinationField.setValue(StationConstants.STOCKHOLM);
 
         dateFilter = new DatePicker("Date:");
-        dateFilter.setMax(LocalDate.now().minusDays(1));
+        dateFilter.setMax(LocalDate.now());
         //dateFilter.setValue(LocalDate.now());
 
         Button swapButton = getSwapButton(tripInfoService, tripInfoGrid, rateLimiterService);
