@@ -9,7 +9,7 @@ import com.hs.railway_stats.view.component.GitHubLink;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDrawer;
 import com.hs.railway_stats.view.component.ScheduledJobTimer;
-import com.hs.railway_stats.view.component.TripInfoGrid;
+import com.hs.railway_stats.view.component.TripInfoCard;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -74,7 +74,7 @@ public class TripInfoView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("flex-shrink", "0");
 
-        TripInfoGrid tripInfoGrid = new TripInfoGrid();
+        TripInfoCard tripInfoCard = new TripInfoCard();
         AdminBanner adminBanner = new AdminBanner();
 
         Runnable[] collectHolder = {() -> {
@@ -89,17 +89,17 @@ public class TripInfoView extends VerticalLayout {
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
         profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService, scheduledJobTimer);
-        collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
-        clearDateHolder[0] = inputLayout.buildClearDateRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoCard, adminControls, rateLimiterService, scheduledJobTimer);
+        collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoCard, rateLimiterService);
+        clearDateHolder[0] = inputLayout.buildClearDateRunnable(tripInfoService, tripInfoCard, rateLimiterService);
 
         inputLayout.setWidthFull();
         inputLayout.setMaxWidth("700px");
         inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
-        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoGrid);
-        setFlexGrow(1, tripInfoGrid);
+        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoCard);
+        setFlexGrow(1, tripInfoCard);
         setAlignItems(Alignment.CENTER);
-        setAlignSelf(Alignment.STRETCH, headerRow, tripInfoGrid);
+        setAlignSelf(Alignment.STRETCH, headerRow, tripInfoCard);
     }
 }

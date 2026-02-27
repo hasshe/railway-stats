@@ -1,0 +1,124 @@
+/* ── Trip Cards ─────────────────────────────────────────── */
+.trip-cards-container {
+    gap: 0.5rem !important;
+    padding: 0.25rem 0 !important;
+}
+
+.trip-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: background var(--transition), box-shadow var(--transition), border-color var(--transition);
+    box-sizing: border-box;
+}
+
+.trip-card:hover {
+    background: rgba(76, 175, 125, 0.08);
+    border-color: rgba(76, 175, 125, 0.22);
+    box-shadow: var(--shadow-md);
+}
+
+.trip-card--late {
+    border-left: 3px solid var(--accent);
+}
+
+.trip-card--cancelled {
+    border-left: 3px solid var(--error);
+    opacity: 0.85;
+}
+
+/* ── Info section ───────────────────────────────────────── */
+.trip-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.trip-card-time-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trip-card-time {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.trip-card-arrow {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Badges ─────────────────────────────────────────────── */
+.trip-card-badge-row {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.trip-card-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.trip-card-badge--ontime {
+    background: rgba(76, 175, 125, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(76, 175, 125, 0.30);
+}
+
+.trip-card-badge--late {
+    background: rgba(255, 180, 0, 0.12);
+    color: #ffc947;
+    border: 1px solid rgba(255, 180, 0, 0.30);
+}
+
+.trip-card-badge--cancelled {
+    background: rgba(255, 95, 109, 0.12);
+    color: var(--error);
+    border: 1px solid rgba(255, 95, 109, 0.30);
+}
+
+/* ── Action button ──────────────────────────────────────── */
+.trip-card-action-btn {
+    flex-shrink: 0;
+    color: var(--text-secondary) !important;
+    transition: color var(--transition), background var(--transition);
+}
+
+.trip-card-action-btn:hover {
+    color: var(--accent) !important;
+    background: var(--accent-subtle) !important;
+}
+
+/* ── Empty state ────────────────────────────────────────── */
+.trip-card-empty {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .trip-card {
+        padding: 0.6rem 0.75rem;
+    }
+
+    .trip-card-time {
+        font-size: 0.9rem;
+    }
+}
+

@@ -24,7 +24,7 @@ public class InputLayout extends FormLayout {
     private final ComboBox<String> destinationField;
     private final DatePicker dateFilter;
 
-    public InputLayout(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+    public InputLayout(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                        AdminControls adminControls,
                        RateLimiterService rateLimiterService, ScheduledJobTimer scheduledJobTimer) {
 
@@ -40,13 +40,13 @@ public class InputLayout extends FormLayout {
         dateFilter.setMax(LocalDate.now());
         //dateFilter.setValue(LocalDate.now());
 
-        Button swapButton = getSwapButton(tripInfoService, tripInfoGrid, rateLimiterService);
+        Button swapButton = getSwapButton(tripInfoService, tripInfoCard, rateLimiterService);
 
-        originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
-        destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
-        dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService));
+        originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
+        destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
+        dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
-        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoGrid.reimbursableFilter);
+        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
         dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
         dateAndFilterRow.setSpacing(true);
 
@@ -62,12 +62,12 @@ public class InputLayout extends FormLayout {
         setColspan(adminControls, 4);
     }
 
-    private Button getSwapButton(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid, RateLimiterService rateLimiterService) {
+    private Button getSwapButton(TripInfoService tripInfoService, TripInfoCard tripInfoCard, RateLimiterService rateLimiterService) {
         Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
             destinationField.setValue(temp);
-            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
         });
         swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         swapButton.addClassName("swap-button");
@@ -84,7 +84,7 @@ public class InputLayout extends FormLayout {
         return swapButton;
     }
 
-    public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+    public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                                          RateLimiterService rateLimiterService) {
         return () -> {
             String origin = originField.getValue();
@@ -95,21 +95,21 @@ public class InputLayout extends FormLayout {
             }
             tripInfoService.collectTripInformation(origin, destination);
             Notification.show("Trip information collection started for " + origin + " to " + destination);
-            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
         };
     }
 
-    public Runnable buildClearDateRunnable(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+    public Runnable buildClearDateRunnable(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                                            RateLimiterService rateLimiterService) {
         return () -> {
             LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
             tripInfoService.deleteTripsByDate(selectedDate);
             Notification.show("Cleared all trip records for " + selectedDate);
-            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
         };
     }
 
-    private void refreshGrid(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+    private void refreshGrid(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                              RateLimiterService rateLimiterService) {
         String ip = getClientIp();
         if (!rateLimiterService.tryConsume(ip)) {
@@ -125,7 +125,7 @@ public class InputLayout extends FormLayout {
             if (origin == null || destination == null) return;
 
             LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
-            tripInfoGrid.setTrips(tripInfoService.getTripInfo(origin, destination, selectedDate));
+            tripInfoCard.setTrips(tripInfoService.getTripInfo(origin, destination, selectedDate));
         } catch (Exception e) {
             Notification.show("Error filtering trips: " + e.getMessage());
         }
