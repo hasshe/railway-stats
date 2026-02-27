@@ -8,6 +8,7 @@ import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -92,7 +93,7 @@ public class TripInfoCard extends VerticalLayout {
         }
     }
 
-    private HorizontalLayout buildCard(TripInfoResponse trip) {
+    private Card buildCard(TripInfoResponse trip) {
         String departure = trip.initialDepartureTime() != null
                 ? trip.initialDepartureTime().format(TIME_FMT) : "N/A";
         String arrival = trip.actualArrivalTime() != null
@@ -101,6 +102,44 @@ public class TripInfoCard extends VerticalLayout {
         int minsLate = trip.totalMinutesLate();
 
         // ── left info section ──────────────────────────────────────
+        Div infoSection = getInfoSection(departure, arrival, cancelled, minsLate);
+
+        // ── card root (Vaadin Card component) ─────────────────────
+        Card card = new Card();
+        card.addClassName("trip-card"); // Restore previous custom card background and style
+        card.getStyle().set("width", "100%");
+        card.getStyle().set("boxSizing", "border-box");
+        if (cancelled) card.addClassName("trip-card--cancelled");
+        else if (minsLate >= REIMBURSABLE_MINUTES_THRESHOLD) card.addClassName("trip-card--late");
+
+        // ── action button (only for reimbursable trips) ────────────
+        boolean reimbursable = cancelled || minsLate >= REIMBURSABLE_MINUTES_THRESHOLD;
+        if (reimbursable) {
+            buildReimbursableCard(trip, infoSection, card);
+        } else {
+            buildRegularCard(new HorizontalLayout(infoSection), infoSection, card);
+        }
+
+        return card;
+    }
+
+    private static void buildRegularCard(HorizontalLayout cardRow, Div infoSection, Card card) {
+        cardRow.setWidthFull();
+        cardRow.setAlignItems(Alignment.CENTER);
+        cardRow.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        cardRow.setFlexGrow(1, infoSection);
+        card.add(cardRow);
+    }
+
+    private void buildReimbursableCard(TripInfoResponse trip, Div infoSection, Card card) {
+        Button actionBtn = new Button("Claim", new Icon(VaadinIcon.CHECK));
+        actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        actionBtn.addClassName("trip-card-action-btn");
+        claimsButtonClickAction(trip, actionBtn);
+        buildRegularCard(new HorizontalLayout(infoSection, actionBtn), infoSection, card);
+    }
+
+    private static Div getInfoSection(String departure, String arrival, boolean cancelled, int minsLate) {
         Div infoSection = new Div();
         infoSection.addClassName("trip-card-info");
 
@@ -110,7 +149,7 @@ public class TripInfoCard extends VerticalLayout {
         Span depSpan = new Span(departure);
         depSpan.addClassName("trip-card-time");
 
-        Span arrow = new Span("→");
+        Span arrow = new Span(new Icon(VaadinIcon.ARROW_RIGHT));
         arrow.addClassName("trip-card-arrow");
 
         Span arrSpan = new Span(arrival);
@@ -118,6 +157,57 @@ public class TripInfoCard extends VerticalLayout {
 
         timeRow.add(depSpan, arrow, arrSpan);
 
+        Div badgeRow = getBadgeRow(cancelled, minsLate);
+
+        infoSection.add(timeRow, badgeRow);
+        return infoSection;
+    }
+
+    private void claimsButtonClickAction(TripInfoResponse trip, Button actionBtn) {
+        actionBtn.addClickListener(clickEvent -> {
+            String storageKey = "userProfile";
+            BrowserStorageUtils.encryptedLocalStorageLoad(storageKey, cryptoSecret, cryptoSalt, profileJson -> {
+                UserProfile profile = validateAndGetUserProfile(profileJson);
+                if (profile == null) return;
+                // Build ClaimRequest
+                ClaimRequest.Customer customer = getCustomer(profile);
+                ClaimRequest.RefundType refundType = new ClaimRequest.RefundType(
+                        UUID,
+                        "Payment via Swedbank SUS"
+                );
+                ClaimRequest claimRequest = getClaimRequest(trip, customer, profile, refundType);
+                try {
+                    claimsService.submitClaim(claimRequest);
+                    UI.getCurrent().access(() -> {
+                        Notification.show("Claim submitted successfully!");
+                    });
+                } catch (Exception ex) {
+                    UI.getCurrent().access(() -> {
+                        Notification.show("Claim submission failed: " + ex.getMessage());
+                    });
+                }
+            });
+        });
+    }
+
+    private static UserProfile validateAndGetUserProfile(String profileJson) {
+        if (profileJson == null) {
+            UI.getCurrent().access(() -> {
+                Notification.show("Please set up your profile before claiming a trip.");
+            });
+            return null;
+        }
+        UserProfile profile = UserProfile.fromJson(profileJson);
+        if (profile == null || !profile.isComplete()) {
+            UI.getCurrent().access(() -> {
+                Notification.show("Please complete your profile before claiming a trip.");
+            });
+            return null;
+        }
+        return profile;
+    }
+
+    private static Div getBadgeRow(boolean cancelled, int minsLate) {
         Div badgeRow = new Div();
         badgeRow.addClassName("trip-card-badge-row");
 
@@ -134,66 +224,7 @@ public class TripInfoCard extends VerticalLayout {
             onTimeBadge.addClassNames("trip-card-badge", "trip-card-badge--ontime");
             badgeRow.add(onTimeBadge);
         }
-
-        infoSection.add(timeRow, badgeRow);
-
-        // ── action button (only for reimbursable trips) ────────────
-        boolean reimbursable = cancelled || minsLate >= REIMBURSABLE_MINUTES_THRESHOLD;
-        HorizontalLayout card;
-        if (reimbursable) {
-            Button actionBtn = new Button("Claim", new Icon(VaadinIcon.CHECK));
-            actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-            actionBtn.addClassName("trip-card-action-btn");
-            actionBtn.addClickListener(clickEvent -> {
-                String storageKey = "userProfile";
-                BrowserStorageUtils.encryptedLocalStorageLoad(storageKey, cryptoSecret, cryptoSalt, profileJson -> {
-                    if (profileJson == null) {
-                        UI.getCurrent().access(() -> {
-                            Notification.show("Please set up your profile before claiming a trip.");
-                        });
-                        return;
-                    }
-                    UserProfile profile = UserProfile.fromJson(profileJson);
-                    if (profile == null || !profile.isComplete()) {
-                        UI.getCurrent().access(() -> {
-                            Notification.show("Please complete your profile before claiming a trip.");
-                        });
-                        return;
-                    }
-                    // Build ClaimRequest
-                    ClaimRequest.Customer customer = getCustomer(profile);
-                    ClaimRequest.RefundType refundType = new ClaimRequest.RefundType(
-                            "00000000-0000-0000-0000-000000000000",
-                            "Payment via Swedbank SUS"
-                    );
-                    ClaimRequest claimRequest = getClaimRequest(trip, customer, profile, refundType);
-                    try {
-                        claimsService.submitClaim(claimRequest);
-                        UI.getCurrent().access(() -> {
-                            Notification.show("Claim submitted successfully!");
-                        });
-                    } catch (Exception ex) {
-                        UI.getCurrent().access(() -> {
-                            Notification.show("Claim submission failed: " + ex.getMessage());
-                        });
-                    }
-                });
-            });
-            card = new HorizontalLayout(infoSection, actionBtn);
-        } else {
-            card = new HorizontalLayout(infoSection);
-        }
-
-        // ── card wrapper ───────────────────────────────────────────
-        card.addClassName("trip-card");
-        if (cancelled) card.addClassName("trip-card--cancelled");
-        else if (minsLate >= REIMBURSABLE_MINUTES_THRESHOLD) card.addClassName("trip-card--late");
-        card.setWidthFull();
-        card.setAlignItems(Alignment.CENTER);
-        card.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        card.setFlexGrow(1, infoSection);
-
-        return card;
+        return badgeRow;
     }
 
     private static ClaimRequest getClaimRequest(TripInfoResponse trip, ClaimRequest.Customer customer, UserProfile profile, ClaimRequest.RefundType refundType) {

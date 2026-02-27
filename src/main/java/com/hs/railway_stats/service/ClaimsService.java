@@ -5,4 +5,3 @@ import com.hs.railway_stats.dto.ClaimRequest;
 public interface ClaimsService {
     void submitClaim(ClaimRequest request);
 }
-
