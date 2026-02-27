@@ -10,4 +10,6 @@ public interface TripInfoService {
     List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date);
 
     void collectTripInformation(String originStationName, String destinationStationName);
+
+    void deleteTripsByDate(LocalDate date);
 }

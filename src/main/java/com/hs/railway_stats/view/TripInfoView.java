@@ -79,14 +79,19 @@ public class TripInfoView extends VerticalLayout {
 
         Runnable[] collectHolder = {() -> {
         }};
+        Runnable[] clearDateHolder = {() -> {
+        }};
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
-                () -> collectHolder[0].run(), translationService);
+                () -> collectHolder[0].run(),
+                () -> clearDateHolder[0].run(),
+                translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
         profileButton.addClickListener(clickEvent -> profileDrawer.open());
 
         InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoGrid, adminControls, rateLimiterService, scheduledJobTimer);
         collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
+        clearDateHolder[0] = inputLayout.buildClearDateRunnable(tripInfoService, tripInfoGrid, rateLimiterService);
 
         inputLayout.setWidthFull();
         inputLayout.setMaxWidth("700px");

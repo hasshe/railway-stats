@@ -116,6 +116,16 @@ public class TripInfoServiceImpl implements TripInfoService {
         });
     }
 
+    @Override
+    @Transactional
+    public void deleteTripsByDate(LocalDate date) {
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
+        ZonedDateTime startOfDay = date.atStartOfDay(stockholmZone);
+        ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(stockholmZone);
+        tripInfoRepository.deleteByDate(startOfDay, endOfDay);
+        logger.info("Deleted all trip records for date {}", date);
+    }
+
     @Scheduled(cron = "59 50 23 * * ?", zone = ZONE_ID)
     protected final void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");

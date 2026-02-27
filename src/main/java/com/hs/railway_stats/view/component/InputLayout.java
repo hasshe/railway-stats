@@ -59,6 +59,7 @@ public class InputLayout extends FormLayout {
         add(originField, swapButton, destinationField);
         add(dateAndFilterRow, scheduledJobTimer, adminControls);
         setColspan(dateAndFilterRow, 4);
+        setColspan(adminControls, 4);
     }
 
     private Button getSwapButton(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid, RateLimiterService rateLimiterService) {
@@ -94,6 +95,16 @@ public class InputLayout extends FormLayout {
             }
             tripInfoService.collectTripInformation(origin, destination);
             Notification.show("Trip information collection started for " + origin + " to " + destination);
+            refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
+        };
+    }
+
+    public Runnable buildClearDateRunnable(TripInfoService tripInfoService, TripInfoGrid tripInfoGrid,
+                                           RateLimiterService rateLimiterService) {
+        return () -> {
+            LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
+            tripInfoService.deleteTripsByDate(selectedDate);
+            Notification.show("Cleared all trip records for " + selectedDate);
             refreshGrid(tripInfoService, tripInfoGrid, rateLimiterService);
         };
     }
