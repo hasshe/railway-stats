@@ -17,6 +17,9 @@ public interface TripInfoRepository extends JpaRepository<TripInfo, Integer> {
     List<TripInfo> findByOriginAndDestinationAndDate(int originId, int destinationId,
                                                       ZonedDateTime startOfDay, ZonedDateTime endOfDay);
 
+    boolean existsByOriginIdAndDestinationIdAndOriginalDepartureTime(int originId, int destinationId,
+                                                                      ZonedDateTime originalDepartureTime);
+
     @Modifying
     @Query("DELETE FROM TripInfo t WHERE t.originalDepartureTime >= :startOfDay AND t.originalDepartureTime < :endOfDay")
     void deleteByDate(ZonedDateTime startOfDay, ZonedDateTime endOfDay);
