@@ -1,6 +1,7 @@
 package com.hs.railway_stats.external;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripRequest;
 import com.hs.railway_stats.dto.TripResponse;
@@ -30,6 +31,7 @@ public class MalarDalenClient implements RestClient {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.findAndRegisterModules();
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Override

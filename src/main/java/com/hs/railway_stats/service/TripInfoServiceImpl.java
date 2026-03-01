@@ -86,6 +86,13 @@ public class TripInfoServiceImpl implements TripInfoService {
         ZonedDateTime startOfDay = date.atStartOfDay(stockholmZone);
         ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(stockholmZone);
 
+        String originClaimsStationId = translationRepository.findByStationId((int) originId)
+                .map(Translation::getClaimsStationId)
+                .orElse(null);
+        String destinationClaimsStationId = translationRepository.findByStationId((int) destinationId)
+                .map(Translation::getClaimsStationId)
+                .orElse(null);
+
         List<TripInfo> tripInfos = tripInfoRepository.findByOriginAndDestinationAndDate(
                 (int) originId, (int) destinationId, startOfDay, endOfDay);
 
@@ -96,7 +103,9 @@ public class TripInfoServiceImpl implements TripInfoService {
                         info.getCanceled() == 1,
                         info.getMinutesLate(),
                         info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null,
-                        info.getActualArrivalTime() != null ? info.getActualArrivalTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null
+                        info.getActualArrivalTime() != null ? info.getActualArrivalTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null,
+                        originClaimsStationId,
+                        destinationClaimsStationId
                 ))
                 .toList();
     }

@@ -18,11 +18,16 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TripInfoCard extends VerticalLayout {
+
+    private static final Logger log = LoggerFactory.getLogger(TripInfoCard.class);
 
     private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
@@ -176,12 +181,22 @@ public class TripInfoCard extends VerticalLayout {
                         "Payment via Swedbank SUS"
                 );
                 ClaimRequest claimRequest = getClaimRequest(trip, customer, profile, refundType);
+                log.info("Submitting claim request: ticketNumber={}, departureStationId={}, arrivalStationId={}, departureDate={}, customer=[{} {}], payoutOption={}",
+                        claimRequest.ticketNumber(),
+                        claimRequest.departureStationId(),
+                        claimRequest.arrivalStationId(),
+                        claimRequest.departureDate(),
+                        claimRequest.customer().firstName(),
+                        claimRequest.customer().surName(),
+                        claimRequest.payoutOption());
                 try {
                     claimsService.submitClaim(claimRequest);
+                    log.info("Claim submitted successfully for ticketNumber={}", claimRequest.ticketNumber());
                     UI.getCurrent().access(() -> {
                         Notification.show("Claim submitted successfully!");
                     });
                 } catch (Exception ex) {
+                    log.error("Claim submission failed for ticketNumber={}: {}", claimRequest.ticketNumber(), ex.getMessage(), ex);
                     UI.getCurrent().access(() -> {
                         Notification.show("Claim submission failed: " + ex.getMessage());
                     });
@@ -235,8 +250,8 @@ public class TripInfoCard extends VerticalLayout {
                 customer,
                 profile.ticketNumber(),
                 1,
-                trip.startDestination(),
-                trip.endingDestination(),
+                trip.departureClaimsStationId(),
+                trip.arrivalClaimsStationId(),
                 trip.initialDepartureTime(),
                 "",
                 0,

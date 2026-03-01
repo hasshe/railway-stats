@@ -21,16 +21,19 @@ public class AddStationDialog extends Dialog {
 
         TextField stationNameField = getStationNameField();
 
-        FormLayout formLayout = new FormLayout(stationIdField, stationNameField);
+        TextField claimsStationIdField = getClaimsStationIdField();
+
+        FormLayout formLayout = new FormLayout(stationIdField, stationNameField, claimsStationIdField);
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        Button saveButton = getSaveButton(translationService, stationIdField, stationNameField);
+        Button saveButton = getSaveButton(translationService, stationIdField, stationNameField, claimsStationIdField);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button cancelButton = new Button("Cancel", clickEvent -> close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         stationNameField.addKeyDownListener(Key.ENTER, e -> saveButton.click());
+        claimsStationIdField.addKeyDownListener(Key.ENTER, e -> saveButton.click());
 
         addDialogCloseActionListener(e -> close());
 
@@ -53,10 +56,19 @@ public class AddStationDialog extends Dialog {
         return stationNameField;
     }
 
-    private Button getSaveButton(TranslationService translationService, IntegerField stationIdField, TextField stationNameField) {
+    private static TextField getClaimsStationIdField() {
+        TextField claimsStationIdField = new TextField("Claims Station ID (Optional)");
+        claimsStationIdField.setPlaceholder("e.g. f4d25596-a9f9-41a1-b200-713439d92fc4");
+        claimsStationIdField.setWidthFull();
+        claimsStationIdField.setHelperText("UUID format for claims system integration");
+        return claimsStationIdField;
+    }
+
+    private Button getSaveButton(TranslationService translationService, IntegerField stationIdField, TextField stationNameField, TextField claimsStationIdField) {
         return new Button("Save", clickEvent -> {
             Integer stationId = stationIdField.getValue();
             String stationName = stationNameField.getValue();
+            String claimsStationId = claimsStationIdField.getValue();
 
             if (stationId == null || stationId <= 0) {
                 stationIdField.setInvalid(true);
@@ -69,8 +81,21 @@ public class AddStationDialog extends Dialog {
                 return;
             }
 
+            // Validate UUID format if provided
+            if (claimsStationId != null && !claimsStationId.isBlank()) {
+                String trimmedClaimsId = claimsStationId.trim();
+                if (!isValidUUID(trimmedClaimsId)) {
+                    claimsStationIdField.setInvalid(true);
+                    claimsStationIdField.setErrorMessage("Invalid UUID format");
+                    return;
+                }
+                claimsStationId = trimmedClaimsId;
+            } else {
+                claimsStationId = null;
+            }
+
             try {
-                translationService.addStation(stationId, stationName.trim());
+                translationService.addStation(stationId, stationName.trim(), claimsStationId);
                 Notification success = Notification.show("Station '" + stationName.trim() + "' (ID: " + stationId + ") added successfully.");
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 close();
@@ -82,6 +107,12 @@ public class AddStationDialog extends Dialog {
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
+    }
+
+    private static boolean isValidUUID(String uuid) {
+        if (uuid == null) return false;
+        String uuidPattern = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
+        return uuid.matches(uuidPattern);
     }
 }
 

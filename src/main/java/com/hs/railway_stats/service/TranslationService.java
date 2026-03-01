@@ -8,6 +8,8 @@ public interface TranslationService {
 
     Translation addStation(int stationId, String stationName);
 
+    Translation addStation(int stationId, String stationName, String claimsStationId);
+
     List<Translation> getAllStations();
 }
 

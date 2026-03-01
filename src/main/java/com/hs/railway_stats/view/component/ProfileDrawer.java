@@ -15,6 +15,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.html.Span;
 import lombok.Getter;
 
 @Getter
@@ -59,13 +60,24 @@ public class ProfileDrawer extends Div {
     private static class ProfileFields {
         final TextField firstName = styledField("First Name", "John");
         final TextField lastName = styledField("Last Name", "Doe");
-        final TextField phone = styledField("Phone Number", "+46 70 000 00 00");
+        final TextField phone = buildPhoneField();
         final TextField email = styledField("Email Address", "you@example.com");
         final TextField address = styledField("Home Address", "123 Main Street");
         final TextField city = styledField("City", "Stockholm");
         final TextField postalCode = styledField("Postal Code", "111 22");
         final TextField ticketNumber = styledField("Ticket Number", "e.g. B123ABCG6");
         final TextField identityNumber = new TextField("Identity Number");
+    }
+
+    private static TextField buildPhoneField() {
+        TextField field = styledField("Phone Number", "734151665");
+        Span prefix = new Span("+46");
+        prefix.getStyle()
+                .set("color", "#8aaa92")
+                .set("padding", "0 4px 0 2px")
+                .set("user-select", "none");
+        field.setPrefixComponent(prefix);
+        return field;
     }
 
     private Div buildBackdrop() {
@@ -154,7 +166,7 @@ public class ProfileDrawer extends Div {
             String profileJson = "{" +
                     "\"firstName\":\"" + fields.firstName.getValue() + "\"," +
                     "\"lastName\":\"" + fields.lastName.getValue() + "\"," +
-                    "\"phone\":\"" + fields.phone.getValue() + "\"," +
+                    "\"phone\":\"46" + fields.phone.getValue() + "\"," +
                     "\"email\":\"" + fields.email.getValue() + "\"," +
                     "\"address\":\"" + fields.address.getValue() + "\"," +
                     "\"city\":\"" + fields.city.getValue() + "\"," +
@@ -176,7 +188,8 @@ public class ProfileDrawer extends Div {
                 JsonNode node = mapper.readTree(json);
                 fields.firstName.setValue(node.path("firstName").asText(""));
                 fields.lastName.setValue(node.path("lastName").asText(""));
-                fields.phone.setValue(node.path("phone").asText(""));
+                String storedPhone = node.path("phone").asText("");
+                fields.phone.setValue(storedPhone.startsWith("46") ? storedPhone.substring(2) : storedPhone);
                 fields.email.setValue(node.path("email").asText(""));
                 fields.address.setValue(node.path("address").asText(""));
                 fields.city.setValue(node.path("city").asText(""));
@@ -193,7 +206,7 @@ public class ProfileDrawer extends Div {
         addValidation(fields.firstName, "^[\\p{L}\\s\\-']+$", "First name must contain letters only");
         addValidation(fields.lastName, "^[\\p{L}\\s\\-']+$", "Last name must contain letters only");
         addValidation(fields.email, "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)*\\.[a-zA-Z]{2,}$", "Enter a valid email address (e.g. you@example.com)");
-        addValidation(fields.phone, "^[+]?[\\d\\s\\-().]{6,20}$", "Enter a valid phone number (e.g. +46 70 000 00 00)");
+        addValidation(fields.phone, "^\\d{6,12}$", "Enter digits only (e.g. 734151665)");
         addValidation(fields.postalCode, "^[\\w\\s\\-]{3,10}$", "Enter a valid postal code (e.g. 111 22)");
         addValidation(fields.address, "^[\\p{L}\\d\\s\\-,.']+$", "Enter a valid home address (e.g. 123 Main Street)");
         addValidation(fields.identityNumber, "^\\d{8}-\\d{4}$", "Identity number must be in the format YYYYMMDD-XXXX");

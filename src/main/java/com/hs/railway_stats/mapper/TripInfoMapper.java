@@ -19,8 +19,8 @@ public final class TripInfoMapper {
         return tripResponse.trips().stream()
                 .filter(trip -> trip.legs() != null && !trip.legs().isEmpty())
                 .map(trip -> {
-                    var firstLeg = trip.legs().get(0);
-                    var lastLeg = trip.legs().get(trip.legs().size() - 1);
+                    var firstLeg = trip.legs().getFirst();
+                    var lastLeg = trip.legs().getLast();
                     String startDestination = firstLeg.origin().name();
                     String endingDestination = lastLeg.destination().name();
                     Boolean isCancelled = trip.canceled();
@@ -38,7 +38,9 @@ public final class TripInfoMapper {
                             isCancelled,
                             totalMinutesLate,
                             initialDepartureTime,
-                            actualArrivalTime
+                            actualArrivalTime,
+                            null,
+                            null
                     );
                 })
                 .toList();

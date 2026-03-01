@@ -17,6 +17,11 @@ public class TranslationServiceImpl implements TranslationService {
 
     @Override
     public Translation addStation(int stationId, String stationName) {
+        return addStation(stationId, stationName, null);
+    }
+
+    @Override
+    public Translation addStation(int stationId, String stationName, String claimsStationId) {
         translationRepository.findByStationId(stationId).ifPresent(t -> {
             throw new IllegalArgumentException("Station with ID " + stationId + " already exists: " + t.getStationName());
         });
@@ -26,6 +31,7 @@ public class TranslationServiceImpl implements TranslationService {
         Translation translation = Translation.builder()
                 .stationId(stationId)
                 .stationName(stationName)
+                .claimsStationId(claimsStationId)
                 .build();
         return translationRepository.save(translation);
     }

@@ -8,6 +8,8 @@ public record TripInfoResponse(
         Boolean isCancelled,
         int totalMinutesLate,
         OffsetDateTime initialDepartureTime,
-        OffsetDateTime actualArrivalTime
+        OffsetDateTime actualArrivalTime,
+        String departureClaimsStationId,
+        String arrivalClaimsStationId
 ) {
 }

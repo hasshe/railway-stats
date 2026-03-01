@@ -28,4 +28,7 @@ public class Translation {
 
     @Column(nullable = false)
     private String stationName;
+
+    @Column(name = "claims_station_id", length = 36)
+    private String claimsStationId;
 }
