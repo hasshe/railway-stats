@@ -21,6 +21,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -243,6 +244,11 @@ public class TripInfoCard extends VerticalLayout {
     }
 
     private static ClaimRequest getClaimRequest(TripInfoResponse trip, ClaimRequest.Customer customer, UserProfile profile, ClaimRequest.RefundType refundType) {
+        String departureDate = trip.initialDepartureTime() != null
+                ? trip.initialDepartureTime()
+                        .withOffsetSameLocal(ZoneOffset.UTC)
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+                : null;
         return new ClaimRequest(
                 UUID,
                 null,
@@ -252,7 +258,7 @@ public class TripInfoCard extends VerticalLayout {
                 1,
                 trip.departureClaimsStationId(),
                 trip.arrivalClaimsStationId(),
-                trip.initialDepartureTime(),
+                departureDate,
                 "",
                 0,
                 0,

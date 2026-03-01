@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripRequest;
 import com.hs.railway_stats.dto.TripResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -20,6 +22,8 @@ import java.time.ZoneId;
 
 @Component
 public class MalarDalenClient implements RestClient {
+
+    private static final Logger log = LoggerFactory.getLogger(MalarDalenClient.class);
 
     public static final String ZONE_ID = "Europe/Stockholm";
     private final HttpClient httpClient;
@@ -82,6 +86,7 @@ public class MalarDalenClient implements RestClient {
     public void callClaim(ClaimRequest body) throws IOException, InterruptedException {
         String url = "https://evf-regionsormland.preciocloudapp.net/api/Claims";
         String json = objectMapper.writeValueAsString(body);
+        log.info("Claim request JSON: {}", json);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
