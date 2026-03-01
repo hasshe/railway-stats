@@ -15,6 +15,8 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.Notification.Position;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
@@ -43,11 +45,13 @@ public class TripInfoCard extends VerticalLayout {
     private final String cryptoSecret;
     private final String cryptoSalt;
     private final ClaimsService claimsService;
+    private final boolean devMode;
 
-    public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService) {
+    public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService, boolean devMode) {
         this.cryptoSecret = cryptoSecret;
         this.cryptoSalt = cryptoSalt;
         this.claimsService = claimsService;
+        this.devMode = devMode;
         setPadding(false);
         setSpacing(false);
         setWidthFull();
@@ -190,16 +194,26 @@ public class TripInfoCard extends VerticalLayout {
                         claimRequest.customer().firstName(),
                         claimRequest.customer().surName(),
                         claimRequest.payoutOption());
+                if (devMode) {
+                    log.info("[DEV] Skipping actual claim submission for ticketNumber={}", claimRequest.ticketNumber());
+                    UI.getCurrent().access(() -> {
+                        Notification notification = Notification.show("✓ Claim submitted successfully! (dev mode — no real request made)", 4000, Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    });
+                    return;
+                }
                 try {
                     claimsService.submitClaim(claimRequest);
                     log.info("Claim submitted successfully for ticketNumber={}", claimRequest.ticketNumber());
                     UI.getCurrent().access(() -> {
-                        Notification.show("Claim submitted successfully!");
+                        Notification notification = Notification.show("✓ Claim submitted successfully!", 4000, Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                     });
                 } catch (Exception ex) {
                     log.error("Claim submission failed for ticketNumber={}: {}", claimRequest.ticketNumber(), ex.getMessage(), ex);
                     UI.getCurrent().access(() -> {
-                        Notification.show("Claim submission failed: " + ex.getMessage());
+                        Notification notification = Notification.show("✗ Claim submission failed: " + ex.getMessage(), 5000, Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                     });
                 }
             });
@@ -209,14 +223,16 @@ public class TripInfoCard extends VerticalLayout {
     private static UserProfile validateAndGetUserProfile(String profileJson) {
         if (profileJson == null) {
             UI.getCurrent().access(() -> {
-                Notification.show("Please set up your profile before claiming a trip.");
+                Notification notification = Notification.show("Please set up your profile before claiming a trip.", 4000, Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             });
             return null;
         }
         UserProfile profile = UserProfile.fromJson(profileJson);
         if (profile == null || !profile.isComplete()) {
             UI.getCurrent().access(() -> {
-                Notification.show("Please complete your profile before claiming a trip.");
+                Notification notification = Notification.show("Please complete your profile before claiming a trip.", 4000, Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             });
             return null;
         }

@@ -78,6 +78,15 @@
     border-color: rgba(76, 175, 125, 0.35);
 }
 
+/* ── Date picker calendar toggle icon ───────────────────── */
+.trip-info-view vaadin-date-picker::part(toggle-button) {
+    color: var(--text-secondary);
+}
+
+.trip-info-view vaadin-date-picker::part(toggle-button):hover {
+    color: var(--accent);
+}
+
 /* ── Checkbox ───────────────────────────────────────────── */
 .trip-info-view vaadin-checkbox::part(label),
 .trip-info-view vaadin-checkbox [slot="label"] {
@@ -90,3 +99,43 @@
     border-color: var(--border);
 }
 
+/*
+.trip-info-view vaadin-checkbox {
+    --vaadin-checkbox-size: 1.1rem;
+    --vaadin-checkbox-label-color: #e2ede6;
+    --lumo-body-text-color: #e2ede6;
+    padding-bottom: 0.45rem;
+    align-self: flex-end;
+    margin-bottom: 2px;
+}
+
+.trip-info-view vaadin-checkbox::part(label) {
+    color: #e2ede6 !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.trip-info-view vaadin-checkbox::part(checkbox) {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(76, 175, 125, 0.40);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.trip-info-view vaadin-checkbox:hover::part(checkbox) {
+    border-color: rgba(76, 175, 125, 0.70);
+    background: rgba(76, 175, 125, 0.08);
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.12);
+}
+
+.trip-info-view vaadin-checkbox[checked]::part(checkbox) {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.18);
+}
+
+.trip-info-view vaadin-checkbox::part(checkmark) {
+    color: #0d1410;
+}
+*/

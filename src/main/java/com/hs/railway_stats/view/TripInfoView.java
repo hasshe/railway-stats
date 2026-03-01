@@ -22,6 +22,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+
+import java.util.List;
 
 @Route("")
 @CssImport("./themes/railway-stats/styles.css")
@@ -35,7 +38,8 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.version}") String appVersion,
                         RateLimiterService rateLimiterService,
                         TranslationService translationService,
-                        ClaimsService claimsService) {
+                        ClaimsService claimsService,
+                        Environment environment) {
 
         addClassName("trip-info-view");
         setPadding(false);   // handled in CSS per breakpoint
@@ -76,7 +80,8 @@ public class TripInfoView extends VerticalLayout {
                 .set("overflow", "hidden")
                 .set("flex-shrink", "0");
 
-        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService);
+        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService,
+                List.of(environment.getActiveProfiles()).contains("dev"));
         AdminBanner adminBanner = new AdminBanner();
 
         Runnable[] collectHolder = {() -> {
