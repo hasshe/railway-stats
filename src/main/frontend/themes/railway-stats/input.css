@@ -99,18 +99,17 @@
     border-color: var(--border);
 }
 
-/*
+/* Adjust size and spacing for better alignment and aesthetics */
 .trip-info-view vaadin-checkbox {
     --vaadin-checkbox-size: 1.1rem;
     --vaadin-checkbox-label-color: #e2ede6;
     --lumo-body-text-color: #e2ede6;
-    padding-bottom: 0.45rem;
+    padding-bottom: 0.25rem;
     align-self: flex-end;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .trip-info-view vaadin-checkbox::part(label) {
-    color: #e2ede6 !important;
     font-size: 0.85rem;
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -138,4 +137,3 @@
 .trip-info-view vaadin-checkbox::part(checkmark) {
     color: #0d1410;
 }
-*/
