@@ -14,7 +14,6 @@ body, html {
     max-width: 100vw;
 }
 
-vaadin-app-layout,
 vaadin-vertical-layout[class~="trip-info-view"],
 .v-system-error {
     background: transparent;

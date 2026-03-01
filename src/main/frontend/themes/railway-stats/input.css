@@ -26,11 +26,7 @@
 
 /* ── Field Labels ───────────────────────────────────────── */
 .trip-info-view vaadin-combo-box::part(label),
-.trip-info-view vaadin-date-picker::part(label),
-.trip-info-view vaadin-text-field::part(label),
-.trip-info-view vaadin-combo-box [slot="label"],
-.trip-info-view vaadin-date-picker [slot="label"],
-.trip-info-view vaadin-text-field [slot="label"] {
+.trip-info-view vaadin-date-picker::part(label) {
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 500;
@@ -40,8 +36,7 @@
 
 /* ── Input Fields ───────────────────────────────────────── */
 .trip-info-view vaadin-combo-box::part(input-field),
-.trip-info-view vaadin-date-picker::part(input-field),
-.trip-info-view vaadin-text-field::part(input-field) {
+.trip-info-view vaadin-date-picker::part(input-field) {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -52,20 +47,17 @@
 }
 
 .trip-info-view vaadin-combo-box::part(value),
-.trip-info-view vaadin-date-picker::part(value),
-.trip-info-view vaadin-text-field::part(value) {
+.trip-info-view vaadin-date-picker::part(value) {
     color: #ffffff;
 }
 
 .trip-info-view vaadin-combo-box::part(placeholder),
-.trip-info-view vaadin-date-picker::part(placeholder),
-.trip-info-view vaadin-text-field::part(placeholder) {
+.trip-info-view vaadin-date-picker::part(placeholder) {
     color: rgba(255, 255, 255, 0.35);
 }
 
 .trip-info-view vaadin-combo-box::part(input-field):focus-within,
-.trip-info-view vaadin-date-picker::part(input-field):focus-within,
-.trip-info-view vaadin-text-field::part(input-field):focus-within {
+.trip-info-view vaadin-date-picker::part(input-field):focus-within {
     background: rgba(76, 175, 125, 0.06);
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
@@ -73,8 +65,7 @@
 }
 
 .trip-info-view vaadin-combo-box::part(input-field):hover,
-.trip-info-view vaadin-date-picker::part(input-field):hover,
-.trip-info-view vaadin-text-field::part(input-field):hover {
+.trip-info-view vaadin-date-picker::part(input-field):hover {
     border-color: rgba(76, 175, 125, 0.35);
 }
 
@@ -88,18 +79,6 @@
 }
 
 /* ── Checkbox ───────────────────────────────────────────── */
-.trip-info-view vaadin-checkbox::part(label),
-.trip-info-view vaadin-checkbox [slot="label"] {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-}
-
-.trip-info-view vaadin-checkbox::part(checkbox) {
-    border-radius: var(--radius-sm);
-    border-color: var(--border);
-}
-
-/* Adjust size and spacing for better alignment and aesthetics */
 .trip-info-view vaadin-checkbox {
     --vaadin-checkbox-size: 1.1rem;
     --vaadin-checkbox-label-color: #e2ede6;
@@ -110,6 +89,7 @@
 }
 
 .trip-info-view vaadin-checkbox::part(label) {
+    color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     letter-spacing: 0.02em;

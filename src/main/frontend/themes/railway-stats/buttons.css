@@ -1,5 +1,4 @@
 /* ── Buttons ────────────────────────────────────────────── */
-.trip-info-view vaadin-button[theme~="primary"]::part(label),
 .trip-info-view vaadin-button[theme~="primary"] {
     background: var(--accent);
     border-radius: var(--radius-md);
