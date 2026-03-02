@@ -27,32 +27,41 @@
 /* Fixed floating action button that navigates to the metrics view */
 .metrics-fab {
     position: fixed;
-    bottom: 24px;
+    bottom: 32px;
     right: 24px;
-    z-index: 1000;
+    z-index: 9999;
 }
 
 /* FAB circle shape, size and accent background */
 .metrics-fab-btn {
     width: 64px;
     height: 64px;
+    min-width: 64px !important;
     border-radius: 50% !important;
-    background: var(--accent) !important;
+    background: #4caf7d !important;
+    color: #fff !important;
     box-shadow: 0 4px 16px rgba(76, 175, 125, 0.45) !important;
-    transition: background var(--transition), box-shadow var(--transition), transform var(--transition) !important;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
     padding: 0 !important;
+    border: none !important;
 }
 
 .metrics-fab-btn::part(label) {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 0;
 }
 
-/* FAB icon — white, centred inside the circle */
-.metrics-fab-btn::part(icon) {
-    color: #fff;
-    width: 1.8rem;
-    height: 1.8rem;
-    margin: 0;
+/* FAB SVG icon — white bar-chart injected into the button's label slot */
+.metrics-fab-btn svg {
+    display: block;
+    width: 26px;
+    height: 26px;
+    stroke: #ffffff;
+    fill: none;
+    pointer-events: none;
 }
 
 .metrics-fab-btn:hover {

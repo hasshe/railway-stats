@@ -56,20 +56,29 @@ public class TripInfoView extends VerticalLayout {
 
         GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
 
+        // Wrap in a Div so the Anchor sits correctly in the grid's right column
+        Div githubWrapper = new Div(githubLink);
+        githubWrapper.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "flex-end");
+
         ScheduledJobTimer scheduledJobTimer = new ScheduledJobTimer();
 
         // Title wrapper — CSS grid centres this column; title wraps naturally inside
         Div titleWrapper = new Div(titleGroup);
         titleWrapper.addClassName("header-title-wrapper");
 
-        // CSS grid header: [profileButton] [titleWrapper] [githubLink]
-        HorizontalLayout headerRow = getHeaderRow(profileButton, titleWrapper, githubLink);
+        // CSS grid header: [profileButton] [titleWrapper] [githubWrapper]
+        HorizontalLayout headerRow = getHeaderRow(profileButton, titleWrapper, githubWrapper);
 
-        // ── Metrics FAB (sticky bottom-right) ────────────────────
+        // ── Metrics FAB — appended to UI root so position:fixed is viewport-relative ──
         Button metricsButton = getMetricsButton();
-
         Div metricsFab = new Div(metricsButton);
         metricsFab.addClassName("metrics-fab");
+        // Attach after the view is added to the UI so getCurrent() is available
+        addAttachListener(e -> UI.getCurrent().getElement().appendChild(metricsFab.getElement()));
+        addDetachListener(e -> metricsFab.getElement().removeFromParent());
 
         TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService,
                 List.of(environment.getActiveProfiles()).contains("dev"));
@@ -89,7 +98,7 @@ public class TripInfoView extends VerticalLayout {
 
         InputLayout inputLayout = getInputLayout(tripInfoService, rateLimiterService, tripInfoCard, adminControls, scheduledJobTimer, collectHolder, clearDateHolder);
 
-        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoCard, metricsFab);
+        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoCard);
         setFlexGrow(1, tripInfoCard);
         setAlignItems(Alignment.CENTER);
         setAlignSelf(Alignment.STRETCH, headerRow, tripInfoCard);
@@ -107,18 +116,25 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private static Button getMetricsButton() {
-        Icon metricsIcon = new Icon(VaadinIcon.BAR_CHART);
-        metricsIcon.getStyle().set("color", "#fff");
-        Button metricsButton = new Button(metricsIcon);
-        metricsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        // VaadinIcon won't render outside the Vaadin component tree — use raw SVG instead
+        Button metricsButton = new Button();
         metricsButton.getElement().setAttribute("aria-label", "Metrics");
         metricsButton.addClassName("metrics-fab-btn");
+        metricsButton.getElement().executeJs(
+            "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
+            "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
+            "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
+            "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
+            "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
+            "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
+            "</svg>';"
+        );
         metricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
         return metricsButton;
     }
 
-    private static HorizontalLayout getHeaderRow(Button profileButton, Div titleWrapper, GitHubLink githubLink) {
-        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleWrapper, githubLink);
+    private static HorizontalLayout getHeaderRow(Button profileButton, Div titleWrapper, Div githubWrapper) {
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleWrapper, githubWrapper);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
         headerRow.addClassName("header-row");
