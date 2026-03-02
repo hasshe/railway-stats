@@ -1,13 +1,16 @@
 /* ── Stats Chart ─────────────────────────────────────────── */
+/* trip-stats-chart custom element: block display and sibling spacing */
 trip-stats-chart {
     display: block;
     width: 100%;
 }
 
+/* 16px gap between consecutive stacked charts */
 trip-stats-chart + trip-stats-chart {
     margin-top: 16px;
 }
 
+/* Chart wrapper card: elevated background, border and shadow */
 trip-stats-chart::part(wrapper),
 trip-stats-chart .chart-wrapper {
     background: var(--bg-elevated);
@@ -17,6 +20,7 @@ trip-stats-chart .chart-wrapper {
 }
 
 /* ── Departure-time filter row ───────────────────────────── */
+/* Card-styled row that wraps the departure-time MultiSelectComboBox */
 .filter-row {
     padding: 12px 16px;
     background: var(--bg-elevated);
@@ -26,6 +30,7 @@ trip-stats-chart .chart-wrapper {
     box-sizing: border-box;
 }
 
+/* Lumo token overrides to keep the combo colours on-theme */
 .filter-row .time-filter-combo {
     --lumo-base-color:           var(--bg-surface);
     --lumo-body-text-color:      var(--text-primary);
@@ -34,6 +39,9 @@ trip-stats-chart .chart-wrapper {
     --lumo-primary-text-color:   var(--accent);
     --lumo-border-radius-m:      var(--radius-md);
 }
+
+/* ── Route selector row ──────────────────────────────────── */
+/* Card row showing origin / swap / destination station labels */
 .route-selector-row {
     padding: 12px 16px;
     background: var(--bg-elevated);
@@ -50,6 +58,7 @@ trip-stats-chart .chart-wrapper {
     min-width: 120px;
 }
 
+/* Muted uppercase "From" / "To" sub-label */
 .route-selector__sub {
     font-size: 0.7rem;
     font-weight: 600;
@@ -58,10 +67,10 @@ trip-stats-chart .chart-wrapper {
     color: var(--text-muted);
 }
 
+/* Bold primary-colour station name */
 .route-selector__station {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     letter-spacing: -0.01em;
 }
-

@@ -1,10 +1,12 @@
 /* ── Trip Cards ─────────────────────────────────────────── */
+/* Scrollable card list container and base card surface */
 .trip-cards-container {
     gap: 0.5rem !important;
     padding: 0.25rem 0 !important;
 }
 
 .trip-card {
+    /* Card base: elevated surface, border, shadow and hover transition */
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -21,6 +23,7 @@
 }
 
 .trip-card--late {
+    /* Accent left-border variants for late and cancelled states */
     border-left: 3px solid var(--accent);
 }
 
@@ -30,6 +33,7 @@
 }
 
 /* ── Info section ───────────────────────────────────────── */
+/* Left column: departure time row and route text */
 .trip-card-info {
     display: flex;
     flex-direction: column;
@@ -38,6 +42,7 @@
 }
 
 .trip-card-time-row {
+    /* Departure time + arrow row inside the card */
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -56,6 +61,7 @@
 }
 
 /* ── Badges ─────────────────────────────────────────────── */
+/* Pill badges: on-time (green), late (amber), cancelled (red) */
 .trip-card-badge-row {
     display: flex;
     gap: 0.4rem;
@@ -91,6 +97,7 @@
 }
 
 /* ── Action button ──────────────────────────────────────── */
+/* "Request claim" / action CTA on the right side of each card */
 .trip-card-action-btn {
     flex-shrink: 0;
     background: rgba(76, 175, 125, 0.12) !important;
@@ -130,6 +137,7 @@
 }
 
 /* ── Empty state ────────────────────────────────────────── */
+/* Centred placeholder text when no trips match the current filter */
 .trip-card-empty {
     display: block;
     width: 100%;
@@ -140,6 +148,7 @@
 }
 
 @media (max-width: 480px) {
+    /* Tighter padding and smaller time font on very small screens */
     .trip-card {
         padding: 0.6rem 0.75rem;
     }
@@ -148,4 +157,3 @@
         font-size: 0.9rem;
     }
 }
-

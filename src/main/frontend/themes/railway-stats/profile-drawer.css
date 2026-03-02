@@ -1,6 +1,7 @@
 /* ── Profile Drawer ─────────────────────────────────────── */
 
 /* Backdrop */
+/* Semi-transparent blurred overlay behind the open drawer */
 .profile-drawer-backdrop {
     position: fixed;
     inset: 0;
@@ -19,6 +20,7 @@
 }
 
 /* Sliding panel */
+/* Left-edge slide-in panel containing profile and admin controls */
 .profile-drawer-panel {
     position: fixed;
     top: 0;
@@ -46,6 +48,7 @@
 }
 
 /* Header */
+/* Drawer header bar with close button and title */
 .profile-drawer-header {
     display: flex;
     align-items: center;
@@ -57,6 +60,7 @@
 }
 
 /* Scrollable content */
+/* Scrollable middle section that holds the form fields */
 .profile-drawer-content {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -75,6 +79,7 @@
 }
 
 /* Field labels */
+/* Uppercase secondary labels above text fields in the drawer */
 .profile-drawer-panel vaadin-text-field::part(label) {
     color: var(--text-secondary);
     font-size: 0.72rem;
@@ -84,6 +89,7 @@
 }
 
 /* Input fields */
+/* Dark semi-transparent input surface inside the drawer */
 .profile-drawer-panel vaadin-text-field::part(input-field) {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border);
@@ -94,6 +100,7 @@
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
+/* White value and placeholder text colours inside drawer fields */
 .profile-drawer-panel vaadin-text-field::part(value) {
     color: #ffffff;
 }
@@ -102,6 +109,7 @@
     color: rgba(255, 255, 255, 0.35);
 }
 
+/* Accent focus ring and hover border for drawer text fields */
 .profile-drawer-panel vaadin-text-field::part(input-field):focus-within {
     background: rgba(76, 175, 125, 0.06);
     border-color: var(--accent);
@@ -113,6 +121,7 @@
 }
 
 /* Footer */
+/* Sticky footer row at the bottom of the drawer (save/action buttons) */
 .profile-drawer-footer {
     flex-shrink: 0;
     padding: 16px 20px;
@@ -121,6 +130,7 @@
 }
 
 /* Error messages */
+/* Red error text and border for invalid field state */
 .profile-drawer-panel vaadin-text-field::part(error-message) {
     color: var(--error);
 }
@@ -131,9 +141,9 @@
 }
 
 /* Phone / small screens */
+/* Full-width drawer on narrow viewports */
 @media (max-width: 600px) {
     .profile-drawer-panel {
         width: 100vw;
     }
 }
-

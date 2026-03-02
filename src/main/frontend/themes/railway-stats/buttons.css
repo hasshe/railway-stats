@@ -1,10 +1,12 @@
 /* ── Buttons ────────────────────────────────────────────── */
+/* Primary button accent fill for the main view */
 .trip-info-view vaadin-button[theme~="primary"] {
     background: var(--accent);
     border-radius: var(--radius-md);
 }
 
 /* Swap button */
+/* InputLayout station-swap button label typography */
 .trip-info-view vaadin-button[theme~="small"]::part(label) {
     font-size: 0.78rem;
     font-weight: 500;
@@ -22,6 +24,7 @@
 }
 
 /* ── Metrics FAB (sticky bottom-right) ──────────────────── */
+/* Fixed floating action button that navigates to the metrics view */
 .metrics-fab {
     position: fixed;
     bottom: 24px;
@@ -29,6 +32,7 @@
     z-index: 1000;
 }
 
+/* FAB circle shape, size and accent background */
 .metrics-fab-btn {
     width: 64px;
     height: 64px;
@@ -43,6 +47,7 @@
     display: none;
 }
 
+/* FAB icon — white, centred inside the circle */
 .metrics-fab-btn::part(icon) {
     color: #fff;
     width: 1.8rem;
@@ -62,6 +67,7 @@
 }
 
 /* ── GitHub link button ─────────────────────────────────── */
+/* SVG icon colour and hover brightening for the GitHub anchor in the header */
 .github-link-btn::part(icon) {
     color: #8aaa92;
     width: 1.7rem;
@@ -74,6 +80,7 @@
 
 
 /* ── Back button (MetricsView header) ───────────────────── */
+/* Left-arrow back button on the Metrics page header */
 .metrics-back-btn::part(icon) {
     color: #4caf7d;
     width: 1.3rem;
@@ -86,6 +93,7 @@
 }
 
 /* ── Metrics swap button ────────────────────────────────── */
+/* Origin/destination swap button on the Metrics route selector */
 .metrics-swap-btn::part(icon) {
     color: #4caf7d;
     width: 1.3rem;
@@ -98,6 +106,7 @@
 }
 
 /* ── Admin Controls ─────────────────────────────────────── */
+/* Outlined accent buttons inside the admin panel (collect, clear) */
 .trip-info-view .admin-controls-btn {
     background: rgba(76, 175, 125, 0.12);
     color: var(--accent);
@@ -126,6 +135,7 @@
     box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.25) !important;
 }
 
+/* Responsive: stack admin buttons full-width on mobile */
 @media (max-width: 600px) {
     .trip-info-view .admin-controls-btn {
         width: 100%;
@@ -135,4 +145,3 @@
         justify-content: center;
     }
 }
-

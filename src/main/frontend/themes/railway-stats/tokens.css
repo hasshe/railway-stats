@@ -1,4 +1,5 @@
 /* ── Design Tokens ──────────────────────────────────────── */
+/* Global CSS custom properties: colours, radii, shadows, transitions */
 :root {
     --bg-base:        #0d1410;
     --bg-surface:     #121a14;
@@ -21,4 +22,3 @@
     --shadow-lg:      0 8px 40px rgba(0,0,0,0.60);
     --transition:     0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
