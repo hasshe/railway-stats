@@ -23,6 +23,7 @@ public class InputLayout extends FormLayout {
     private final ComboBox<String> originField;
     private final ComboBox<String> destinationField;
     private final DatePicker dateFilter;
+    private Runnable onRouteChange = () -> {};
 
     public InputLayout(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                        AdminControls adminControls,
@@ -42,8 +43,14 @@ public class InputLayout extends FormLayout {
 
         Button swapButton = getSwapButton(tripInfoService, tripInfoCard, rateLimiterService);
 
-        originField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
-        destinationField.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
+        originField.addValueChangeListener(event -> {
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            onRouteChange.run();
+        });
+        destinationField.addValueChangeListener(event -> {
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            onRouteChange.run();
+        });
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
         HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
@@ -62,12 +69,26 @@ public class InputLayout extends FormLayout {
         setColspan(adminControls, 4);
     }
 
+    /** Register a callback that fires whenever origin or destination changes. */
+    public void setOnRouteChange(Runnable callback) {
+        this.onRouteChange = callback != null ? callback : () -> {};
+    }
+
+    public String getOrigin() {
+        return originField.getValue();
+    }
+
+    public String getDestination() {
+        return destinationField.getValue();
+    }
+
     private Button getSwapButton(TripInfoService tripInfoService, TripInfoCard tripInfoCard, RateLimiterService rateLimiterService) {
         Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
             String temp = originField.getValue();
             originField.setValue(destinationField.getValue());
             destinationField.setValue(temp);
             refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            onRouteChange.run();
         });
         swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         swapButton.addClassName("swap-button");

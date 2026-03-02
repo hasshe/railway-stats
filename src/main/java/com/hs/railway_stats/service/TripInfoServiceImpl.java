@@ -6,11 +6,9 @@ import com.hs.railway_stats.dto.TripResponse;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.mapper.TripInfoMapper;
 import com.hs.railway_stats.repository.TranslationRepository;
-import com.hs.railway_stats.repository.TripInfoMetricRepository;
 import com.hs.railway_stats.repository.TripInfoRepository;
 import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfo;
-import com.hs.railway_stats.repository.entity.TripInfoMetric;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -31,19 +28,20 @@ public class TripInfoServiceImpl implements TripInfoService {
     private static final Logger logger = LoggerFactory.getLogger(TripInfoServiceImpl.class);
     private static final int MINUTE = 59;
     private static final int HOUR = 23;
-    private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
     public static final String ZONE_ID = "Europe/Stockholm";
+
     private final RestClient restClient;
     private final TripInfoRepository tripInfoRepository;
-    private final TripInfoMetricRepository tripInfoMetricRepository;
+    private final TripInfoMetricService tripInfoMetricService;
     private final TranslationRepository translationRepository;
 
-    public TripInfoServiceImpl(RestClient restClient, TripInfoRepository tripInfoRepository,
-                               TripInfoMetricRepository tripInfoMetricRepository,
+    public TripInfoServiceImpl(RestClient restClient,
+                               TripInfoRepository tripInfoRepository,
+                               TripInfoMetricService tripInfoMetricService,
                                TranslationRepository translationRepository) {
         this.restClient = restClient;
         this.tripInfoRepository = tripInfoRepository;
-        this.tripInfoMetricRepository = tripInfoMetricRepository;
+        this.tripInfoMetricService = tripInfoMetricService;
         this.translationRepository = translationRepository;
     }
 
@@ -58,7 +56,7 @@ public class TripInfoServiceImpl implements TripInfoService {
             LocalDate today = LocalDate.now(stockholmZone);
             var todayTrips = findAndFilterTrips(originId, destinationId, allTrips, today);
             var newTrips = saveTripInfoToDatabase(todayTrips, originId, destinationId);
-            updateMetrics(newTrips, (int) originId, (int) destinationId, today);
+            tripInfoMetricService.updateMetrics(newTrips, (int) originId, (int) destinationId, today);
         } catch (Exception e) {
             logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
             throw new RuntimeException("Failed to fetch trip info", e);
@@ -147,46 +145,6 @@ public class TripInfoServiceImpl implements TripInfoService {
                 .toList();
     }
 
-    private void updateMetrics(List<TripInfoResponse> trips, int originId, int destinationId, LocalDate today) {
-        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
-        trips.forEach(trip -> {
-            if (trip.initialDepartureTime() == null) {
-                return;
-            }
-            if (trip.actualArrivalTime() == null && !trip.isCancelled()) {
-                return;
-            }
-            LocalTime scheduledDeparture = trip.initialDepartureTime()
-                    .atZoneSameInstant(stockholmZone)
-                    .toLocalTime();
-
-            TripInfoMetric metric = tripInfoMetricRepository
-                    .findByOriginIdAndDestinationIdAndScheduledDepartureTime(originId, destinationId, scheduledDeparture)
-                    .orElseGet(() -> TripInfoMetric.builder()
-                            .originId(originId)
-                            .destinationId(destinationId)
-                            .scheduledDepartureTime(scheduledDeparture)
-                            .build());
-
-            int n = metric.getTotalTrips();
-            int newAvg = (metric.getAverageMinutesLate() * n + trip.totalMinutesLate()) / (n + 1);
-            metric.setAverageMinutesLate(newAvg);
-            metric.setTotalTrips(n + 1);
-
-            if (trip.isCancelled()) {
-                metric.getCanceledTripDates().add(today);
-            }
-
-            boolean reimbursable = trip.isCancelled() || trip.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD;
-            if (reimbursable) {
-                metric.setTotalReimbursableTrips(metric.getTotalReimbursableTrips() + 1);
-            }
-
-            tripInfoMetricRepository.save(metric);
-            logger.debug("Updated metric for origin={} destination={} departure={}", originId, destinationId, scheduledDeparture);
-        });
-    }
-
     @Override
     @Transactional
     public void deleteTripsByDate(LocalDate date) {
@@ -246,3 +204,4 @@ public class TripInfoServiceImpl implements TripInfoService {
         return !plannedDepartureStockholm.toLocalDateTime().isBefore(endOfDay);
     }
 }
+

@@ -1,0 +1,67 @@
+/* ── Stats Chart ─────────────────────────────────────────── */
+trip-stats-chart {
+    display: block;
+    width: 100%;
+}
+
+trip-stats-chart + trip-stats-chart {
+    margin-top: 16px;
+}
+
+trip-stats-chart::part(wrapper),
+trip-stats-chart .chart-wrapper {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Departure-time filter row ───────────────────────────── */
+.filter-row {
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+}
+
+.filter-row .time-filter-combo {
+    --lumo-base-color:           var(--bg-surface);
+    --lumo-body-text-color:      var(--text-primary);
+    --lumo-secondary-text-color: var(--text-secondary);
+    --lumo-primary-color:        var(--accent);
+    --lumo-primary-text-color:   var(--accent);
+    --lumo-border-radius-m:      var(--radius-md);
+}
+.route-selector-row {
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.route-selector__block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 120px;
+}
+
+.route-selector__sub {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.route-selector__station {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+

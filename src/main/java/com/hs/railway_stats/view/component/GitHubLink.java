@@ -42,7 +42,7 @@ public class GitHubLink extends Anchor {
     private static SvgIcon getGithubIcon() {
         SvgIcon githubIcon = new SvgIcon("icons/github.svg");
         githubIcon.setSize("1.7rem");
-        githubIcon.getStyle().set("color", "#5a6478");
+        githubIcon.getStyle().set("color", "#8aaa92");
         return githubIcon;
     }
 
@@ -50,6 +50,7 @@ public class GitHubLink extends Anchor {
         Button githubButton = new Button(githubIcon);
         githubButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
         githubButton.getElement().setAttribute("aria-label", "GitHub repository");
+        githubButton.addClassName("github-link-btn");
         return githubButton;
     }
 }

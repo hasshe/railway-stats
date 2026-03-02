@@ -21,6 +21,82 @@
     box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.28) !important;
 }
 
+/* ── Metrics FAB (sticky bottom-right) ──────────────────── */
+.metrics-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+}
+
+.metrics-fab-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50% !important;
+    background: var(--accent) !important;
+    box-shadow: 0 4px 16px rgba(76, 175, 125, 0.45) !important;
+    transition: background var(--transition), box-shadow var(--transition), transform var(--transition) !important;
+    padding: 0 !important;
+}
+
+.metrics-fab-btn::part(label) {
+    display: none;
+}
+
+.metrics-fab-btn::part(icon) {
+    color: #fff;
+    width: 1.8rem;
+    height: 1.8rem;
+    margin: 0;
+}
+
+.metrics-fab-btn:hover {
+    background: #3d9e6a !important;
+    box-shadow: 0 6px 24px rgba(76, 175, 125, 0.60) !important;
+    transform: translateY(-2px);
+}
+
+.metrics-fab-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(76, 175, 125, 0.40) !important;
+}
+
+/* ── GitHub link button ─────────────────────────────────── */
+.github-link-btn::part(icon) {
+    color: #8aaa92;
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+.github-link-btn:hover::part(icon) {
+    color: #b8d4c0;
+}
+
+
+/* ── Back button (MetricsView header) ───────────────────── */
+.metrics-back-btn::part(icon) {
+    color: #4caf7d;
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.metrics-back-btn:hover {
+    background: rgba(76, 175, 125, 0.14) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.16) !important;
+}
+
+/* ── Metrics swap button ────────────────────────────────── */
+.metrics-swap-btn::part(icon) {
+    color: #4caf7d;
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.metrics-swap-btn:hover {
+    background: rgba(76, 175, 125, 0.14) !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.16) !important;
+}
+
 /* ── Admin Controls ─────────────────────────────────────── */
 .trip-info-view .admin-controls-btn {
     background: rgba(76, 175, 125, 0.12);

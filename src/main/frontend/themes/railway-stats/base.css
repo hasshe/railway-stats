@@ -15,6 +15,7 @@ body, html {
 }
 
 vaadin-vertical-layout[class~="trip-info-view"],
+vaadin-vertical-layout[class~="metrics-view"],
 .v-system-error {
     background: transparent;
 }
@@ -24,7 +25,8 @@ vaadin-vertical-layout[class~="trip-info-view"],
 }
 
 /* ── Trip Info View ─────────────────────────────────────── */
-.trip-info-view {
+.trip-info-view,
+.metrics-view {
     background: var(--bg-base);
     min-height: 100vh;
     color: var(--text-primary);
@@ -35,13 +37,15 @@ vaadin-vertical-layout[class~="trip-info-view"],
 }
 
 @media (min-width: 600px) {
-    .trip-info-view {
+    .trip-info-view,
+    .metrics-view {
         padding: 20px !important;
     }
 }
 
 /* Lumo token overrides scoped to the view */
-.trip-info-view {
+.trip-info-view,
+.metrics-view {
     --lumo-base-color:           var(--bg-surface);
     --lumo-body-text-color:      var(--text-primary);
     --lumo-secondary-text-color: var(--text-secondary);
@@ -54,8 +58,48 @@ vaadin-vertical-layout[class~="trip-info-view"],
 }
 
 /* Ensure no child overflows the view */
-.trip-info-view > * {
+.trip-info-view > *,
+.metrics-view > * {
     min-width: 0;
     max-width: 100%;
+}
+
+/* ── Header row ─────────────────────────────────────────── */
+/*
+ * Three-column CSS grid: fixed left slot | auto-centred title | fixed right slot.
+ * The title column is always centred regardless of how wide the flanks are.
+ * On very small screens the title wraps inside its centred column but never
+ * overflows — overflow-x: hidden on the view clips anything that would escape.
+ */
+.header-row {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.header-row .header-title-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* The inner HorizontalLayout (titleGroup) may wrap on narrow screens — that's fine */
+.header-row .header-title-wrapper > * {
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+}
+
+.header-row .header-title-wrapper h1 {
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+    min-width: 0;
 }
 
