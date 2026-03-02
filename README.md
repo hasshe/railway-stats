@@ -1,6 +1,6 @@
 # 🚆 Movingo Tracker (railway-stats)
 
-A self-hosted web application for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It automatically collects trip data every night, stores it locally, and lets you browse historical delay and cancellation stats — including which journeys qualify for a reimbursement claim.
+A self-hosted web application for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It automatically collects trip data every night, stores it locally, and lets you browse historical delay and cancellation stats — including which journeys qualify for a reimbursement claim. A dedicated **Metrics view** visualises per-departure-time statistics as interactive Chart.js bar charts.
 
 ---
 
@@ -9,9 +9,12 @@ A self-hosted web application for tracking train punctuality on the **Uppsala C 
 | Feature | Description |
 |---|---|
 | **Automatic data collection** | A scheduled job runs every night at **23:50 (Europe/Stockholm)** and fetches all departures for both directions (Uppsala → Stockholm and Stockholm → Uppsala) from the [TransitHub API](https://v2.api.transithub.se). |
-| **Trip grid** | The main view shows a filterable grid of trips for any past date with columns: Departure, Arrival, Minutes Late, and Cancelled. |
-| **Claimable filter** | A "Claimable" checkbox filters the grid to only show trips that were **cancelled** or **≥ 20 minutes late** — the Swedish threshold for a reimbursement claim. |
+| **Trip list** | The main view shows a filterable list of trip cards for any past date, each showing departure time, arrival time, minutes late, and status badges. |
+| **Claimable filter** | A "Claimable" checkbox filters the list to only show trips that were **cancelled** or **≥ 20 minutes late** — the Swedish threshold for a reimbursement claim. |
 | **Swap button** | Quickly swap origin and destination to view the return leg. |
+| **Metrics view** | A separate `/metrics` page with three independent Chart.js bar charts: **Average Minutes Late**, **Times Cancelled**, and **Claims Requested** — one per scheduled departure time. |
+| **Departure-time filter** | A multi-select dropdown on the Metrics page lets you filter charts to specific departure times. |
+| **Metrics FAB** | A sticky floating action button (bottom-right corner) on the main view navigates to the Metrics page from anywhere on the page. |
 | **Profile drawer** | Optionally save your personal details (name, address, ticket number, etc.) in the browser for convenience when filing claims. All data is encrypted client-side. |
 | **Rate limiter** | IP-based rate limiter (20 requests / 5 minutes, 15-minute block) protects the API endpoint from abuse. |
 | **Admin mode** | Password-protected admin mode unlocked via the Profile drawer. Persists across page refreshes using encrypted `localStorage`. |
@@ -22,11 +25,37 @@ A self-hosted web application for tracking train punctuality on the **Uppsala C 
 
 ## Tech stack
 
-- **Java 21** + **Spring Boot 4.x**
-- **Vaadin 25** (server-side UI framework)
-- **Spring Data JPA** + **H2** (dev) / **PostgreSQL** (prod)
-- **Lombok**
-- **Jackson** (JSON serialization)
+| Layer | Technology |
+|---|---|
+| Language | **Java 21** |
+| Framework | **Spring Boot 4.x** |
+| UI | **Vaadin 25** (server-side, with custom web components) |
+| Charts | **Chart.js 4.4** (via a `<trip-stats-chart>` custom element) |
+| Persistence | **Spring Data JPA** + **H2** (dev) / **PostgreSQL** (prod) |
+| Build | **Maven 3.9**, **Lombok**, **Jackson** |
+
+---
+
+## Views
+
+### Main view (`/`)
+
+The landing page. Contains:
+- A **header row** with the profile/menu button, "Movingo Tracker" title, and GitHub link.
+- An **input form** for selecting origin, destination, and date.
+- A scrollable **trip card list** filtered by the selected route and date.
+- A sticky **Metrics FAB** (green circle, bottom-right) that navigates to `/metrics`.
+
+### Metrics view (`/metrics`)
+
+Accessible via the FAB or directly at `/metrics`. Contains:
+- A **back button** returning to the main view.
+- A **route selector** showing the current origin → destination as read-only labels with a swap button (no free-text input).
+- A **departure-time filter** — a multi-select combo box populated with all distinct scheduled departure times for the selected route. Selecting one or more times restricts all three charts to those departures. Clearing the selection shows all.
+- Three stacked **Chart.js bar charts**, one each for:
+  - **Average Minutes Late** (amber)
+  - **Times Cancelled** (red)
+  - **Claims Requested** (green)
 
 ---
 
@@ -121,14 +150,14 @@ SPRING_PROFILES_ACTIVE=prod \
 
 ## Admin mode
 
-Admin mode unlocks two extra controls in the toolbar: **Collect (Admin)** and **Add Station (Admin)**.
+Admin mode unlocks three extra controls in the toolbar: **Collect (Admin)**, **Clear Date (Admin)**, and **Add Station (Admin)**.
 
 ### Enabling / disabling
 
 1. Open the **Profile drawer** (hamburger menu, top-left).
 2. Type the configured `ADMIN_USERNAME` value into the **First Name** field — the **Toggle Admin Mode** button appears.
 3. Click **Toggle Admin Mode** and enter the `ADMIN_PASSWORD`.
-4. On success the 🔐 **Admin Mode Active** banner appears and both admin buttons are shown.
+4. On success the 🔐 **Admin Mode Active** banner appears and all three admin buttons are shown.
 5. Clicking **Toggle Admin Mode** again (with the correct password) disables admin mode.
 
 Admin mode is persisted across page refreshes via an encrypted `localStorage` entry (`adminSession`). The session is cleared on explicit toggle-off.
@@ -136,6 +165,10 @@ Admin mode is persisted across page refreshes via an encrypted `localStorage` en
 ### Collect (Admin)
 
 Manually triggers the same trip-data collection job that normally runs on the nightly schedule (every day at **23:50 Europe/Stockholm**). Useful after adding a new station or to back-fill data without restarting the server.
+
+### Clear Date (Admin)
+
+Deletes **all trip records** for the date currently selected in the date picker, then refreshes the trip list. Useful for removing bad or duplicate data for a specific day so it can be re-collected cleanly via **Collect (Admin)**.
 
 ### Add Station (Admin)
 
@@ -186,11 +219,38 @@ src/main/java/com/hs/railway_stats/
 ├── dto/             # API request/response records
 ├── external/        # TransitHub REST client
 ├── mapper/          # Maps API responses to internal DTOs
-├── repository/      # JPA repositories + entities (TripInfo, Translation)
-├── service/         # Business logic, scheduler, rate limiter
-└── view/            # Vaadin UI (main view + components)
-    ├── component/   # ProfileDrawer, TripInfoGrid, InputLayout, …
-    └── util/        # BrowserStorageUtils (client-side crypto)
+├── repository/      # JPA repositories + entities (TripInfo, TripInfoMetric, Translation)
+├── service/
+│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion
+│   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, departure times
+│   ├── ClaimsService                                  # Claim URL generation
+│   ├── TranslationService                             # Station name ↔ ID mapping
+│   └── RateLimiterService                             # IP-based rate limiting
+└── view/
+    ├── TripInfoView.java     # Main view (route /)
+    ├── MetricsView.java      # Metrics view (route /metrics)
+    └── component/
+        ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
+        ├── InputLayout       # Station/date selectors and filter controls
+        ├── TripInfoCard      # Individual trip card + claim button
+        ├── ProfileDrawer     # Slide-in profile + admin panel
+        ├── AdminControls     # Collect / Add Station admin buttons
+        ├── AdminBanner       # "Admin Mode Active" status banner
+        ├── GitHubLink        # Header GitHub icon anchor
+        └── ScheduledJobTimer # Next-run countdown display
+
+src/main/frontend/
+├── trip-stats-chart.js           # <trip-stats-chart> custom element (Chart.js)
+├── icons/github.svg              # GitHub SVG icon
+└── themes/railway-stats/
+    ├── styles.css                # Stylesheet entry point (@import chain)
+    ├── tokens.css                # CSS custom properties (colours, radii, shadows)
+    ├── base.css                  # Reset, page shell, header grid, Lumo overrides
+    ├── buttons.css               # All button variants (FAB, swap, admin, back, GitHub)
+    ├── cards.css                 # Trip card list, badges, action button, empty state
+    ├── input.css                 # Input form card, field labels, checkbox
+    ├── chart.css                 # Chart element, route selector, departure filter
+    └── profile-drawer.css        # Slide-in drawer: backdrop, panel, fields, footer
 ```
 
 ---
@@ -209,6 +269,28 @@ src/main/java/com/hs/railway_stats/
 | `canceled` | INTEGER | `1` = cancelled, `0` = not cancelled |
 | `minutes_late` | INTEGER | Minutes behind schedule |
 | `created_at` | TIMESTAMPTZ | Record creation timestamp |
+
+### `trip_info_metric`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER (PK) | Auto-generated |
+| `origin_id` | INTEGER | TransitHub station ID for origin |
+| `destination_id` | INTEGER | TransitHub station ID for destination |
+| `scheduled_departure_time` | TIME | Scheduled departure time (HH:mm) |
+| `average_minutes_late` | INTEGER | Rolling average minutes late across all recorded trips |
+| `total_trips` | INTEGER | Total number of trips recorded for this slot |
+| `total_reimbursable_trips` | INTEGER | Trips that were cancelled or ≥ 20 min late |
+| `canceled_trip_dates` | TEXT[] | Dates on which this departure was cancelled |
+
+### `translation`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER (PK) | Auto-generated |
+| `station_id` | INTEGER | TransitHub numeric station ID |
+| `station_name` | TEXT | Human-readable display name |
+| `claims_station_id` | TEXT | Station identifier used in reimbursement claim URLs |
 
 ---
 
