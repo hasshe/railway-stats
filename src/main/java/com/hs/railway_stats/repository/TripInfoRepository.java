@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TripInfoRepository extends JpaRepository<TripInfo, Integer> {
@@ -23,4 +24,11 @@ public interface TripInfoRepository extends JpaRepository<TripInfo, Integer> {
     @Modifying
     @Query("DELETE FROM TripInfo t WHERE t.originalDepartureTime >= :startOfDay AND t.originalDepartureTime < :endOfDay")
     void deleteByDate(ZonedDateTime startOfDay, ZonedDateTime endOfDay);
+
+    @Query("SELECT MIN(t.originalDepartureTime) FROM TripInfo t")
+    Optional<ZonedDateTime> findEarliestDepartureTime();
+
+    @Query("SELECT COUNT(DISTINCT CAST(t.originalDepartureTime AS date)) FROM TripInfo t " +
+           "WHERE t.originalDepartureTime < :cutoff")
+    long countDistinctDaysBefore(ZonedDateTime cutoff);
 }

@@ -155,6 +155,38 @@ public class TripInfoServiceImpl implements TripInfoService {
         logger.info("Deleted all trip records for date {}", date);
     }
 
+    @Scheduled(cron = "0 40 23 * * ?", zone = ZONE_ID)
+    @Transactional
+    protected final void pruneOldTrips() {
+        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
+        LocalDate today = LocalDate.now(stockholmZone);
+
+        LocalDate cutoffDate = today.minusDays(30);
+        ZonedDateTime cutoff = cutoffDate.atStartOfDay(stockholmZone);
+
+        long daysBeforeCutoff = tripInfoRepository.countDistinctDaysBefore(cutoff);
+        if (daysBeforeCutoff == 0) {
+            logger.info("Rolling-window pruning: no data older than {} days, nothing to remove", 30);
+            return;
+        }
+
+        findAndDeleteOldestRecord(stockholmZone, cutoffDate);
+    }
+
+    private void findAndDeleteOldestRecord(ZoneId stockholmZone, LocalDate cutoffDate) {
+        tripInfoRepository.findEarliestDepartureTime().ifPresent(earliest -> {
+            LocalDate oldestDay = earliest.withZoneSameInstant(stockholmZone).toLocalDate();
+            if (!oldestDay.isBefore(cutoffDate)) {
+                logger.info("Rolling-window pruning: oldest day {} is within the 30-day window, nothing to remove", oldestDay);
+                return;
+            }
+            ZonedDateTime startOfOldest = oldestDay.atStartOfDay(stockholmZone);
+            ZonedDateTime endOfOldest   = oldestDay.plusDays(1).atStartOfDay(stockholmZone);
+            tripInfoRepository.deleteByDate(startOfOldest, endOfOldest);
+            logger.info("Rolling-window pruning: removed trip records for {} (older than 30 days)", oldestDay);
+        });
+    }
+
     @Scheduled(cron = "59 50 23 * * ?", zone = ZONE_ID)
     protected final void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");
