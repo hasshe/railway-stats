@@ -19,4 +19,3 @@ public interface TripInfoMetricRepository extends JpaRepository<TripInfoMetric, 
            "WHERE m.originId = :originId AND m.destinationId = :destinationId")
     List<TripInfoMetric> findByOriginIdAndDestinationId(int originId, int destinationId);
 }
-

@@ -12,4 +12,3 @@ public interface TranslationService {
 
     List<Translation> getAllStations();
 }
-

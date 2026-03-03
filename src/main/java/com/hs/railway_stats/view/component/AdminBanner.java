@@ -21,4 +21,3 @@ public class AdminBanner extends Span {
         setVisible(false);
     }
 }
-

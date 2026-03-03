@@ -6,6 +6,5 @@ public record TripRequest(
         String nextToken,
         String dateTime,
         boolean searchForArrival,
-        boolean includeAllMovingoOperators
-) {
+        boolean includeAllMovingoOperators) {
 }

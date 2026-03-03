@@ -19,7 +19,6 @@ public final class AdminSessionUtils {
         BrowserStorageUtils.localStorageRemove(STORAGE_KEY);
     }
 
-
     public static void restoreAdminSession(Button adminCollectButton, AdminBanner adminBanner,
                                            String secret, String salt, Runnable onRestore) {
         BrowserStorageUtils.encryptedLocalStorageLoad(STORAGE_KEY, secret, salt, result -> {
@@ -31,4 +30,3 @@ public final class AdminSessionUtils {
         });
     }
 }
-

@@ -81,7 +81,6 @@ public class AddStationDialog extends Dialog {
                 return;
             }
 
-            // Validate UUID format if provided
             if (claimsStationId != null && !claimsStationId.isBlank()) {
                 String trimmedClaimsId = claimsStationId.trim();
                 if (!isValidUUID(trimmedClaimsId)) {
@@ -115,4 +114,3 @@ public class AddStationDialog extends Dialog {
         return uuid.matches(uuidPattern);
     }
 }
-

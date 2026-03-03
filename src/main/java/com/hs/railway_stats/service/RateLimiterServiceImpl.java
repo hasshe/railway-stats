@@ -74,4 +74,3 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         return Math.max(0, remaining);
     }
 }
-

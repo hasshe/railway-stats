@@ -55,21 +55,10 @@ public class TripStatsChart extends Div {
                 .set("width", "100%");
     }
 
-    /**
-     * Fetch metrics from the service for the given route and push them to the
-     * Chart.js web component via a JS property assignment.
-     *
-     * @param originStationName      display name of the origin station
-     * @param destinationStationName display name of the destination station
-     */
     public void loadMetrics(String originStationName, String destinationStationName) {
         loadMetrics(originStationName, destinationStationName, Set.of());
     }
 
-    /**
-     * Load metrics for the route, optionally restricted to the given departure times.
-     * Pass an empty set to show all departure times.
-     */
     public void loadMetrics(String originStationName, String destinationStationName, Set<LocalTime> filter) {
         try {
             List<TripInfoMetric> metrics = tripInfoMetricService

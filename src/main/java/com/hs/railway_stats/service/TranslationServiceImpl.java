@@ -41,4 +41,3 @@ public class TranslationServiceImpl implements TranslationService {
         return translationRepository.findAll();
     }
 }
-

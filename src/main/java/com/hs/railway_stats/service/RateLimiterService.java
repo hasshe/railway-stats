@@ -6,4 +6,3 @@ public interface RateLimiterService {
 
     long getRemainingBlockSeconds(String ip);
 }
-

@@ -7,6 +7,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Trip(
         Boolean canceled,
-        List<Leg> legs
-) {
+        List<Leg> legs) {
 }

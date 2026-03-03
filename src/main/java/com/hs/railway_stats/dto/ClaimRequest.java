@@ -16,8 +16,8 @@ public record ClaimRequest(
         int status,
         int trainNumber,
         RefundType refundType,
-        List<Object> claimReceipts
-) {
+        List<Object> claimReceipts) {
+
     public record Customer(
             String id,
             String firstName,
@@ -28,14 +28,11 @@ public record ClaimRequest(
             String identityNumber,
             String mobileNumber,
             String email,
-            Boolean hasIdentityNumber
-    ) {
+            Boolean hasIdentityNumber) {
     }
 
     public record RefundType(
             String id,
-            String name
-    ) {
+            String name) {
     }
 }
-

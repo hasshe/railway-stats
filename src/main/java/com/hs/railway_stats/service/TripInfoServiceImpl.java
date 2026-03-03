@@ -236,4 +236,3 @@ public class TripInfoServiceImpl implements TripInfoService {
         return !plannedDepartureStockholm.toLocalDateTime().isBefore(endOfDay);
     }
 }
-

@@ -36,7 +36,7 @@ public class AdminPasswordDialog extends Dialog {
 
     private Button getConfirmButton(String adminPassword, AdminControls adminControls,
                                     Runnable onEnable, Runnable onDisable, PasswordField passwordField) {
-        Button confirmButton = new Button("Confirm", clickEvent -> {
+        return new Button("Confirm", clickEvent -> {
             if (adminPassword.equals(passwordField.getValue())) {
                 boolean nowVisible = !adminControls.getAdminCollectButton().isVisible();
                 adminControls.setAdminVisible(nowVisible);
@@ -54,7 +54,6 @@ public class AdminPasswordDialog extends Dialog {
             }
             close();
         });
-        return confirmButton;
     }
 
     private static PasswordField getPasswordField() {

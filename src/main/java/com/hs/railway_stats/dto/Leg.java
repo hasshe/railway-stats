@@ -5,6 +5,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Leg(
         StopTime origin,
-        StopTime destination
-) {
+        StopTime destination) {
 }

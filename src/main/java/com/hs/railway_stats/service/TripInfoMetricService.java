@@ -15,4 +15,3 @@ public interface TripInfoMetricService {
 
     void updateMetrics(List<TripInfoResponse> trips, int originId, int destinationId, LocalDate today);
 }
-

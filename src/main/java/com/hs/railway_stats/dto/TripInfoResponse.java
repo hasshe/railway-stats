@@ -10,6 +10,5 @@ public record TripInfoResponse(
         OffsetDateTime initialDepartureTime,
         OffsetDateTime actualArrivalTime,
         String departureClaimsStationId,
-        String arrivalClaimsStationId
-) {
+        String arrivalClaimsStationId) {
 }

@@ -12,8 +12,8 @@ public record UserProfile(
         String city,
         String postalCode,
         String ticketNumber,
-        String identityNumber
-) {
+        String identityNumber) {
+
     public static UserProfile fromJson(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();

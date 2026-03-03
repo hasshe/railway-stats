@@ -7,6 +7,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TripResponse(
         List<Trip> trips,
-        String nextToken
-) {
+        String nextToken) {
 }

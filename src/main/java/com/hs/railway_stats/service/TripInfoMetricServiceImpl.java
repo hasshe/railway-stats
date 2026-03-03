@@ -105,4 +105,3 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
         return translation.getStationId();
     }
 }
-

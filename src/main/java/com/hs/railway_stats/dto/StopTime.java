@@ -8,6 +8,5 @@ import java.time.OffsetDateTime;
 public record StopTime(
         String name,
         OffsetDateTime plannedDateTime,
-        OffsetDateTime actualDateTime
-) {
+        OffsetDateTime actualDateTime) {
 }

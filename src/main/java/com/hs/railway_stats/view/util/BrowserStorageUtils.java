@@ -9,8 +9,6 @@ public final class BrowserStorageUtils {
     private BrowserStorageUtils() {
     }
 
-    // ── Crypto helpers ────────────────────────────────────────────────────────
-
     public static String buildCryptoJs(String secret, String salt) {
         return ("""
                 const APP_SECRET = '%s';
