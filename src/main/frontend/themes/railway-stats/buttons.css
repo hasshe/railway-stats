@@ -77,12 +77,14 @@
 
 /* ── GitHub link button ─────────────────────────────────── */
 /* SVG icon colour and hover brightening for the GitHub anchor in the header */
+.github-link-btn::part(prefix),
 .github-link-btn::part(icon) {
     color: #8aaa92;
     width: 1.7rem;
     height: 1.7rem;
 }
 
+.github-link-btn:hover::part(prefix),
 .github-link-btn:hover::part(icon) {
     color: #b8d4c0;
 }

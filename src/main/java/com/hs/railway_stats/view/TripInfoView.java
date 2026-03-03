@@ -101,7 +101,7 @@ public class TripInfoView extends VerticalLayout {
         add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoCard);
         setFlexGrow(1, tripInfoCard);
         setAlignItems(Alignment.CENTER);
-        setAlignSelf(Alignment.STRETCH, headerRow, tripInfoCard);
+        setAlignSelf(Alignment.STRETCH, headerRow, inputLayout, tripInfoCard);
     }
 
     private static InputLayout getInputLayout(TripInfoService tripInfoService, RateLimiterService rateLimiterService, TripInfoCard tripInfoCard, AdminControls adminControls, ScheduledJobTimer scheduledJobTimer, Runnable[] collectHolder, Runnable[] clearDateHolder) {

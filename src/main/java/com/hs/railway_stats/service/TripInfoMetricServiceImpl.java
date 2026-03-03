@@ -60,23 +60,27 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
 
             TripInfoMetric metric = getTripInfoMetric(originId, destinationId, scheduledDeparture);
 
-            int n = metric.getTotalTrips();
-            int newAvg = (metric.getAverageMinutesLate() * n + trip.totalMinutesLate()) / (n + 1);
-            metric.setAverageMinutesLate(newAvg);
-            metric.setTotalTrips(n + 1);
-
-            if (trip.isCancelled()) {
-                metric.getCanceledTripDates().add(today);
-            }
-
-            boolean reimbursable = trip.isCancelled() || trip.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD;
-            if (reimbursable) {
-                metric.setTotalReimbursableTrips(metric.getTotalReimbursableTrips() + 1);
-            }
+            calculateMetrics(today, trip, metric);
 
             tripInfoMetricRepository.save(metric);
             logger.debug("Updated metric for origin={} destination={} departure={}", originId, destinationId, scheduledDeparture);
         });
+    }
+
+    private static void calculateMetrics(LocalDate today, TripInfoResponse trip, TripInfoMetric metric) {
+        int n = metric.getTotalTrips();
+        int newAvg = (metric.getAverageMinutesLate() * n + trip.totalMinutesLate()) / (n + 1);
+        metric.setAverageMinutesLate(newAvg);
+        metric.setTotalTrips(n + 1);
+
+        if (trip.isCancelled()) {
+            metric.getCanceledTripDates().add(today);
+        }
+
+        boolean reimbursable = trip.isCancelled() || trip.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD;
+        if (reimbursable) {
+            metric.setTotalReimbursableTrips(metric.getTotalReimbursableTrips() + 1);
+        }
     }
 
     private static LocalTime getScheduledDeparture(TripInfoResponse trip, ZoneId stockholmZone) {

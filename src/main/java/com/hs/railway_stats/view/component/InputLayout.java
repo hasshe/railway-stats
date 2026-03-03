@@ -5,23 +5,27 @@ import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.server.VaadinRequest;
 
 import java.time.LocalDate;
 
-public class InputLayout extends FormLayout {
+public class InputLayout extends VerticalLayout {
 
-    private final ComboBox<String> originField;
-    private final ComboBox<String> destinationField;
+    private final String[] stations = {StationConstants.UPPSALA, StationConstants.STOCKHOLM};
+    private final int[] idx = {0};
+    private final Span originSpan;
+    private final Span destSpan;
     private final DatePicker dateFilter;
     private Runnable onRouteChange = () -> {};
 
@@ -29,44 +33,68 @@ public class InputLayout extends FormLayout {
                        AdminControls adminControls,
                        RateLimiterService rateLimiterService, ScheduledJobTimer scheduledJobTimer) {
 
-        originField = new ComboBox<>("From:");
-        originField.setItems(StationConstants.ALL_STATIONS);
-        originField.setValue(StationConstants.UPPSALA);
+        setPadding(false);
+        setSpacing(true);
+        setWidthFull();
 
-        destinationField = new ComboBox<>("To:");
-        destinationField.setItems(StationConstants.ALL_STATIONS);
-        destinationField.setValue(StationConstants.STOCKHOLM);
+        // ── Route selector row (matches MetricsView style) ──
+        Span fromLabel = new Span("From");
+        fromLabel.addClassName("route-selector__sub");
+        originSpan = new Span(stations[idx[0]]);
+        originSpan.addClassName("route-selector__station");
+        Div originBlock = new Div(fromLabel, originSpan);
+        originBlock.addClassName("route-selector__block");
 
+        Icon swapIcon = new Icon(VaadinIcon.ARROWS_LONG_H);
+        swapIcon.getStyle().set("color", "#4caf7d");
+        Button swapButton = new Button(swapIcon);
+        swapButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        swapButton.addClassName("metrics-swap-btn");
+        swapButton.getElement().setAttribute("aria-label", "Swap stations");
+
+        Span toLabel = new Span("To");
+        toLabel.addClassName("route-selector__sub");
+        destSpan = new Span(stations[1 - idx[0]]);
+        destSpan.addClassName("route-selector__station");
+        Div destBlock = new Div(toLabel, destSpan);
+        destBlock.addClassName("route-selector__block");
+
+        HorizontalLayout selectorRow = new HorizontalLayout(originBlock, swapButton, destBlock);
+        selectorRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        selectorRow.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        selectorRow.setSpacing(true);
+        selectorRow.setWidthFull();
+        selectorRow.addClassName("route-selector-row");
+
+        swapButton.addClickListener(e -> {
+            idx[0] = 1 - idx[0];
+            originSpan.setText(stations[idx[0]]);
+            destSpan.setText(stations[1 - idx[0]]);
+            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            onRouteChange.run();
+        });
+
+        // ── Date / filter / admin controls ──
         dateFilter = new DatePicker("Date:");
         dateFilter.setMax(LocalDate.now());
-        //dateFilter.setValue(LocalDate.now());
-
-        Button swapButton = getSwapButton(tripInfoService, tripInfoCard, rateLimiterService);
-
-        originField.addValueChangeListener(event -> {
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
-            onRouteChange.run();
-        });
-        destinationField.addValueChangeListener(event -> {
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
-            onRouteChange.run();
-        });
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
         HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
         dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
         dateAndFilterRow.setSpacing(true);
 
-        setResponsiveSteps(
+        FormLayout formControls = new FormLayout();
+        formControls.setWidthFull();
+        formControls.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("400px", 2),
                 new FormLayout.ResponsiveStep("800px", 4)
         );
+        formControls.add(dateAndFilterRow, scheduledJobTimer, adminControls);
+        formControls.setColspan(dateAndFilterRow, 4);
+        formControls.setColspan(adminControls, 4);
 
-        add(originField, swapButton, destinationField);
-        add(dateAndFilterRow, scheduledJobTimer, adminControls);
-        setColspan(dateAndFilterRow, 4);
-        setColspan(adminControls, 4);
+        add(selectorRow, formControls);
     }
 
     /** Register a callback that fires whenever origin or destination changes. */
@@ -75,45 +103,18 @@ public class InputLayout extends FormLayout {
     }
 
     public String getOrigin() {
-        return originField.getValue();
+        return stations[idx[0]];
     }
 
     public String getDestination() {
-        return destinationField.getValue();
-    }
-
-    private Button getSwapButton(TripInfoService tripInfoService, TripInfoCard tripInfoCard, RateLimiterService rateLimiterService) {
-        Button swapButton = new Button("Swap", new Icon(VaadinIcon.ARROWS_LONG_H), clickEvent -> {
-            String temp = originField.getValue();
-            originField.setValue(destinationField.getValue());
-            destinationField.setValue(temp);
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
-            onRouteChange.run();
-        });
-        swapButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        swapButton.addClassName("swap-button");
-        swapButton.setWidth("auto");
-        swapButton.getStyle()
-                .set("align-self", "flex-end")
-                .set("max-width", "fit-content")
-                .set("white-space", "nowrap")
-                .set("background", "rgba(76, 175, 125, 0.12)")
-                .set("color", "#4caf7d")
-                .set("border", "1px solid rgba(76, 175, 125, 0.35)")
-                .set("border-radius", "10px")
-                .set("transition", "background 0.2s ease, box-shadow 0.2s ease");
-        return swapButton;
+        return stations[1 - idx[0]];
     }
 
     public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                                          RateLimiterService rateLimiterService) {
         return () -> {
-            String origin = originField.getValue();
-            String destination = destinationField.getValue();
-            if (origin == null || destination == null) {
-                Notification.show("Please select both stations");
-                return;
-            }
+            String origin = getOrigin();
+            String destination = getDestination();
             tripInfoService.collectTripInformation(origin, destination);
             Notification.show("Trip information collection started for " + origin + " to " + destination);
             refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
@@ -141,9 +142,8 @@ public class InputLayout extends FormLayout {
             return;
         }
         try {
-            String origin = originField.getValue();
-            String destination = destinationField.getValue();
-            if (origin == null || destination == null) return;
+            String origin = getOrigin();
+            String destination = getDestination();
 
             LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
             tripInfoCard.setTrips(tripInfoService.getTripInfo(origin, destination, selectedDate));
