@@ -9,6 +9,7 @@ A self-hosted web application for tracking train punctuality on the **Uppsala C 
 | Feature | Description |
 |---|---|
 | **Automatic data collection** | A scheduled job runs every night at **23:50 (Europe/Stockholm)** and fetches all departures for both directions (Uppsala → Stockholm and Stockholm → Uppsala) from the [TransitHub API](https://v2.api.transithub.se). |
+| **Rolling 30-day retention** | A second scheduled job runs at **23:40 (Europe/Stockholm)**, before data collection, and automatically removes the oldest day's records once the table holds more than 30 days of data — ensuring a strict rolling window is maintained. |
 | **Trip list** | The main view shows a filterable list of trip cards for any past date, each showing departure time, arrival time, minutes late, and status badges. |
 | **Claimable filter** | A "Claimable" checkbox filters the list to only show trips that were **cancelled** or **≥ 20 minutes late** — the Swedish threshold for a reimbursement claim. |
 | **Swap button** | Quickly swap origin and destination to view the return leg. |
@@ -42,7 +43,7 @@ A self-hosted web application for tracking train punctuality on the **Uppsala C 
 
 The landing page. Contains:
 - A **header row** with the profile/menu button, "Movingo Tracker" title, and GitHub link.
-- An **input form** for selecting origin, destination, and date.
+- A **route selector** showing the current origin → destination as styled read-only labels (matching the Metrics view), with a swap button. Below it, a date picker, claimable filter, and admin controls sit in a form card.
 - A scrollable **trip card list** filtered by the selected route and date.
 - A sticky **Metrics FAB** (green circle, bottom-right) that navigates to `/metrics`.
 
@@ -162,6 +163,7 @@ Admin mode unlocks three extra controls in the toolbar: **Collect (Admin)**, **C
 
 Admin mode is persisted across page refreshes via an encrypted `localStorage` entry (`adminSession`). The session is cleared on explicit toggle-off.
 
+
 ### Collect (Admin)
 
 Manually triggers the same trip-data collection job that normally runs on the nightly schedule (every day at **23:50 Europe/Stockholm**). Useful after adding a new station or to back-fill data without restarting the server.
@@ -183,6 +185,17 @@ Duplicate station IDs and duplicate station names are both rejected with an erro
 
 ---
 
+## Scheduled jobs
+
+Two jobs run automatically every night in `Europe/Stockholm` time:
+
+| Time | Job | Description |
+|---|---|---|
+| **23:40** | Rolling-window pruning | Deletes the oldest day's `trip_info` records if the table already holds more than 30 days of data, maintaining a strict 30-day rolling window. No-ops while the table is still filling up. |
+| **23:50** | Trip data collection | Fetches all of today's departures for both directions from the TransitHub API, saves any new records to `trip_info`, and updates the `trip_info_metric` aggregates. |
+
+---
+
 ## How personal information is stored
 
 > **No personal data is ever sent to the server.**
@@ -193,6 +206,7 @@ The Profile drawer collects optional personal details to make it easier to fill 
 - Phone number, email address
 - Home address, city, postal code
 - Train ticket number
+- Personal number (Swedish "personnummer")
 
 ### Encryption
 
@@ -221,7 +235,7 @@ src/main/java/com/hs/railway_stats/
 ├── mapper/          # Maps API responses to internal DTOs
 ├── repository/      # JPA repositories + entities (TripInfo, TripInfoMetric, Translation)
 ├── service/
-│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion
+│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion, rolling-window pruning
 │   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, departure times
 │   ├── ClaimsService                                  # Claim URL generation
 │   ├── TranslationService                             # Station name ↔ ID mapping
@@ -231,7 +245,7 @@ src/main/java/com/hs/railway_stats/
     ├── MetricsView.java      # Metrics view (route /metrics)
     └── component/
         ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
-        ├── InputLayout       # Station/date selectors and filter controls
+        ├── InputLayout       # Route selector (From/To labels + swap button) and date/filter controls
         ├── TripInfoCard      # Individual trip card + claim button
         ├── ProfileDrawer     # Slide-in profile + admin panel
         ├── AdminControls     # Collect / Add Station admin buttons
