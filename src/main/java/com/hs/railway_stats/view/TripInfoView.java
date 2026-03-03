@@ -169,6 +169,7 @@ public class TripInfoView extends VerticalLayout {
     private static Button getProfileButton() {
         Icon profileIcon = new Icon(VaadinIcon.MENU);
         profileIcon.setSize("2rem");
+        profileIcon.getStyle().set("color", "#7abf9a");
         Button profileButton = new Button(profileIcon);
         profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_LARGE);
         profileButton.getElement().setAttribute("aria-label", "Profile");

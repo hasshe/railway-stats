@@ -147,3 +147,14 @@
         width: 100vw;
     }
 }
+
+/* ── Profile / menu button (header) ─────────────────────── */
+/* Hamburger menu button that opens the profile drawer */
+.trip-info-view vaadin-button[aria-label="Profile"]::part(prefix) {
+    transition: color 0.18s ease;
+}
+
+.trip-info-view vaadin-button[aria-label="Profile"]:hover::part(prefix) {
+    color: #4caf7d;
+}
+
