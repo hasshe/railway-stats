@@ -312,3 +312,25 @@ src/main/frontend/
 
 This project is for personal use. No license is currently specified.
 
+---
+
+## Caching
+
+Trip info queries are cached in-memory using [Caffeine](https://github.com/ben-manes/caffeine) for fast repeated access and reduced database load. The cache is configurable via `application.properties` or YAML:
+
+```
+tripinfo.cache.expiry.hours=24   # How long (in hours) each entry stays in cache (default: 24)
+tripinfo.cache.max-size=100      # Maximum number of cached queries (default: 100)
+```
+Or in YAML:
+```
+tripinfo:
+  cache:
+    expiry:
+      hours: 24
+    max-size: 100
+```
+- **Cache keys** are based on origin, destination, and date.
+- **Cache hits/misses** are logged: hits return cached data, misses query the DB and cache the result (unless empty).
+- **Empty results** are not cached, so queries for missing data always check the DB.
+- **Eviction:** If the cache exceeds the max size, least recently used entries are removed automatically.
