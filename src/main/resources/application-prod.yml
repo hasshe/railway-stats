@@ -55,3 +55,9 @@ vaadin:
   production-mode: true
   heartbeat-interval: 300
   close-idle-sessions: true
+
+tripinfo:
+  cache:
+    expiry:
+      hours: ${CACHE_EXPIRY_HOURS:24}
+    max-size: ${CACHE_MAX_SIZE:100}

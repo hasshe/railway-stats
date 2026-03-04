@@ -32,3 +32,8 @@ server:
     max-connections: 20
     accept-count: 5
 
+tripinfo:
+  cache:
+    expiry:
+      hours: 24
+    max-size: 100

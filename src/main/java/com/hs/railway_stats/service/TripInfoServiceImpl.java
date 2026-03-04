@@ -1,5 +1,6 @@
 package com.hs.railway_stats.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
@@ -34,15 +35,18 @@ public class TripInfoServiceImpl implements TripInfoService {
     private final TripInfoRepository tripInfoRepository;
     private final TripInfoMetricService tripInfoMetricService;
     private final TranslationRepository translationRepository;
+    private final Cache<String, List<TripInfoResponse>> tripInfoCache;
 
     public TripInfoServiceImpl(RestClient restClient,
                                TripInfoRepository tripInfoRepository,
                                TripInfoMetricService tripInfoMetricService,
-                               TranslationRepository translationRepository) {
+                               TranslationRepository translationRepository,
+                               Cache<String, List<TripInfoResponse>> tripInfoCache) {
         this.restClient = restClient;
         this.tripInfoRepository = tripInfoRepository;
         this.tripInfoMetricService = tripInfoMetricService;
         this.translationRepository = translationRepository;
+        this.tripInfoCache = tripInfoCache;
     }
 
     @Override
@@ -86,6 +90,13 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Override
     public List<TripInfoResponse> getTripInfo(String originStationName, String destinationStationName, LocalDate date) {
+        String cacheKey = originStationName + "-" + destinationStationName + "-" + date;
+        List<TripInfoResponse> cached = tripInfoCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            logger.info("CACHE HIT for key: {}", cacheKey);
+            return cached;
+        }
+        logger.info("CACHE MISS (DB) for key: {}", cacheKey);
         long originId = stationNameToDestinationId(originStationName);
         long destinationId = stationNameToDestinationId(destinationStationName);
         ZoneId stockholmZone = ZoneId.of(ZONE_ID);
@@ -103,6 +114,16 @@ public class TripInfoServiceImpl implements TripInfoService {
         List<TripInfo> tripInfos = tripInfoRepository.findByOriginAndDestinationAndDate(
                 (int) originId, (int) destinationId, startOfDay, endOfDay);
 
+        List<TripInfoResponse> result = getTripInfoResponses(tripInfos, stockholmZone, originClaimsStationId, destinationClaimsStationId);
+        if (!result.isEmpty()) {
+            tripInfoCache.put(cacheKey, result);
+        } else {
+            logger.info("CACHE NOT STORED for key: {} (empty result)", cacheKey);
+        }
+        return result;
+    }
+
+    private List<TripInfoResponse> getTripInfoResponses(List<TripInfo> tripInfos, ZoneId stockholmZone, String originClaimsStationId, String destinationClaimsStationId) {
         return tripInfos.stream()
                 .map(info -> new TripInfoResponse(
                         destinationIdToStationName(info.getOriginId()),
