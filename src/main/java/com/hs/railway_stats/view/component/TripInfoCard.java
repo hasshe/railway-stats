@@ -26,7 +26,10 @@ import org.slf4j.LoggerFactory;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TripInfoCard extends VerticalLayout {
 
@@ -35,6 +38,7 @@ public class TripInfoCard extends VerticalLayout {
     private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     public static final String UUID = "00000000-0000-0000-0000-000000000000";
+    private static final String CLAIMED_TRIPS_KEY = "claimedTrips";
 
     private final VerticalLayout cardsContainer = new VerticalLayout();
     private final List<TripInfoResponse> allTrips = new ArrayList<>();
@@ -142,11 +146,68 @@ public class TripInfoCard extends VerticalLayout {
     }
 
     private void buildReimbursableCard(TripInfoResponse trip, Div infoSection, Card card) {
+        String tripKey = buildTripKey(trip);
+
+        Span alreadyClaimedLabel = new Span("Already Claimed");
+        alreadyClaimedLabel.addClassName("trip-card-already-claimed");
+        alreadyClaimedLabel.setVisible(false);
+
         Button actionBtn = new Button("Claim", new Icon(VaadinIcon.CHECK));
         actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
         actionBtn.addClassName("trip-card-action-btn");
-        claimsButtonClickAction(trip, actionBtn);
-        buildRegularCard(new HorizontalLayout(infoSection, actionBtn), infoSection, card);
+
+        BrowserStorageUtils.localStorageLoad(CLAIMED_TRIPS_KEY, storedJson -> {
+            if (isTripClaimed(storedJson, tripKey)) {
+                UI.getCurrent().access(() -> {
+                    actionBtn.setVisible(false);
+                    alreadyClaimedLabel.setVisible(true);
+                });
+            }
+        });
+
+        claimsButtonClickAction(trip, actionBtn, alreadyClaimedLabel, tripKey);
+
+        HorizontalLayout cardRow = new HorizontalLayout(infoSection, actionBtn, alreadyClaimedLabel);
+        buildRegularCard(cardRow, infoSection, card);
+    }
+
+    private static String buildTripKey(TripInfoResponse trip) {
+        String dep = trip.initialDepartureTime() != null
+                ? trip.initialDepartureTime().withOffsetSameLocal(ZoneOffset.UTC)
+                        .format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmm"))
+                : "unknown";
+        return trip.departureClaimsStationId() + "_" + trip.arrivalClaimsStationId() + "_" + dep;
+    }
+
+    private static boolean isTripClaimed(String storedJson, String tripKey) {
+        if (storedJson == null || storedJson.isBlank()) return false;
+        // stored as comma-separated keys inside a JSON array string: ["key1","key2"]
+        return storedJson.contains("\"" + tripKey + "\"");
+    }
+
+    private static void markTripAsClaimed(String tripKey) {
+        BrowserStorageUtils.localStorageLoad(CLAIMED_TRIPS_KEY, storedJson -> {
+            Set<String> keys = new HashSet<>();
+            if (storedJson != null && storedJson.startsWith("[")) {
+                // parse simple JSON array of strings
+                String inner = storedJson.substring(1, storedJson.length() - 1).trim();
+                if (!inner.isEmpty()) {
+                    Arrays.stream(inner.split(","))
+                            .map(s -> s.trim().replaceAll("^\"|\"$", ""))
+                            .forEach(keys::add);
+                }
+            }
+            keys.add(tripKey);
+            StringBuilder sb = new StringBuilder("[");
+            boolean first = true;
+            for (String k : keys) {
+                if (!first) sb.append(",");
+                sb.append("\"").append(k).append("\"");
+                first = false;
+            }
+            sb.append("]");
+            BrowserStorageUtils.localStorageSave(CLAIMED_TRIPS_KEY, sb.toString());
+        });
     }
 
     private static Div getInfoSection(String departure, String arrival, boolean cancelled, int minsLate) {
@@ -173,13 +234,12 @@ public class TripInfoCard extends VerticalLayout {
         return infoSection;
     }
 
-    private void claimsButtonClickAction(TripInfoResponse trip, Button actionBtn) {
+    private void claimsButtonClickAction(TripInfoResponse trip, Button actionBtn, Span alreadyClaimedLabel, String tripKey) {
         actionBtn.addClickListener(clickEvent -> {
             String storageKey = "userProfile";
             BrowserStorageUtils.encryptedLocalStorageLoad(storageKey, cryptoSecret, cryptoSalt, profileJson -> {
                 UserProfile profile = validateAndGetUserProfile(profileJson);
                 if (profile == null) return;
-                // Build ClaimRequest
                 ClaimRequest.Customer customer = getCustomer(profile);
                 ClaimRequest.RefundType refundType = new ClaimRequest.RefundType(
                         UUID,
@@ -197,6 +257,9 @@ public class TripInfoCard extends VerticalLayout {
                 if (devMode) {
                     log.info("[DEV] Skipping actual claim submission for ticketNumber={}", claimRequest.ticketNumber());
                     UI.getCurrent().access(() -> {
+                        markTripAsClaimed(tripKey);
+                        actionBtn.setVisible(false);
+                        alreadyClaimedLabel.setVisible(true);
                         Notification notification = Notification.show("✓ Claim submitted successfully! (dev mode — no real request made)", 4000, Position.TOP_CENTER);
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                     });
@@ -206,6 +269,9 @@ public class TripInfoCard extends VerticalLayout {
                     claimsService.submitClaim(claimRequest);
                     log.info("Claim submitted successfully for ticketNumber={}", claimRequest.ticketNumber());
                     UI.getCurrent().access(() -> {
+                        markTripAsClaimed(tripKey);
+                        actionBtn.setVisible(false);
+                        alreadyClaimedLabel.setVisible(true);
                         Notification notification = Notification.show("✓ Claim submitted successfully!", 4000, Position.TOP_CENTER);
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                     });

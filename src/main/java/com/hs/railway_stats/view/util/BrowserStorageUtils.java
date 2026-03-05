@@ -83,4 +83,13 @@ public final class BrowserStorageUtils {
     public static void localStorageRemove(String key) {
         UI.getCurrent().getPage().executeJs("localStorage.removeItem($0);", key);
     }
+
+    public static void localStorageSave(String key, String value) {
+        UI.getCurrent().getPage().executeJs("localStorage.setItem($0, $1);", key, value);
+    }
+
+    public static void localStorageLoad(String key, Consumer<String> onResult) {
+        UI.getCurrent().getPage().executeJs("return localStorage.getItem($0);", key)
+                .then(String.class, result -> onResult.accept(result != null && !result.isBlank() ? result : null));
+    }
 }
