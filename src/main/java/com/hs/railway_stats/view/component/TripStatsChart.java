@@ -37,7 +37,8 @@ public class TripStatsChart extends Div {
     public enum ChartType {
         AVG_LATE,
         CANCELLATIONS,
-        CLAIMS
+        CLAIMS,
+        REIMBURSABLE
     }
 
     private static final Logger log = LoggerFactory.getLogger(TripStatsChart.class);
@@ -72,8 +73,8 @@ public class TripStatsChart extends Div {
 
             getElement().setAttribute("title", resolveTitle());
             getElement().executeJs(
-                "customElements.whenDefined('trip-stats-chart').then(() => { this.chartData = JSON.parse($0); })",
-                json
+                    "customElements.whenDefined('trip-stats-chart').then(() => { this.chartData = JSON.parse($0); })",
+                    json
             );
 
         } catch (Exception e) {
@@ -83,9 +84,10 @@ public class TripStatsChart extends Div {
 
     private String resolveTitle() {
         return switch (chartType) {
-            case AVG_LATE      -> "Average Minutes Late";
+            case AVG_LATE -> "Average Minutes Late";
             case CANCELLATIONS -> "Times Cancelled";
-            case CLAIMS        -> "Claims Requested";
+            case CLAIMS -> "Claims Requested";
+            case REIMBURSABLE -> "Total Reimbursable Trips";
         };
     }
 
@@ -94,14 +96,15 @@ public class TripStatsChart extends Div {
         root.put("type", "bar");
 
         ArrayNode labels = root.putArray("labels");
-        ArrayNode data   = MAPPER.createArrayNode();
+        ArrayNode data = MAPPER.createArrayNode();
 
         for (TripInfoMetric m : metrics) {
             labels.add(m.getScheduledDepartureTime().format(TIME_FMT));
             data.add((int) switch (chartType) {
-                case AVG_LATE      -> m.getAverageMinutesLate();
+                case AVG_LATE -> m.getAverageMinutesLate();
                 case CANCELLATIONS -> m.getCanceledTripDates() != null ? m.getCanceledTripDates().size() : 0;
-                case CLAIMS        -> m.getTotalReimbursableTrips();
+                case CLAIMS -> m.getTotalReimbursementsRequested();
+                case REIMBURSABLE -> m.getTotalReimbursableTrips();
             });
         }
 
@@ -109,9 +112,10 @@ public class TripStatsChart extends Div {
         ObjectNode ds = datasets.addObject();
 
         String color = switch (chartType) {
-            case AVG_LATE      -> "#e8a56b";
+            case AVG_LATE -> "#e8a56b";
             case CANCELLATIONS -> "#e84b4b";
-            case CLAIMS        -> "#4caf7d";
+            case CLAIMS -> "#4caf7d";
+            case REIMBURSABLE -> "#2196f3";
         };
 
         ds.put("label", resolveTitle());
