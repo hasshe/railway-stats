@@ -225,6 +225,19 @@ Open your browser's DevTools → **Application → Local Storage** → delete th
 
 ---
 
+## Claim Button & Trip Tracking
+
+When you view a trip card, a **Claim** button is shown for trips that are eligible for reimbursement (cancelled or ≥ 20 minutes late). Once you click **Claim** for a trip:
+
+- The app sends your claim request using your saved profile details.
+- That trip is marked as claimed in your browser's `localStorage`.
+- The button is replaced with a static label: **Already Claimed**.
+- You cannot claim the same trip again from the same browser.
+
+This claimed-trip tracking is local to your browser and device. Clearing your browser's site data will reset the claimed status.
+
+---
+
 ## Project structure
 
 ```
