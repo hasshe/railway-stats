@@ -70,7 +70,7 @@ public class ProfileDrawer extends Div {
     }
 
     private static TextField buildPhoneField() {
-        TextField field = styledField("Phone Number", "0734151665");
+        TextField field = styledField("Phone Number", "734151665");
         Span prefix = new Span("+46");
         prefix.getStyle()
                 .set("color", "#8aaa92")
@@ -164,9 +164,6 @@ public class ProfileDrawer extends Div {
                 return;
             }
             String rawPhone = fields.phone.getValue();
-            if (rawPhone.startsWith("0")) {
-                rawPhone = rawPhone.substring(1);
-            }
             String profileJson = "{" +
                     "\"firstName\":\"" + fields.firstName.getValue() + "\"," +
                     "\"lastName\":\"" + fields.lastName.getValue() + "\"," +
@@ -193,9 +190,9 @@ public class ProfileDrawer extends Div {
                 fields.firstName.setValue(node.path("firstName").asText(""));
                 fields.lastName.setValue(node.path("lastName").asText(""));
                 String storedPhone = node.path("phone").asText("");
-                // Stored as 46XXXXXXXXX → display as 0XXXXXXXXX
+                // Stored as 46XXXXXXXXX → display as XXXXXXXXX (9 digits, no leading 0)
                 if (storedPhone.startsWith("46")) {
-                    storedPhone = "0" + storedPhone.substring(2);
+                    storedPhone = storedPhone.substring(2);
                 }
                 fields.phone.setValue(storedPhone);
                 fields.email.setValue(node.path("email").asText(""));
@@ -214,7 +211,7 @@ public class ProfileDrawer extends Div {
         addValidation(fields.firstName, "^[\\p{L}\\s\\-']+$", "First name must contain letters only");
         addValidation(fields.lastName, "^[\\p{L}\\s\\-']+$", "Last name must contain letters only");
         addValidation(fields.email, "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)*\\.[a-zA-Z]{2,}$", "Enter a valid email address (e.g. you@example.com)");
-        addValidation(fields.phone, "^07\\d{8}$", "Enter a 10-digit Swedish number starting with 07 (e.g. 0734151665)");
+        addValidation(fields.phone, "^7\\d{8}$", "Enter a 9-digit number starting with 7 (e.g. 734151665)");
         addValidation(fields.postalCode, "^[\\w\\s\\-]{3,10}$", "Enter a valid postal code (e.g. 111 22)");
         addValidation(fields.address, "^[\\p{L}\\d\\s\\-,.']+$", "Enter a valid home address (e.g. 123 Main Street)");
         addValidation(fields.identityNumber, "^\\d{8}-\\d{4}$", "Identity number must be in the format YYYYMMDD-XXXX");
