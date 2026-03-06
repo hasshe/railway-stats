@@ -93,6 +93,10 @@ public class MalarDalenClient implements RestClient {
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 422) {
+            log.info("Claim API call failed with status 422: {} (Too many concurrent claims for this user. Please wait until previous claims are processed.)", response.body());
+            throw new RuntimeException("Too many concurrent claims for this user. Please wait until previous claims are processed. Response: " + response.body());
+        }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new RuntimeException("Claim API call failed with status: " + response.statusCode());
         }
