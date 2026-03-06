@@ -12,7 +12,8 @@ public record UserProfile(
         String city,
         String postalCode,
         String ticketNumber,
-        String identityNumber) {
+        String identityNumber,
+        String payoutOption) {
 
     public static UserProfile fromJson(String json) {
         try {
@@ -27,7 +28,8 @@ public record UserProfile(
                     node.path("city").asText(""),
                     node.path("postalCode").asText(""),
                     node.path("ticketNumber").asText(""),
-                    node.path("identityNumber").asText("")
+                    node.path("identityNumber").asText(""),
+                    node.path("payoutOption").asText("SWISH")
             );
         } catch (Exception e) {
             return null;

@@ -158,3 +158,39 @@
     color: #4caf7d;
 }
 
+/* Combo box styles for payout options */
+/* Styles for combo-box elements to match text fields */
+.profile-drawer-panel vaadin-combo-box {
+    margin-top: 16px;
+    width: 100%;
+}
+.profile-drawer-panel vaadin-combo-box::part(label) {
+    color: #8aaa92;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.profile-drawer-panel vaadin-combo-box::part(input-field) {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    --vaadin-input-field-value-color: #ffffff;
+    --vaadin-input-field-placeholder-color: rgba(255,255,255,0.40);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+.profile-drawer-panel vaadin-combo-box::part(value) {
+    color: #ffffff;
+}
+.profile-drawer-panel vaadin-combo-box::part(placeholder) {
+    color: rgba(255,255,255,0.35);
+}
+.profile-drawer-panel vaadin-combo-box::part(input-field):focus-within {
+    background: rgba(76,175,125,0.06);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.profile-drawer-panel vaadin-combo-box::part(input-field):hover {
+    border-color: rgba(76,175,125,0.35);
+}

@@ -114,19 +114,15 @@ public class TripInfoCard extends VerticalLayout {
                 ? trip.actualArrivalTime().format(TIME_FMT) : "N/A";
         boolean cancelled = Boolean.TRUE.equals(trip.isCancelled());
         int minsLate = trip.totalMinutesLate();
-
-        // ── left info section ──────────────────────────────────────
         Div infoSection = getInfoSection(departure, arrival, cancelled, minsLate);
 
-        // ── card root (Vaadin Card component) ─────────────────────
         Card card = new Card();
-        card.addClassName("trip-card"); // Restore previous custom card background and style
+        card.addClassName("trip-card");
         card.getStyle().set("width", "100%");
         card.getStyle().set("boxSizing", "border-box");
         if (cancelled) card.addClassName("trip-card--cancelled");
         else if (minsLate >= REIMBURSABLE_MINUTES_THRESHOLD) card.addClassName("trip-card--late");
 
-        // ── action button (only for reimbursable trips) ────────────
         boolean reimbursable = cancelled || minsLate >= REIMBURSABLE_MINUTES_THRESHOLD;
         if (reimbursable) {
             buildReimbursableCard(trip, infoSection, card);
@@ -181,7 +177,6 @@ public class TripInfoCard extends VerticalLayout {
 
     private static boolean isTripClaimed(String storedJson, String tripKey) {
         if (storedJson == null || storedJson.isBlank()) return false;
-        // stored as comma-separated keys inside a JSON array string: ["key1","key2"]
         return storedJson.contains("\"" + tripKey + "\"");
     }
 
@@ -189,7 +184,6 @@ public class TripInfoCard extends VerticalLayout {
         BrowserStorageUtils.localStorageLoad(CLAIMED_TRIPS_KEY, storedJson -> {
             Set<String> keys = new HashSet<>();
             if (storedJson != null && storedJson.startsWith("[")) {
-                // parse simple JSON array of strings
                 String inner = storedJson.substring(1, storedJson.length() - 1).trim();
                 if (!inner.isEmpty()) {
                     Arrays.stream(inner.split(","))
@@ -334,7 +328,7 @@ public class TripInfoCard extends VerticalLayout {
         return new ClaimRequest(
                 UUID,
                 null,
-                "SWISH",
+                profile.payoutOption() != null && !profile.payoutOption().isBlank() ? profile.payoutOption() : "SWISH",
                 customer,
                 profile.ticketNumber(),
                 1,

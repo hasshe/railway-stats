@@ -7,6 +7,7 @@ import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -47,10 +48,10 @@ public class ProfileDrawer extends Div {
         });
 
         Div header = buildHeader();
-        FormLayout form = buildForm(fields);
+        Div formWrapper = buildFormWrapper(fields);
         Button saveButton = buildSaveButton(cryptoSecret, cryptoSalt, fields);
         Div footer = buildFooter(saveButton, adminToggleButton);
-        Div content = new Div(form);
+        Div content = new Div(formWrapper);
         content.addClassName("profile-drawer-content");
 
         panel.add(header, content, footer);
@@ -67,6 +68,37 @@ public class ProfileDrawer extends Div {
         final TextField postalCode = styledField("Postal Code", "111 22");
         final TextField ticketNumber = styledField("Ticket Number", "e.g. B123ABCG6");
         final TextField identityNumber = new TextField("Identity Number");
+        final ComboBox<String> payoutOption = buildPayoutDropdown();
+    }
+
+    private static ComboBox<String> buildPayoutDropdown() {
+        ComboBox<String> payoutDropdown = new ComboBox<>();
+        payoutDropdown.setLabel("Payout Option");
+        payoutDropdown.setItems("SWISH", "SUS");
+        payoutDropdown.setValue("SWISH");
+        payoutDropdown.setWidthFull();
+        payoutDropdown.addClassName("payout-dropdown");
+        payoutDropdown.getStyle()
+                .set("--vaadin-input-field-label-color", "#8aaa92")
+                .set("--lumo-body-text-color", "#e8edf5");
+        return payoutDropdown;
+    }
+
+    private static FormLayout buildForm(ProfileFields fields) {
+        FormLayout form = new FormLayout(
+                fields.firstName, fields.lastName, fields.phone, fields.email,
+                fields.address, fields.city, fields.postalCode, fields.ticketNumber,
+                fields.identityNumber, fields.payoutOption);
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+        form.addClassName("profile-drawer-form");
+        form.getStyle().set("--lumo-body-text-color", "#e8edf5");
+        return form;
+    }
+
+    private static Div buildFormWrapper(ProfileFields fields) {
+        Div wrapper = new Div(buildForm(fields)); // payoutOption now in FormLayout
+        wrapper.setWidthFull();
+        return wrapper;
     }
 
     private static TextField buildPhoneField() {
@@ -106,15 +138,6 @@ public class ProfileDrawer extends Div {
         return header;
     }
 
-    private static FormLayout buildForm(ProfileFields fields) {
-        FormLayout form = new FormLayout(
-                fields.firstName, fields.lastName, fields.phone, fields.email,
-                fields.address, fields.city, fields.postalCode, fields.ticketNumber, fields.identityNumber);
-        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-        form.addClassName("profile-drawer-form");
-        form.getStyle().set("--lumo-body-text-color", "#e8edf5");
-        return form;
-    }
 
     private static Button buildAdminToggleButton(String adminPassword, AdminControls adminControls,
                                                  String cryptoSecret, String cryptoSalt) {
@@ -173,7 +196,8 @@ public class ProfileDrawer extends Div {
                     "\"city\":\"" + fields.city.getValue() + "\"," +
                     "\"postalCode\":\"" + fields.postalCode.getValue() + "\"," +
                     "\"ticketNumber\":\"" + fields.ticketNumber.getValue() + "\"," +
-                    "\"identityNumber\":\"" + fields.identityNumber.getValue() + "\"" +
+                    "\"identityNumber\":\"" + fields.identityNumber.getValue() + "\"," +
+                    "\"payoutOption\":\"" + fields.payoutOption.getValue() + "\"" +
                     "}";
             BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profileJson, cryptoSecret, cryptoSalt);
             Notification.show("Profile saved");
@@ -201,6 +225,8 @@ public class ProfileDrawer extends Div {
                 fields.postalCode.setValue(node.path("postalCode").asText(""));
                 fields.ticketNumber.setValue(node.path("ticketNumber").asText(""));
                 fields.identityNumber.setValue(node.path("identityNumber").asText(""));
+                String storedPayout = node.path("payoutOption").asText("SWISH");
+                fields.payoutOption.setValue(storedPayout.isBlank() ? "SWISH" : storedPayout);
             } catch (Exception ignored) {
             }
             onLoaded.run();
