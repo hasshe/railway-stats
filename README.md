@@ -13,9 +13,11 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Metrics view:** `/metrics` page with four bar charts: Average Minutes Late, Times Cancelled, Claims Requested, and Total Reimbursable Trips.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
 - **Metrics FAB:** Floating button to access metrics from anywhere.
-- **Profile drawer:** Save personal details for claims, encrypted client-side.
+- **Profile drawer:** Save personal details for claims, encrypted client-side — including preferred **payout option** (SWISH or SUS).
+- **Payout option selection:** Dropdown in the profile drawer to choose between SWISH and SUS; value is persisted encrypted in localStorage and sent with every claim submission.
 - **Rate limiter:** IP-based protection against abuse.
 - **Admin mode:** Password-protected, enables manual data collection and station management.
+- **Global exception handling:** Typed exceptions (`StationNotFoundException`, `TripCollectionException`, `ClaimSubmissionException`, `ExternalApiException`) with clean, user-friendly notifications — no raw error messages exposed to the UI.
 
 ---
 
@@ -36,6 +38,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - Route selector, swap button, date picker, claimable filter, and admin controls.
 - Scrollable trip card list.
 - Metrics FAB (bottom-right).
+- Profile drawer with all personal fields including a **Payout Option** dropdown (SWISH / SUS).
 
 ### Metrics view (`/metrics`)
 - Back button, route selector, departure-time filter.
@@ -48,6 +51,39 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 #### Chart details
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
 - **Total Reimbursable Trips:** Number of trips cancelled or ≥ 20 minutes late (updated automatically during nightly collection and metric refresh).
+
+---
+
+## Payout Option
+
+The profile drawer includes a **Payout Option** dropdown with two choices:
+
+| Option | Description |
+|--------|-------------|
+| `SWISH` | Reimbursement paid via Swish (default) |
+| `SUS`   | Reimbursement paid via Swedbank SUS |
+
+- The selected value is saved encrypted in `localStorage` alongside other profile fields.
+- It is loaded automatically when the drawer opens and pre-populated from storage.
+- The value is sent as the `payoutOption` field in every claim request.
+- Defaults to `SWISH` if no value has been saved.
+
+---
+
+## Exception Handling
+
+All service-layer errors are represented by typed exceptions that map to specific HTTP status codes and clean user-facing messages. Raw error details are never shown in the UI.
+
+| Exception | Thrown when | HTTP status | User message |
+|---|---|---|---|
+| `StationNotFoundException` | Station name/ID not found in DB | 404 Not Found | "Station not found. Please check the selected route and try again." |
+| `TripCollectionException` | External trip API fetch fails | 503 Service Unavailable | "Could not collect trip data. Please try again later." |
+| `ClaimSubmissionException` (rate-limited) | API returns 422 | 429 Too Many Requests | "You have too many pending claims. Please wait a moment before trying again." |
+| `ClaimSubmissionException` | Other claim API failure | 502 Bad Gateway | "Claim submission failed. Please try again later." |
+| `ExternalApiException` | Non-2xx from TransitHub API | 502 Bad Gateway | "An external service is currently unavailable. Please try again later." |
+| `Exception` (fallback) | Any unhandled error | 500 Internal Server Error | "An unexpected error occurred. Please try again." |
+
+The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, logs errors with appropriate severity, and returns a structured `ErrorResponse` with `userMessage` and `details` fields.
 
 ---
 
@@ -88,7 +124,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 ## Personal Data & Encryption
 
 - No personal data sent to server.
-- Profile details are encrypted in browser using AES-GCM and PBKDF2.
+- Profile details (name, phone, email, address, postal code, ticket number, identity number, **payout option**) are encrypted in browser using AES-GCM and PBKDF2.
 - Delete data by clearing `userProfile` from localStorage.
 
 ---
@@ -98,6 +134,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - Claim button shown for eligible trips (cancelled or ≥ 20 min late).
 - Claim marks trip as claimed in localStorage; button replaced with label.
 - Cannot claim same trip twice from same browser.
+- **Payout option** from profile (SWISH or SUS) is included in the claim request; defaults to SWISH if not set.
 - **Claims Requested** chart updates only for real claims (not dev mode).
 - **Total Reimbursable Trips** chart updates automatically for qualifying trips.
 
@@ -107,15 +144,16 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 
 ```
 src/main/java/com/hs/railway_stats/
-├── config/          # Station constants (Uppsala C, Stockholm C)
-├── dto/             # API request/response records
-├── external/        # TransitHub REST client
+├── config/          # Station constants, GlobalExceptionHandler
+├── dto/             # API request/response records, UserProfile
+├── exception/       # Typed exceptions: StationNotFoundException, TripCollectionException, ClaimSubmissionException, ExternalApiException
+├── external/        # TransitHub REST client (MalarDalenClient)
 ├── mapper/          # Maps API responses to internal DTOs
 ├── repository/      # JPA repositories + entities (TripInfo, TripInfoMetric, Translation)
 ├── service/
 │   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion, rolling-window pruning
 │   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, departure times
-│   ├── ClaimsService                                  # Claim URL generation
+│   ├── ClaimsService / ClaimsServiceImpl              # Claim submission
 │   ├── TranslationService                             # Station name ↔ ID mapping
 │   └── RateLimiterService                             # IP-based rate limiting
 └── view/
@@ -125,7 +163,7 @@ src/main/java/com/hs/railway_stats/
         ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
         ├── InputLayout       # Route selector (From/To labels + swap button) and date/filter controls
         ├── TripInfoCard      # Individual trip card + claim button
-        ├── ProfileDrawer     # Slide-in profile + admin panel
+        ├── ProfileDrawer     # Slide-in profile + admin panel (incl. payout option dropdown)
         ├── AdminControls     # Collect / Add Station admin buttons
         ├── AdminBanner       # "Admin Mode Active" status banner
         ├── GitHubLink        # Header GitHub icon anchor
