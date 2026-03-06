@@ -1,6 +1,7 @@
 package com.hs.railway_stats.view.component;
 
 import com.hs.railway_stats.config.StationConstants;
+import com.hs.railway_stats.exception.TripCollectionException;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.vaadin.flow.component.button.Button;
@@ -12,6 +13,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -115,9 +117,17 @@ public class InputLayout extends VerticalLayout {
         return () -> {
             String origin = getOrigin();
             String destination = getDestination();
-            tripInfoService.collectTripInformation(origin, destination);
-            Notification.show("Trip information collection started for " + origin + " to " + destination);
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            try {
+                tripInfoService.collectTripInformation(origin, destination);
+                Notification.show("Trip information collected for " + origin + " → " + destination, 3000, Position.TOP_CENTER);
+                refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            } catch (TripCollectionException e) {
+                Notification notification = Notification.show("Could not collect trip data. Please try again later.", 4000, Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            } catch (Exception e) {
+                Notification notification = Notification.show("An unexpected error occurred while collecting trip data.", 4000, Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
         };
     }
 
@@ -147,8 +157,12 @@ public class InputLayout extends VerticalLayout {
 
             LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
             tripInfoCard.setTrips(tripInfoService.getTripInfo(origin, destination, selectedDate));
+        } catch (TripCollectionException e) {
+            Notification notification = Notification.show("Could not load trips. Please try again later.", 4000, Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         } catch (Exception e) {
-            Notification.show("Error filtering trips: " + e.getMessage());
+            Notification notification = Notification.show("An unexpected error occurred while loading trips.", 4000, Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripRequest;
 import com.hs.railway_stats.dto.TripResponse;
+import com.hs.railway_stats.exception.ClaimSubmissionException;
+import com.hs.railway_stats.exception.ExternalApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -52,9 +54,7 @@ public class MalarDalenClient implements RestClient {
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            throw new RuntimeException(
-                    "API call failed with status: " + response.statusCode()
-            );
+            throw new ExternalApiException("Trip search API call failed with status: " + response.statusCode(), response.statusCode());
         }
         return objectMapper.readValue(response.body(), TripResponse.class);
     }
@@ -95,10 +95,10 @@ public class MalarDalenClient implements RestClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() == 422) {
             log.info("Claim API call failed with status 422: {} (Too many concurrent claims for this user. Please wait until previous claims are processed.)", response.body());
-            throw new RuntimeException("Too many concurrent claims for this user. Please wait until previous claims are processed. Response: " + response.body());
+            throw new ClaimSubmissionException("Too many concurrent claims for this user. Please wait until previous claims are processed.", null, true);
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new RuntimeException("Claim API call failed with status: " + response.statusCode());
+            throw new ClaimSubmissionException("Claim submission failed. Please try again later.", new ExternalApiException("Claim API call failed with status: " + response.statusCode(), response.statusCode()), false);
         }
     }
 }

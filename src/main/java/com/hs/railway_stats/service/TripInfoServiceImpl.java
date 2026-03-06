@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
+import com.hs.railway_stats.exception.StationNotFoundException;
+import com.hs.railway_stats.exception.TripCollectionException;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.mapper.TripInfoMapper;
 import com.hs.railway_stats.repository.TranslationRepository;
@@ -63,7 +65,7 @@ public class TripInfoServiceImpl implements TripInfoService {
             tripInfoMetricService.updateMetrics(newTrips, (int) originId, (int) destinationId, today);
         } catch (Exception e) {
             logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
-            throw new RuntimeException("Failed to fetch trip info", e);
+            throw new TripCollectionException(originStationName, destinationStationName, e);
         }
     }
 
@@ -223,13 +225,13 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     private long stationNameToDestinationId(String stationName) {
         Translation translation = translationRepository.findByStationName(stationName.toLowerCase())
-                .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
+                .orElseThrow(() -> new StationNotFoundException(stationName));
         return translation.getStationId();
     }
 
     private String destinationIdToStationName(int destinationId) {
         Translation translation = translationRepository.findByStationId(destinationId)
-                .orElseThrow(() -> new RuntimeException("Destination ID not found: " + destinationId));
+                .orElseThrow(() -> new StationNotFoundException(String.valueOf(destinationId)));
         return translation.getStationName();
     }
 

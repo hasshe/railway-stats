@@ -1,6 +1,7 @@
 package com.hs.railway_stats.service;
 
 import com.hs.railway_stats.dto.ClaimRequest;
+import com.hs.railway_stats.exception.ClaimSubmissionException;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.repository.TripInfoMetricRepository;
 import org.slf4j.Logger;
@@ -41,7 +42,8 @@ public class ClaimsServiceImpl implements ClaimsService {
             }
         } catch (Exception ex) {
             log.error("ClaimsService: REST call failed for ticketNumber={}: {}", request.ticketNumber(), ex.getMessage(), ex);
-            throw new RuntimeException("Failed to submit claim: " + ex.getMessage(), ex);
+            boolean rateLimited = ex instanceof ClaimSubmissionException cse && cse.isRateLimited();
+            throw new ClaimSubmissionException("Failed to submit claim", ex, rateLimited);
         }
     }
 

@@ -3,6 +3,7 @@ package com.hs.railway_stats.view.component;
 import com.hs.railway_stats.dto.ClaimRequest;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.UserProfile;
+import com.hs.railway_stats.exception.ClaimSubmissionException;
 import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
@@ -269,10 +270,19 @@ public class TripInfoCard extends VerticalLayout {
                         Notification notification = Notification.show("✓ Claim submitted successfully!", 4000, Position.TOP_CENTER);
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                     });
-                } catch (Exception ex) {
+                } catch (ClaimSubmissionException ex) {
                     log.error("Claim submission failed for ticketNumber={}: {}", claimRequest.ticketNumber(), ex.getMessage(), ex);
+                    String userMsg = ex.isRateLimited()
+                            ? "You have too many pending claims. Please wait a moment before trying again."
+                            : "Claim submission failed. Please try again later.";
                     UI.getCurrent().access(() -> {
-                        Notification notification = Notification.show("✗ Claim submission failed: " + ex.getMessage(), 5000, Position.TOP_CENTER);
+                        Notification notification = Notification.show(userMsg, 5000, Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    });
+                } catch (Exception ex) {
+                    log.error("Unexpected error during claim submission for ticketNumber={}: {}", claimRequest.ticketNumber(), ex.getMessage(), ex);
+                    UI.getCurrent().access(() -> {
+                        Notification notification = Notification.show("An unexpected error occurred. Please try again.", 5000, Position.TOP_CENTER);
                         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                     });
                 }
