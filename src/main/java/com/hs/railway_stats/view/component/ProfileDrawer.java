@@ -2,6 +2,7 @@ package com.hs.railway_stats.view.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hs.railway_stats.dto.UserProfile;
 import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
@@ -18,12 +19,20 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import lombok.Getter;
+import lombok.Setter;
+
+import java.util.function.Consumer;
 
 @Getter
 public class ProfileDrawer extends Div {
 
     private static final String STORAGE_KEY = "userProfile";
     private boolean open = false;
+    @Setter
+    private Runnable onCloseCallback;
+    @Setter
+    private Consumer<UserProfile> onSaveCallback;
+    private boolean skipNextCloseCallback = false;
 
     public ProfileDrawer(String cryptoSecret, String cryptoSalt,
                          AdminControls adminControls, String adminPassword,
@@ -201,6 +210,12 @@ public class ProfileDrawer extends Div {
                     "}";
             BrowserStorageUtils.encryptedLocalStorageSave(STORAGE_KEY, profileJson, cryptoSecret, cryptoSalt);
             Notification.show("Profile saved");
+
+            if (onSaveCallback != null) {
+                UserProfile saved = UserProfile.fromJson(profileJson);
+                onSaveCallback.accept(saved);
+            }
+            skipNextCloseCallback = true;
             close();
         });
     }
@@ -214,7 +229,7 @@ public class ProfileDrawer extends Div {
                 fields.firstName.setValue(node.path("firstName").asText(""));
                 fields.lastName.setValue(node.path("lastName").asText(""));
                 String storedPhone = node.path("phone").asText("");
-                // Stored as 46XXXXXXXXX → display as XXXXXXXXX (9 digits, no leading 0)
+
                 if (storedPhone.startsWith("46")) {
                     storedPhone = storedPhone.substring(2);
                 }
@@ -287,5 +302,10 @@ public class ProfileDrawer extends Div {
         removeClassName("profile-drawer--open");
         addClassName("profile-drawer--closed");
         UI.getCurrent().getPage().executeJs("document.body.style.overflow='';");
+        if (skipNextCloseCallback) {
+            skipNextCloseCallback = false;
+        } else if (onCloseCallback != null) {
+            onCloseCallback.run();
+        }
     }
 }

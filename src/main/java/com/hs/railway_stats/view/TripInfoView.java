@@ -1,5 +1,6 @@
 package com.hs.railway_stats.view;
 
+import com.hs.railway_stats.dto.UserProfile;
 import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TranslationService;
@@ -9,8 +10,10 @@ import com.hs.railway_stats.view.component.AdminControls;
 import com.hs.railway_stats.view.component.GitHubLink;
 import com.hs.railway_stats.view.component.InputLayout;
 import com.hs.railway_stats.view.component.ProfileDrawer;
+import com.hs.railway_stats.view.component.ProfileSetupBanner;
 import com.hs.railway_stats.view.component.ScheduledJobTimer;
 import com.hs.railway_stats.view.component.TripInfoCard;
+import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -56,7 +59,6 @@ public class TripInfoView extends VerticalLayout {
 
         GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
 
-        // Wrap in a Div so the Anchor sits correctly in the grid's right column
         Div githubWrapper = new Div(githubLink);
         githubWrapper.getStyle()
                 .set("display", "flex")
@@ -65,23 +67,25 @@ public class TripInfoView extends VerticalLayout {
 
         ScheduledJobTimer scheduledJobTimer = new ScheduledJobTimer();
 
-        // Title wrapper — CSS grid centres this column; title wraps naturally inside
         Div titleWrapper = new Div(titleGroup);
         titleWrapper.addClassName("header-title-wrapper");
 
-        // CSS grid header: [profileButton] [titleWrapper] [githubWrapper]
         HorizontalLayout headerRow = getHeaderRow(profileButton, titleWrapper, githubWrapper);
 
-        // ── Metrics FAB — appended to UI root so position:fixed is viewport-relative ──
         Button metricsButton = getMetricsButton();
         Div metricsFab = new Div(metricsButton);
         metricsFab.addClassName("metrics-fab");
-        // Attach after the view is added to the UI so getCurrent() is available
+
         addAttachListener(e -> UI.getCurrent().getElement().appendChild(metricsFab.getElement()));
         addDetachListener(e -> metricsFab.getElement().removeFromParent());
 
+        ProfileSetupBanner profileSetupBanner = new ProfileSetupBanner();
+        Runnable profileHighlightCallback = getProfileHighlightCallback(profileButton);
+
         TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService,
-                List.of(environment.getActiveProfiles()).contains("dev"));
+                List.of(environment.getActiveProfiles()).contains("dev"),
+                profileSetupBanner,
+                profileHighlightCallback);
         AdminBanner adminBanner = new AdminBanner();
 
         Runnable[] collectHolder = {() -> {
@@ -94,14 +98,78 @@ public class TripInfoView extends VerticalLayout {
                 translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
-        profileButton.addClickListener(clickEvent -> profileDrawer.open());
+        profileSaveButtonClickListener(profileButton, profileDrawer);
+
+        reCheckProfileStatusForRippleEffect(cryptoSecret, cryptoSalt, profileDrawer, profileSetupBanner, profileHighlightCallback);
+
+        profileOnSaveCallback(profileDrawer, tripInfoCard, profileButton, profileHighlightCallback);
 
         InputLayout inputLayout = getInputLayout(tripInfoService, rateLimiterService, tripInfoCard, adminControls, scheduledJobTimer, collectHolder, clearDateHolder);
 
-        add(profileDrawer, headerRow, adminBanner, inputLayout, tripInfoCard);
+        add(profileDrawer, headerRow, adminBanner, profileSetupBanner, inputLayout, tripInfoCard);
         setFlexGrow(1, tripInfoCard);
         setAlignItems(Alignment.CENTER);
         setAlignSelf(Alignment.STRETCH, headerRow, inputLayout, tripInfoCard);
+    }
+
+    private static Runnable getProfileHighlightCallback(Button profileButton) {
+        return () -> {
+            profileButton.addClassName("profile-btn--highlight");
+            profileButton.getElement().executeJs(
+                    "if (!this.querySelector('.profile-btn-ripple-ring')) {" +
+                            "  var r1 = document.createElement('div');" +
+                            "  r1.className = 'profile-btn-ripple-ring';" +
+                            "  var r2 = document.createElement('div');" +
+                            "  r2.className = 'profile-btn-ripple-ring';" +
+                            "  this.appendChild(r1);" +
+                            "  this.appendChild(r2);" +
+                            "}"
+            );
+        };
+    }
+
+    private static void profileSaveButtonClickListener(Button profileButton, ProfileDrawer profileDrawer) {
+        profileButton.addClickListener(clickEvent -> {
+            profileButton.removeClassName("profile-btn--highlight");
+            profileButton.getElement().executeJs(
+                    "this.querySelectorAll('.profile-btn-ripple-ring').forEach(el => el.remove());"
+            );
+            profileDrawer.open();
+        });
+    }
+
+    private static void reCheckProfileStatusForRippleEffect(String cryptoSecret, String cryptoSalt, ProfileDrawer profileDrawer, ProfileSetupBanner profileSetupBanner, Runnable profileHighlightCallback) {
+        profileDrawer.setOnCloseCallback(() ->
+                BrowserStorageUtils.encryptedLocalStorageLoad("userProfile", cryptoSecret, cryptoSalt, profileJson -> {
+                    UserProfile profile =
+                            profileJson != null ? UserProfile.fromJson(profileJson) : null;
+                    boolean complete = profile != null && profile.isComplete();
+                    UI ui = UI.getCurrent();
+                    if (ui != null) {
+                        ui.access(() -> {
+                            profileSetupBanner.setVisible(!complete);
+                            if (!complete) {
+                                profileHighlightCallback.run();
+                            }
+                        });
+                    }
+                })
+        );
+    }
+
+    private static void profileOnSaveCallback(ProfileDrawer profileDrawer, TripInfoCard tripInfoCard, Button profileButton, Runnable profileHighlightCallback) {
+        profileDrawer.setOnSaveCallback(saved -> {
+            boolean complete = saved != null && saved.isComplete();
+            tripInfoCard.updateProfileState(complete);
+            if (complete) {
+                profileButton.removeClassName("profile-btn--highlight");
+                profileButton.getElement().executeJs(
+                        "this.querySelectorAll('.profile-btn-ripple-ring').forEach(el => el.remove());"
+                );
+            } else {
+                profileHighlightCallback.run();
+            }
+        });
     }
 
     private static InputLayout getInputLayout(TripInfoService tripInfoService, RateLimiterService rateLimiterService, TripInfoCard tripInfoCard, AdminControls adminControls, ScheduledJobTimer scheduledJobTimer, Runnable[] collectHolder, Runnable[] clearDateHolder) {
@@ -116,18 +184,17 @@ public class TripInfoView extends VerticalLayout {
     }
 
     private static Button getMetricsButton() {
-        // VaadinIcon won't render outside the Vaadin component tree — use raw SVG instead
         Button metricsButton = new Button();
         metricsButton.getElement().setAttribute("aria-label", "Metrics");
         metricsButton.addClassName("metrics-fab-btn");
         metricsButton.getElement().executeJs(
-            "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
-            "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
-            "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
-            "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
-            "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
-            "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
-            "</svg>';"
+                "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
+                        "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
+                        "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
+                        "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
+                        "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
+                        "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
+                        "</svg>';"
         );
         metricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
         return metricsButton;

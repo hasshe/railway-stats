@@ -39,7 +39,6 @@ public class InputLayout extends VerticalLayout {
         setSpacing(true);
         setWidthFull();
 
-        // ── Route selector row (matches MetricsView style) ──
         Span fromLabel = new Span("From");
         fromLabel.addClassName("route-selector__sub");
         originSpan = new Span(stations[idx[0]]);
@@ -76,7 +75,6 @@ public class InputLayout extends VerticalLayout {
             onRouteChange.run();
         });
 
-        // ── Date / filter / admin controls ──
         dateFilter = new DatePicker("Date:");
         dateFilter.setMax(LocalDate.now());
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));

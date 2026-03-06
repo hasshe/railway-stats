@@ -136,6 +136,15 @@
     transform: translateY(0);
 }
 
+/* Disabled claim button — shown when user profile is incomplete */
+.trip-card-action-btn--disabled,
+.trip-card-action-btn[disabled] {
+    opacity: 0.38 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    transform: none !important;
+}
+
 /* ── Empty state ────────────────────────────────────────── */
 /* Centred placeholder text when no trips match the current filter */
 .trip-card-empty {

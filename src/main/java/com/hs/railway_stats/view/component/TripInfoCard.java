@@ -6,6 +6,7 @@ import com.hs.railway_stats.dto.UserProfile;
 import com.hs.railway_stats.exception.ClaimSubmissionException;
 import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -51,12 +52,21 @@ public class TripInfoCard extends VerticalLayout {
     private final String cryptoSalt;
     private final ClaimsService claimsService;
     private final boolean devMode;
+    private final ProfileSetupBanner profileSetupBanner;
+    private final Runnable profileHighlightCallback;
 
-    public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService, boolean devMode) {
+    /** Whether the loaded profile is complete; gates claim buttons. */
+    private boolean profileComplete = true;
+
+    public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService,
+                        boolean devMode, ProfileSetupBanner profileSetupBanner,
+                        Runnable profileHighlightCallback) {
         this.cryptoSecret = cryptoSecret;
         this.cryptoSalt = cryptoSalt;
         this.claimsService = claimsService;
         this.devMode = devMode;
+        this.profileSetupBanner = profileSetupBanner;
+        this.profileHighlightCallback = profileHighlightCallback;
         setPadding(false);
         setSpacing(false);
         setWidthFull();
@@ -73,9 +83,40 @@ public class TripInfoCard extends VerticalLayout {
         setFlexGrow(1, cardsContainer);
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        checkProfileAndUpdateUI();
+    }
+
+    private void checkProfileAndUpdateUI() {
+        BrowserStorageUtils.encryptedLocalStorageLoad("userProfile", cryptoSecret, cryptoSalt, profileJson -> {
+            UserProfile profile = profileJson != null ? UserProfile.fromJson(profileJson) : null;
+            boolean complete = profile != null && profile.isComplete();
+            UI ui = UI.getCurrent();
+            if (ui != null) {
+                ui.access(() -> {
+                    profileComplete = complete;
+                    profileSetupBanner.setVisible(!complete);
+                    if (!complete && profileHighlightCallback != null) {
+                        profileHighlightCallback.run();
+                    }
+                    applyFilter();
+                });
+            }
+        });
+    }
+
     public void setTrips(List<TripInfoResponse> trips) {
         allTrips.clear();
         allTrips.addAll(trips);
+        applyFilter();
+    }
+
+    /** Called immediately after a profile save so claim buttons update without a page reload. */
+    public void updateProfileState(boolean complete) {
+        profileComplete = complete;
+        profileSetupBanner.setVisible(!complete);
         applyFilter();
     }
 
@@ -152,6 +193,12 @@ public class TripInfoCard extends VerticalLayout {
         Button actionBtn = new Button("Claim", new Icon(VaadinIcon.CHECK));
         actionBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
         actionBtn.addClassName("trip-card-action-btn");
+
+        if (!profileComplete) {
+            actionBtn.setEnabled(false);
+            actionBtn.addClassName("trip-card-action-btn--disabled");
+            actionBtn.getElement().setAttribute("title", "Set up your profile to claim this trip");
+        }
 
         BrowserStorageUtils.localStorageLoad(CLAIMED_TRIPS_KEY, storedJson -> {
             if (isTripClaimed(storedJson, tripKey)) {
