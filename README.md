@@ -108,7 +108,8 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 ## Admin Mode
 
 - Unlocks manual data collection, date clearing, and station management.
-- Enable via Profile drawer (enter admin username, toggle, enter password).
+- Enable via the **Admin Mode** accordion in the Profile drawer — enter username and password, then click **Login as Admin**.
+- The accordion is always visible in the drawer and starts collapsed.
 - Session persists via encrypted localStorage.
 - Admin panel includes buttons to clear both the Trip Info cache and Metrics cache instantly.
 
@@ -166,7 +167,8 @@ src/main/java/com/hs/railway_stats/
         ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
         ├── InputLayout       # Route selector (From/To labels + swap button) and date/filter controls
         ├── TripInfoCard      # Individual trip card + claim button
-        ├── ProfileDrawer     # Slide-in profile + admin panel (incl. payout option dropdown)
+        ├── ProfileDrawer     # Slide-in profile panel (incl. payout option dropdown)
+        ├── AdminAccordion    # Collapsible accordion inside ProfileDrawer for admin login (username + password)
         ├── AdminControls     # Collect / Add Station admin buttons
         ├── AdminBanner       # "Admin Mode Active" status banner
         ├── GitHubLink        # Header GitHub icon anchor
@@ -183,7 +185,10 @@ src/main/frontend/
     ├── cards.css                 # Trip card list, badges, action button, empty state
     ├── input.css                 # Input form card, field labels, checkbox
     ├── chart.css                 # Chart element, route selector, departure filter
-    └── profile-drawer.css        # Slide-in drawer: backdrop, panel, fields, footer
+    ├── profile-drawer.css        # Slide-in drawer: backdrop, panel, fields, footer
+    ├── admin-accordion.css       # Admin Mode accordion heading/arrow colour overrides
+    └── components/
+        └── vaadin-accordion-heading.css  # Shadow DOM override for accordion arrow colour
 ```
 
 ---
