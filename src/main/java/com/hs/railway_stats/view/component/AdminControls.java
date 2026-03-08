@@ -18,6 +18,10 @@ public class AdminControls extends HorizontalLayout {
     @Getter
     private final Button adminClearDateButton;
     @Getter
+    private final Button adminClearTripInfoCacheButton;
+    @Getter
+    private final Button adminClearMetricsCacheButton;
+    @Getter
     private final AdminBanner adminBanner;
 
     public AdminControls(AdminBanner adminBanner,
@@ -25,6 +29,8 @@ public class AdminControls extends HorizontalLayout {
                          String cryptoSalt,
                          Runnable onCollect,
                          Runnable onClearDate,
+                         Runnable onClearTripInfoCache,
+                         Runnable onClearMetricsCache,
                          TranslationService translationService) {
 
         this.adminBanner = adminBanner;
@@ -59,22 +65,48 @@ public class AdminControls extends HorizontalLayout {
             }
         });
 
+        adminClearTripInfoCacheButton = new Button("Clear Trip Info Cache", new Icon(VaadinIcon.REFRESH));
+        adminClearTripInfoCacheButton.setVisible(false);
+        adminClearTripInfoCacheButton.addClassName("admin-controls-btn");
+        adminClearTripInfoCacheButton.addClickListener(clickEvent -> {
+            try {
+                onClearTripInfoCache.run();
+            } catch (Exception e) {
+                Notification.show("Error clearing trip info cache: " + e.getMessage());
+            }
+        });
+
+        adminClearMetricsCacheButton = new Button("Clear Metrics Cache", new Icon(VaadinIcon.REFRESH));
+        adminClearMetricsCacheButton.setVisible(false);
+        adminClearMetricsCacheButton.addClassName("admin-controls-btn");
+        adminClearMetricsCacheButton.addClickListener(clickEvent -> {
+            try {
+                onClearMetricsCache.run();
+            } catch (Exception e) {
+                Notification.show("Error clearing metrics cache: " + e.getMessage());
+            }
+        });
+
         AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt,
                 () -> {
                     adminAddStationButton.setVisible(true);
                     adminClearDateButton.setVisible(true);
+                    adminClearTripInfoCacheButton.setVisible(true);
+                    adminClearMetricsCacheButton.setVisible(true);
                 });
 
         setWidthFull();
         getStyle().set("flex-wrap", "wrap").set("row-gap", "0.5rem");
 
-        add(adminCollectButton, adminAddStationButton, adminClearDateButton);
+        add(adminCollectButton, adminAddStationButton, adminClearDateButton, adminClearTripInfoCacheButton, adminClearMetricsCacheButton);
     }
 
     public void setAdminVisible(boolean visible) {
         adminCollectButton.setVisible(visible);
         adminAddStationButton.setVisible(visible);
         adminClearDateButton.setVisible(visible);
+        adminClearTripInfoCacheButton.setVisible(visible);
+        adminClearMetricsCacheButton.setVisible(visible);
         adminBanner.setVisible(visible);
     }
 }

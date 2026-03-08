@@ -12,4 +12,6 @@ public interface TripInfoService {
     void collectTripInformation(String originStationName, String destinationStationName);
 
     void deleteTripsByDate(LocalDate date);
+
+    void clearCache();
 }

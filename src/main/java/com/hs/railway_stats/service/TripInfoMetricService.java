@@ -14,4 +14,6 @@ public interface TripInfoMetricService {
     List<LocalTime> getDepartureTimes(String originStationName, String destinationStationName);
 
     void updateMetrics(List<TripInfoResponse> trips, int originId, int destinationId, LocalDate today);
+
+    void clearCache();
 }

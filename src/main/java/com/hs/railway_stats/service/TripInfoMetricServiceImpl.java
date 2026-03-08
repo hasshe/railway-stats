@@ -111,6 +111,12 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
         logger.info("Metrics cache refresh complete");
     }
 
+    @Override
+    public void clearCache() {
+        metricsCache.invalidateAll();
+        logger.info("Metrics cache cleared by admin");
+    }
+
     private static void calculateMetrics(LocalDate today, TripInfoResponse trip, TripInfoMetric metric) {
         int n = metric.getTotalTrips();
         int minutesLate = Math.max(0, trip.totalMinutesLate());

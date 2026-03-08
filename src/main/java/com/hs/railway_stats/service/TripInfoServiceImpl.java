@@ -205,7 +205,7 @@ public class TripInfoServiceImpl implements TripInfoService {
                 return;
             }
             ZonedDateTime startOfOldest = oldestDay.atStartOfDay(stockholmZone);
-            ZonedDateTime endOfOldest   = oldestDay.plusDays(1).atStartOfDay(stockholmZone);
+            ZonedDateTime endOfOldest = oldestDay.plusDays(1).atStartOfDay(stockholmZone);
             tripInfoRepository.deleteByDate(startOfOldest, endOfOldest);
             logger.info("Rolling-window pruning: removed trip records for {} (older than 30 days)", oldestDay);
         });
@@ -222,6 +222,12 @@ public class TripInfoServiceImpl implements TripInfoService {
             logger.error("Scheduled trip information collection job failed", e);
             throw e;
         }
+    }
+
+    @Override
+    public void clearCache() {
+        tripInfoCache.invalidateAll();
+        logger.info("Trip info cache cleared by admin");
     }
 
     private long stationNameToDestinationId(String stationName) {

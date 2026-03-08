@@ -4,6 +4,7 @@ import com.hs.railway_stats.dto.UserProfile;
 import com.hs.railway_stats.service.ClaimsService;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TranslationService;
+import com.hs.railway_stats.service.TripInfoMetricService;
 import com.hs.railway_stats.service.TripInfoService;
 import com.hs.railway_stats.view.component.AdminBanner;
 import com.hs.railway_stats.view.component.AdminControls;
@@ -43,7 +44,8 @@ public class TripInfoView extends VerticalLayout {
                         RateLimiterService rateLimiterService,
                         TranslationService translationService,
                         ClaimsService claimsService,
-                        Environment environment) {
+                        Environment environment,
+                        TripInfoMetricService tripInfoMetricService) {
 
         addClassName("trip-info-view");
         setPadding(false);
@@ -92,9 +94,19 @@ public class TripInfoView extends VerticalLayout {
         }};
         Runnable[] clearDateHolder = {() -> {
         }};
+        Runnable clearTripInfoCacheRunnable = () -> {
+            tripInfoService.clearCache();
+            com.vaadin.flow.component.notification.Notification.show("Trip info cache cleared");
+        };
+        Runnable clearMetricsCacheRunnable = () -> {
+            tripInfoMetricService.clearCache();
+            com.vaadin.flow.component.notification.Notification.show("Metrics cache cleared");
+        };
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
                 () -> collectHolder[0].run(),
                 () -> clearDateHolder[0].run(),
+                clearTripInfoCacheRunnable,
+                clearMetricsCacheRunnable,
                 translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);

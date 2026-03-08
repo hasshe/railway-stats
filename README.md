@@ -110,6 +110,7 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 - Unlocks manual data collection, date clearing, and station management.
 - Enable via Profile drawer (enter admin username, toggle, enter password).
 - Session persists via encrypted localStorage.
+- Admin panel includes buttons to clear both the Trip Info cache and Metrics cache instantly.
 
 ---
 
@@ -234,6 +235,7 @@ Personal use only. No license specified.
 
 - Trip info queries cached in-memory using [Caffeine](https://github.com/ben-manes/caffeine).
 - Metrics queries cached in-memory using Caffeine for fast chart rendering. Metrics cache is cleared and repopulated nightly at 23:59 for all station pairs.
+- **Admin users can clear both caches instantly from the admin panel.**
 - Configurable via properties or YAML:
   - `tripinfo.cache.expiry.hours`, `tripinfo.cache.max-size`
   - `metrics.cache.max-size`
