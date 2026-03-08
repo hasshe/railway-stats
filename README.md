@@ -51,6 +51,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 #### Chart details
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
 - **Total Reimbursable Trips:** Number of trips cancelled or ≥ 20 minutes late (updated automatically during nightly collection and metric refresh).
+- Metrics queries are cached in-memory using Caffeine for fast chart rendering. The cache is cleared and repopulated nightly at 23:59.
 
 ---
 
@@ -118,6 +119,7 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 |--------|------------------------|------------------------------------------------------------------|
 | 23:40  | Rolling-window pruning | Prunes oldest records to maintain 30-day window.                 |
 | 23:50  | Trip data collection   | Fetches all departures, updates trip and metric tables.          |
+| 23:59  | Metrics cache refresh  | Clears and repopulates metrics cache for all station pairs.      |
 
 ---
 
@@ -231,5 +233,11 @@ Personal use only. No license specified.
 ## Caching
 
 - Trip info queries cached in-memory using [Caffeine](https://github.com/ben-manes/caffeine).
-- Configurable via properties or YAML.
-- Cache keys: origin, destination, date. Hits/misses logged. Empty results not cached. LRU eviction.
+- Metrics queries cached in-memory using Caffeine for fast chart rendering. Metrics cache is cleared and repopulated nightly at 23:59 for all station pairs.
+- Configurable via properties or YAML:
+  - `tripinfo.cache.expiry.hours`, `tripinfo.cache.max-size`
+  - `metrics.cache.max-size`
+- Cache keys:
+  - Trip info: `origin`, `destination`, `date`
+  - Metrics: `origin`, `destination`
+- Hits/misses logged. Empty results not cached. LRU eviction.
