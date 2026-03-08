@@ -76,7 +76,7 @@ public class InputLayout extends VerticalLayout {
         });
 
         dateFilter = new DatePicker("Date:");
-        dateFilter.setMax(LocalDate.now());
+        dateFilter.setMax(LocalDate.now().minusDays(1));
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
         HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);

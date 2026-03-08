@@ -69,7 +69,8 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
 
     private static void calculateMetrics(LocalDate today, TripInfoResponse trip, TripInfoMetric metric) {
         int n = metric.getTotalTrips();
-        int newAvg = (metric.getAverageMinutesLate() * n + trip.totalMinutesLate()) / (n + 1);
+        int minutesLate = Math.max(0, trip.totalMinutesLate());
+        int newAvg = (metric.getAverageMinutesLate() * n + minutesLate) / (n + 1);
         metric.setAverageMinutesLate(newAvg);
         metric.setTotalTrips(n + 1);
 
@@ -77,7 +78,7 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
             metric.getCanceledTripDates().add(today);
         }
 
-        boolean reimbursable = trip.isCancelled() || trip.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD;
+        boolean reimbursable = trip.isCancelled() || minutesLate >= REIMBURSABLE_MINUTES_THRESHOLD;
         if (reimbursable) {
             metric.setTotalReimbursableTrips(metric.getTotalReimbursableTrips() + 1);
         }
