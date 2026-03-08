@@ -1,0 +1,14 @@
+/* Injected into vaadin-accordion-heading shadow DOM */
+/* Recolors the chevron arrow and heading text to match the profile drawer */
+
+:host {
+    color: #e2ede6;
+}
+
+[part="toggle"] {
+    color: #e2ede6;
+}
+
+[part="content"] {
+    color: #e2ede6;
+}

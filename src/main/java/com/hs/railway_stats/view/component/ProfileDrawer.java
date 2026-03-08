@@ -3,7 +3,6 @@ package com.hs.railway_stats.view.component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hs.railway_stats.dto.UserProfile;
-import com.hs.railway_stats.view.util.AdminSessionUtils;
 import com.hs.railway_stats.view.util.BrowserStorageUtils;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -48,19 +47,16 @@ public class ProfileDrawer extends Div {
 
         applyValidations(fields);
 
-        Button adminToggleButton = buildAdminToggleButton(adminPassword, adminControls, cryptoSecret, cryptoSalt);
-        wireAdminToggleVisibility(adminToggleButton, fields.firstName, adminUsername);
+        AdminAccordion adminAccordion = new AdminAccordion(adminPassword, adminUsername, adminControls, cryptoSecret, cryptoSalt);
 
         loadFromStorage(cryptoSecret, cryptoSalt, fields, () -> {
-            boolean matches = fields.firstName.getValue().trim().equalsIgnoreCase(adminUsername);
-            adminToggleButton.setVisible(matches);
         });
 
         Div header = buildHeader();
         Div formWrapper = buildFormWrapper(fields);
         Button saveButton = buildSaveButton(cryptoSecret, cryptoSalt, fields);
-        Div footer = buildFooter(saveButton, adminToggleButton);
-        Div content = new Div(formWrapper);
+        Div footer = buildFooter(saveButton);
+        Div content = new Div(formWrapper, adminAccordion);
         content.addClassName("profile-drawer-content");
 
         panel.add(header, content, footer);
@@ -148,33 +144,8 @@ public class ProfileDrawer extends Div {
     }
 
 
-    private static Button buildAdminToggleButton(String adminPassword, AdminControls adminControls,
-                                                 String cryptoSecret, String cryptoSalt) {
-        Button button = new Button("Toggle Admin Mode");
-        button.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        button.setWidthFull();
-        button.setVisible(false);
-        button.getStyle().set("margin-top", "20px");
-        button.addClickListener(e -> new AdminPasswordDialog(
-                adminPassword,
-                adminControls,
-                () -> AdminSessionUtils.saveAdminSession(cryptoSecret, cryptoSalt),
-                AdminSessionUtils::clearAdminSession
-        ).open());
-        return button;
-    }
-
-    private static void wireAdminToggleVisibility(Button adminToggleButton,
-                                                  TextField firstNameField,
-                                                  String adminUsername) {
-        firstNameField.addValueChangeListener(e -> {
-            boolean matches = e.getValue().trim().equalsIgnoreCase(adminUsername);
-            adminToggleButton.setVisible(matches);
-        });
-    }
-
-    private static Div buildFooter(Button saveButton, Button adminToggleButton) {
-        Div footer = new Div(saveButton, adminToggleButton);
+    private static Div buildFooter(Button saveButton) {
+        Div footer = new Div(saveButton);
         footer.addClassName("profile-drawer-footer");
         return footer;
     }

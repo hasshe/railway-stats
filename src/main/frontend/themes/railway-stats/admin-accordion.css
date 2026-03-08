@@ -1,0 +1,32 @@
+/* ── Admin Accordion ─────────────────────────────────────── */
+
+/* Light-coloured heading text and arrow for the admin accordion panel */
+.profile-drawer-panel vaadin-accordion-panel {
+    --lumo-contrast-60pct: rgba(226, 237, 230, 0.80);
+    --lumo-contrast-70pct: rgba(226, 237, 230, 0.90);
+    --lumo-contrast-90pct: #e2ede6;
+    --lumo-body-text-color: #e2ede6;
+}
+
+.profile-drawer-panel vaadin-accordion-heading {
+    color: #e2ede6 !important;
+    --lumo-contrast-60pct: rgba(226, 237, 230, 0.80);
+    --lumo-contrast-90pct: #e2ede6;
+}
+
+.profile-drawer-panel vaadin-accordion-heading::part(toggle) {
+    color: #e2ede6 !important;
+}
+
+.profile-drawer-panel vaadin-accordion-heading::part(content) {
+    color: #e2ede6 !important;
+}
+
+.profile-drawer-panel vaadin-accordion-panel::part(summary) {
+    color: #e2ede6 !important;
+}
+
+.profile-drawer-panel vaadin-accordion-panel [slot="summary"] {
+    color: #e2ede6 !important;
+}
+
