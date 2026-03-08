@@ -37,3 +37,8 @@ tripinfo:
     expiry:
       hours: 24
     max-size: 100
+
+metrics:
+  cache:
+    max-size: 50
+

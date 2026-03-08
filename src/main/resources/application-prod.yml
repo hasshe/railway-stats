@@ -61,3 +61,8 @@ tripinfo:
     expiry:
       hours: ${CACHE_EXPIRY_HOURS:24}
     max-size: ${CACHE_MAX_SIZE:100}
+
+metrics:
+  cache:
+    max-size: ${METRICS_CACHE_MAX_SIZE:100}
+

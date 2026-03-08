@@ -15,6 +15,7 @@ import com.hs.railway_stats.repository.entity.TripInfo;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +44,7 @@ public class TripInfoServiceImpl implements TripInfoService {
                                TripInfoRepository tripInfoRepository,
                                TripInfoMetricService tripInfoMetricService,
                                TranslationRepository translationRepository,
-                               Cache<String, List<TripInfoResponse>> tripInfoCache) {
+                               @Qualifier("tripInfoCache") Cache<String, List<TripInfoResponse>> tripInfoCache) {
         this.restClient = restClient;
         this.tripInfoRepository = tripInfoRepository;
         this.tripInfoMetricService = tripInfoMetricService;

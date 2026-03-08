@@ -1,5 +1,7 @@
 package com.hs.railway_stats.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoMetricRepository;
@@ -7,6 +9,8 @@ import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfoMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,18 +27,32 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
 
     private final TripInfoMetricRepository tripInfoMetricRepository;
     private final TranslationRepository translationRepository;
+    private final Cache<String, List<TripInfoMetric>> metricsCache;
 
     public TripInfoMetricServiceImpl(TripInfoMetricRepository tripInfoMetricRepository,
-                                     TranslationRepository translationRepository) {
+                                     TranslationRepository translationRepository,
+                                     @Qualifier("metricsCache") Cache<String, List<TripInfoMetric>> metricsCache) {
         this.tripInfoMetricRepository = tripInfoMetricRepository;
         this.translationRepository = translationRepository;
+        this.metricsCache = metricsCache;
     }
 
     @Override
     public List<TripInfoMetric> getMetrics(String originStationName, String destinationStationName) {
+        String cacheKey = originStationName + "-" + destinationStationName;
+        List<TripInfoMetric> cached = metricsCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            logger.info("METRICS CACHE HIT for key: {}", cacheKey);
+            return cached;
+        }
+        logger.info("METRICS CACHE MISS (DB) for key: {}", cacheKey);
         int originId = stationNameToId(originStationName);
         int destinationId = stationNameToId(destinationStationName);
-        return tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
+        List<TripInfoMetric> result = tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
+        if (!result.isEmpty()) {
+            metricsCache.put(cacheKey, result);
+        }
+        return result;
     }
 
     @Override
@@ -65,6 +83,32 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
             tripInfoMetricRepository.save(metric);
             logger.debug("Updated metric for origin={} destination={} departure={}", originId, destinationId, scheduledDeparture);
         });
+    }
+
+    @Scheduled(cron = "0 59 23 * * ?", zone = ZONE_ID)
+    protected final void refreshMetricsCache() {
+        logger.info("Refreshing metrics cache for all station pairs");
+        metricsCache.invalidateAll();
+        logger.info("Metrics cache cleared");
+        for (String origin : StationConstants.ALL_STATIONS) {
+            for (String destination : StationConstants.ALL_STATIONS) {
+                if (!origin.equals(destination)) {
+                    try {
+                        String cacheKey = origin + "-" + destination;
+                        int originId = stationNameToId(origin);
+                        int destinationId = stationNameToId(destination);
+                        List<TripInfoMetric> metrics = tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
+                        if (!metrics.isEmpty()) {
+                            metricsCache.put(cacheKey, metrics);
+                            logger.info("Metrics cache repopulated for key: {}", cacheKey);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Failed to repopulate metrics cache for {} -> {}", origin, destination, e);
+                    }
+                }
+            }
+        }
+        logger.info("Metrics cache refresh complete");
     }
 
     private static void calculateMetrics(LocalDate today, TripInfoResponse trip, TripInfoMetric metric) {
