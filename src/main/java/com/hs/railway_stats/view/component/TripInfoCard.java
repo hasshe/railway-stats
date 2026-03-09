@@ -56,7 +56,7 @@ public class TripInfoCard extends VerticalLayout {
     private final Runnable profileHighlightCallback;
 
     /** Whether the loaded profile is complete; gates claim buttons. */
-    private boolean profileComplete = true;
+    private boolean profileComplete = false;
 
     public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService,
                         boolean devMode, ProfileSetupBanner profileSetupBanner,

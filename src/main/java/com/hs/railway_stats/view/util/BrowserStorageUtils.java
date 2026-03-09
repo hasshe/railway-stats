@@ -57,7 +57,7 @@ public final class BrowserStorageUtils {
     }
 
     public static void encryptedLocalStorageLoad(String key, String secret, String salt,
-                                                 Consumer<String> onSuccess) {
+                                                 Consumer<String> onResult) {
         UI.getCurrent().getPage().executeJs(buildCryptoJs(secret, salt) + """
                 return (async () => {
                     const raw = localStorage.getItem($0);
@@ -74,9 +74,7 @@ public final class BrowserStorageUtils {
                     } catch(e) { return ''; }
                 })();
                 """, key).then(String.class, result -> {
-            if (result != null && !result.isBlank()) {
-                onSuccess.accept(result);
-            }
+            onResult.accept(result != null && !result.isBlank() ? result : null);
         });
     }
 
