@@ -18,11 +18,13 @@ public class ClaimsServiceImpl implements ClaimsService {
 
     private final RestClient restClient;
     private final TripInfoMetricRepository tripInfoMetricRepository;
+    private final TranslationService translationService;
 
     @Autowired
-    public ClaimsServiceImpl(RestClient restClient, TripInfoMetricRepository tripInfoMetricRepository) {
+    public ClaimsServiceImpl(RestClient restClient, TripInfoMetricRepository tripInfoMetricRepository, TranslationService translationService) {
         this.restClient = restClient;
         this.tripInfoMetricRepository = tripInfoMetricRepository;
+        this.translationService = translationService;
     }
 
     @Override
@@ -32,8 +34,8 @@ public class ClaimsServiceImpl implements ClaimsService {
         try {
             restClient.callClaim(request);
             try {
-                int originId = Integer.parseInt(request.departureStationId());
-                int destinationId = Integer.parseInt(request.arrivalStationId());
+                int originId = translationService.translateClaimsStationId(request.departureStationId());
+                int destinationId = translationService.translateClaimsStationId(request.arrivalStationId());
                 String timeStr = request.departureDate().substring(11, 16);
                 LocalTime scheduledDepartureTime = LocalTime.parse(timeStr);
                 updateMetric(originId, destinationId, scheduledDepartureTime);

@@ -2,15 +2,13 @@ package com.hs.railway_stats.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.hs.railway_stats.config.StationConstants;
+import com.hs.railway_stats.dto.TranslationDto;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.dto.TripResponse;
-import com.hs.railway_stats.exception.StationNotFoundException;
 import com.hs.railway_stats.exception.TripCollectionException;
 import com.hs.railway_stats.external.RestClient;
 import com.hs.railway_stats.mapper.TripInfoMapper;
-import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoRepository;
-import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfo;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -37,18 +35,18 @@ public class TripInfoServiceImpl implements TripInfoService {
     private final RestClient restClient;
     private final TripInfoRepository tripInfoRepository;
     private final TripInfoMetricService tripInfoMetricService;
-    private final TranslationRepository translationRepository;
+    private final TranslationService translationService;
     private final Cache<String, List<TripInfoResponse>> tripInfoCache;
 
     public TripInfoServiceImpl(RestClient restClient,
                                TripInfoRepository tripInfoRepository,
                                TripInfoMetricService tripInfoMetricService,
-                               TranslationRepository translationRepository,
+                               TranslationService translationService,
                                @Qualifier("tripInfoCache") Cache<String, List<TripInfoResponse>> tripInfoCache) {
         this.restClient = restClient;
         this.tripInfoRepository = tripInfoRepository;
         this.tripInfoMetricService = tripInfoMetricService;
-        this.translationRepository = translationRepository;
+        this.translationService = translationService;
         this.tripInfoCache = tripInfoCache;
     }
 
@@ -56,8 +54,10 @@ public class TripInfoServiceImpl implements TripInfoService {
     @Transactional
     public void collectTripInformation(String originStationName, String destinationStationName) {
         try {
-            long originId = stationNameToDestinationId(originStationName);
-            long destinationId = stationNameToDestinationId(destinationStationName);
+            TranslationDto origin = translationService.getTranslationByName(originStationName);
+            TranslationDto destination = translationService.getTranslationByName(destinationStationName);
+            long originId = origin.stationId();
+            long destinationId = destination.stationId();
             List<TripInfoResponse> allTrips = new ArrayList<>();
             ZoneId stockholmZone = ZoneId.of(ZONE_ID);
             LocalDate today = LocalDate.now(stockholmZone);
@@ -100,24 +100,17 @@ public class TripInfoServiceImpl implements TripInfoService {
             return cached;
         }
         logger.info("CACHE MISS (DB) for key: {}", cacheKey);
-        long originId = stationNameToDestinationId(originStationName);
-        long destinationId = stationNameToDestinationId(destinationStationName);
+        TranslationDto origin = translationService.getTranslationByName(originStationName);
+        TranslationDto destination = translationService.getTranslationByName(destinationStationName);
         ZoneId stockholmZone = ZoneId.of(ZONE_ID);
 
         ZonedDateTime startOfDay = date.atStartOfDay(stockholmZone);
         ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(stockholmZone);
 
-        String originClaimsStationId = translationRepository.findByStationId((int) originId)
-                .map(Translation::getClaimsStationId)
-                .orElse(null);
-        String destinationClaimsStationId = translationRepository.findByStationId((int) destinationId)
-                .map(Translation::getClaimsStationId)
-                .orElse(null);
-
         List<TripInfo> tripInfos = tripInfoRepository.findByOriginAndDestinationAndDate(
-                (int) originId, (int) destinationId, startOfDay, endOfDay);
+                origin.stationId(), destination.stationId(), startOfDay, endOfDay);
 
-        List<TripInfoResponse> result = getTripInfoResponses(tripInfos, stockholmZone, originClaimsStationId, destinationClaimsStationId);
+        List<TripInfoResponse> result = getTripInfoResponses(tripInfos, stockholmZone, origin, destination);
         if (!result.isEmpty()) {
             tripInfoCache.put(cacheKey, result);
         } else {
@@ -126,17 +119,17 @@ public class TripInfoServiceImpl implements TripInfoService {
         return result;
     }
 
-    private List<TripInfoResponse> getTripInfoResponses(List<TripInfo> tripInfos, ZoneId stockholmZone, String originClaimsStationId, String destinationClaimsStationId) {
+    private List<TripInfoResponse> getTripInfoResponses(List<TripInfo> tripInfos, ZoneId stockholmZone, TranslationDto origin, TranslationDto destination) {
         return tripInfos.stream()
                 .map(info -> new TripInfoResponse(
-                        destinationIdToStationName(info.getOriginId()),
-                        destinationIdToStationName(info.getDestinationId()),
+                        origin.stationName(),
+                        destination.stationName(),
                         info.getCanceled() == 1,
                         info.getMinutesLate(),
                         info.getOriginalDepartureTime() != null ? info.getOriginalDepartureTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null,
                         info.getActualArrivalTime() != null ? info.getActualArrivalTime().withZoneSameInstant(stockholmZone).toOffsetDateTime() : null,
-                        originClaimsStationId,
-                        destinationClaimsStationId
+                        origin.claimsStationId(),
+                        destination.claimsStationId()
                 ))
                 .toList();
     }
@@ -228,18 +221,6 @@ public class TripInfoServiceImpl implements TripInfoService {
     public void clearCache() {
         tripInfoCache.invalidateAll();
         logger.info("Trip info cache cleared by admin");
-    }
-
-    private long stationNameToDestinationId(String stationName) {
-        Translation translation = translationRepository.findByStationName(stationName.toLowerCase())
-                .orElseThrow(() -> new StationNotFoundException(stationName));
-        return translation.getStationId();
-    }
-
-    private String destinationIdToStationName(int destinationId) {
-        Translation translation = translationRepository.findByStationId(destinationId)
-                .orElseThrow(() -> new StationNotFoundException(String.valueOf(destinationId)));
-        return translation.getStationName();
     }
 
     private boolean isLastTrainOfDay(final TripResponse response, final LocalDate today) {

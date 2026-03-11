@@ -13,4 +13,6 @@ public interface TranslationRepository extends JpaRepository<Translation, Intege
     Optional<Translation> findByStationName(String stationName);
 
     Optional<Translation> findByStationId(int stationId);
+
+    Optional<Translation> findByClaimsStationId(String claimsStationId);
 }
