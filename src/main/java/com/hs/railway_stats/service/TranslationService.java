@@ -7,19 +7,9 @@ import java.util.List;
 
 public interface TranslationService {
 
-    Translation addStation(int stationId, String stationName);
-
     Translation addStation(int stationId, String stationName, String claimsStationId);
 
-    List<Translation> getAllStations();
-
     int translateClaimsStationId(String claimsStationId);
-
-    String getClaimsStationId(int stationId);
-
-    int getStationIdByName(String stationName);
-
-    String getStationNameById(int stationId);
 
     TranslationDto getTranslationByName(String stationName);
 }
