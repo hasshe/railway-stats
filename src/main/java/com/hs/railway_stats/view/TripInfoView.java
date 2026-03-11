@@ -102,11 +102,16 @@ public class TripInfoView extends VerticalLayout {
             tripInfoMetricService.clearCache();
             com.vaadin.flow.component.notification.Notification.show("Metrics cache cleared");
         };
+        Runnable clearTranslationCacheRunnable = () -> {
+            translationService.clearCache();
+            com.vaadin.flow.component.notification.Notification.show("Translation cache cleared");
+        };
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
                 () -> collectHolder[0].run(),
                 () -> clearDateHolder[0].run(),
                 clearTripInfoCacheRunnable,
                 clearMetricsCacheRunnable,
+                clearTranslationCacheRunnable,
                 translationService);
 
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);

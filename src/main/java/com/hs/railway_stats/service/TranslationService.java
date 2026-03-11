@@ -12,4 +12,6 @@ public interface TranslationService {
     int translateClaimsStationId(String claimsStationId);
 
     TranslationDto getTranslationByName(String stationName);
+
+    void clearCache();
 }

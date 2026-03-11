@@ -22,6 +22,8 @@ public class AdminControls extends HorizontalLayout {
     @Getter
     private final Button adminClearMetricsCacheButton;
     @Getter
+    private final Button adminClearTranslationCacheButton;
+    @Getter
     private final AdminBanner adminBanner;
 
     public AdminControls(AdminBanner adminBanner,
@@ -31,6 +33,7 @@ public class AdminControls extends HorizontalLayout {
                          Runnable onClearDate,
                          Runnable onClearTripInfoCache,
                          Runnable onClearMetricsCache,
+                         Runnable onClearTranslationCache,
                          TranslationService translationService) {
 
         this.adminBanner = adminBanner;
@@ -87,18 +90,30 @@ public class AdminControls extends HorizontalLayout {
             }
         });
 
+        adminClearTranslationCacheButton = new Button("Clear Translation Cache", new Icon(VaadinIcon.REFRESH));
+        adminClearTranslationCacheButton.setVisible(false);
+        adminClearTranslationCacheButton.addClassName("admin-controls-btn");
+        adminClearTranslationCacheButton.addClickListener(clickEvent -> {
+            try {
+                onClearTranslationCache.run();
+            } catch (Exception e) {
+                Notification.show("Error clearing translation cache: " + e.getMessage());
+            }
+        });
+
         AdminSessionUtils.restoreAdminSession(adminCollectButton, adminBanner, cryptoSecret, cryptoSalt,
                 () -> {
                     adminAddStationButton.setVisible(true);
                     adminClearDateButton.setVisible(true);
                     adminClearTripInfoCacheButton.setVisible(true);
                     adminClearMetricsCacheButton.setVisible(true);
+                    adminClearTranslationCacheButton.setVisible(true);
                 });
 
         setWidthFull();
         getStyle().set("flex-wrap", "wrap").set("row-gap", "0.5rem");
 
-        add(adminCollectButton, adminAddStationButton, adminClearDateButton, adminClearTripInfoCacheButton, adminClearMetricsCacheButton);
+        add(adminCollectButton, adminAddStationButton, adminClearDateButton, adminClearTripInfoCacheButton, adminClearMetricsCacheButton, adminClearTranslationCacheButton);
     }
 
     public void setAdminVisible(boolean visible) {
@@ -107,6 +122,7 @@ public class AdminControls extends HorizontalLayout {
         adminClearDateButton.setVisible(visible);
         adminClearTripInfoCacheButton.setVisible(visible);
         adminClearMetricsCacheButton.setVisible(visible);
+        adminClearTranslationCacheButton.setVisible(visible);
         adminBanner.setVisible(visible);
     }
 }

@@ -78,4 +78,10 @@ public class TranslationServiceImpl implements TranslationService {
         }
         translationCache.put(String.valueOf(dto.stationId()), dto);
     }
+
+    @Override
+    public void clearCache() {
+        translationCache.invalidateAll();
+        logger.info("Translation cache cleared by admin");
+    }
 }
