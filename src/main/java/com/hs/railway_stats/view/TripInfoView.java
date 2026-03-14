@@ -23,17 +23,27 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
-
-import java.util.List;
 
 @Route("")
 @CssImport("./themes/railway-stats/styles.css")
 public class TripInfoView extends VerticalLayout {
+
+    private static final String REMOVE_RIPPLE_JS =
+            "this.querySelectorAll('.profile-btn-ripple-ring').forEach(el => el.remove());";
+
+    private static final String METRICS_FAB_SVG =
+            "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
+            "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
+            "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
+            "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
+            "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
+            "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
+            "</svg>';";
 
     public TripInfoView(final TripInfoService tripInfoService,
                         @Value("${app.crypto.secret}") String cryptoSecret,
@@ -41,87 +51,83 @@ public class TripInfoView extends VerticalLayout {
                         @Value("${app.admin.password}") String adminPassword,
                         @Value("${app.admin.username}") String adminUsername,
                         @Value("${app.version}") String appVersion,
+                        @Value("${app.dev-mode:false}") boolean devMode,
                         RateLimiterService rateLimiterService,
                         TranslationService translationService,
                         ClaimsService claimsService,
-                        Environment environment,
                         TripInfoMetricService tripInfoMetricService) {
 
         addClassName("trip-info-view");
         setPadding(false);
         setSpacing(true);
 
-        Button profileButton = getProfileButton();
+        Button profileButton = buildProfileButton();
+        HorizontalLayout headerRow = buildHeader(profileButton, appVersion);
 
-        Icon trainIcon = getTrainIcon();
-
-        H1 heading = getHeading();
-
-        HorizontalLayout titleGroup = getTitleGroup(trainIcon, heading);
-
-        GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
-
-        Div githubWrapper = new Div(githubLink);
-        githubWrapper.getStyle()
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "flex-end");
-
-        ScheduledJobTimer scheduledJobTimer = new ScheduledJobTimer();
-
-        Div titleWrapper = new Div(titleGroup);
-        titleWrapper.addClassName("header-title-wrapper");
-
-        HorizontalLayout headerRow = getHeaderRow(profileButton, titleWrapper, githubWrapper);
-
-        Button metricsButton = getMetricsButton();
+        Button metricsButton = new Button();
+        metricsButton.getElement().setAttribute("aria-label", "Metrics");
+        metricsButton.addClassName("metrics-fab-btn");
+        metricsButton.getElement().executeJs(METRICS_FAB_SVG);
+        metricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
         Div metricsFab = new Div(metricsButton);
         metricsFab.addClassName("metrics-fab");
-
         addAttachListener(e -> UI.getCurrent().getElement().appendChild(metricsFab.getElement()));
         addDetachListener(e -> metricsFab.getElement().removeFromParent());
 
         ProfileSetupBanner profileSetupBanner = new ProfileSetupBanner();
-        Runnable profileHighlightCallback = getProfileHighlightCallback(profileButton);
-
-        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService,
-                List.of(environment.getActiveProfiles()).contains("dev"),
-                profileSetupBanner,
-                profileHighlightCallback);
+        Runnable profileHighlightCallback = buildProfileHighlightCallback(profileButton);
         AdminBanner adminBanner = new AdminBanner();
 
-        Runnable[] collectHolder = {() -> {
-        }};
-        Runnable[] clearDateHolder = {() -> {
-        }};
-        Runnable clearTripInfoCacheRunnable = () -> {
-            tripInfoService.clearCache();
-            com.vaadin.flow.component.notification.Notification.show("Trip info cache cleared");
-        };
-        Runnable clearMetricsCacheRunnable = () -> {
-            tripInfoMetricService.clearCache();
-            com.vaadin.flow.component.notification.Notification.show("Metrics cache cleared");
-        };
-        Runnable clearTranslationCacheRunnable = () -> {
-            translationService.clearCache();
-            com.vaadin.flow.component.notification.Notification.show("Translation cache cleared");
-        };
+        TripInfoCard tripInfoCard = new TripInfoCard(cryptoSecret, cryptoSalt, claimsService,
+                devMode, profileSetupBanner, profileHighlightCallback);
+
+        ScheduledJobTimer scheduledJobTimer = new ScheduledJobTimer();
+
         AdminControls adminControls = new AdminControls(adminBanner, cryptoSecret, cryptoSalt,
-                () -> collectHolder[0].run(),
-                () -> clearDateHolder[0].run(),
-                clearTripInfoCacheRunnable,
-                clearMetricsCacheRunnable,
-                clearTranslationCacheRunnable,
+                clearCacheRunnable(tripInfoService::clearCache,      "Trip info cache cleared"),
+                clearCacheRunnable(tripInfoMetricService::clearCache, "Metrics cache cleared"),
+                clearCacheRunnable(translationService::clearCache,    "Translation cache cleared"),
                 translationService);
 
+        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoCard, adminControls, rateLimiterService, scheduledJobTimer);
+        inputLayout.setWidthFull();
+        inputLayout.setMaxWidth("700px");
+        inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
+
+        adminControls.getAdminCollectButton().addClickListener(e -> inputLayout.buildCollectRunnable().run());
+        adminControls.getAdminClearDateButton().addClickListener(e -> inputLayout.buildClearDateRunnable().run());
+
         ProfileDrawer profileDrawer = new ProfileDrawer(cryptoSecret, cryptoSalt, adminControls, adminPassword, adminUsername);
-        profileSaveButtonClickListener(profileButton, profileDrawer);
 
-        reCheckProfileStatusForRippleEffect(cryptoSecret, cryptoSalt, profileDrawer, profileSetupBanner, profileHighlightCallback);
+        profileButton.addClickListener(e -> {
+            profileButton.removeClassName("profile-btn--highlight");
+            profileButton.getElement().executeJs(REMOVE_RIPPLE_JS);
+            profileDrawer.open();
+        });
 
-        profileOnSaveCallback(profileDrawer, tripInfoCard, profileButton, profileHighlightCallback);
+        profileDrawer.setOnCloseCallback(() ->
+                BrowserStorageUtils.encryptedLocalStorageLoad("userProfile", cryptoSecret, cryptoSalt, profileJson -> {
+                    UserProfile profile = profileJson != null ? UserProfile.fromJson(profileJson) : null;
+                    boolean complete = profile != null && profile.isComplete();
+                    UI ui = UI.getCurrent();
+                    if (ui != null) {
+                        ui.access(() -> {
+                            profileSetupBanner.setVisible(!complete);
+                            if (!complete) profileHighlightCallback.run();
+                        });
+                    }
+                }));
 
-        InputLayout inputLayout = getInputLayout(tripInfoService, rateLimiterService, tripInfoCard, adminControls, scheduledJobTimer, collectHolder, clearDateHolder);
+        profileDrawer.setOnSaveCallback(saved -> {
+            boolean complete = saved != null && saved.isComplete();
+            tripInfoCard.updateProfileState(complete);
+            if (complete) {
+                profileButton.removeClassName("profile-btn--highlight");
+                profileButton.getElement().executeJs(REMOVE_RIPPLE_JS);
+            } else {
+                profileHighlightCallback.run();
+            }
+        });
 
         add(profileDrawer, headerRow, adminBanner, profileSetupBanner, inputLayout, tripInfoCard);
         setFlexGrow(1, tripInfoCard);
@@ -129,110 +135,11 @@ public class TripInfoView extends VerticalLayout {
         setAlignSelf(Alignment.STRETCH, headerRow, inputLayout, tripInfoCard);
     }
 
-    private static Runnable getProfileHighlightCallback(Button profileButton) {
-        return () -> {
-            profileButton.addClassName("profile-btn--highlight");
-            profileButton.getElement().executeJs(
-                    "if (!this.querySelector('.profile-btn-ripple-ring')) {" +
-                            "  var r1 = document.createElement('div');" +
-                            "  r1.className = 'profile-btn-ripple-ring';" +
-                            "  var r2 = document.createElement('div');" +
-                            "  r2.className = 'profile-btn-ripple-ring';" +
-                            "  this.appendChild(r1);" +
-                            "  this.appendChild(r2);" +
-                            "}"
-            );
-        };
-    }
+    private static HorizontalLayout buildHeader(Button profileButton, String appVersion) {
+        Icon trainIcon = new Icon(VaadinIcon.TRAIN);
+        trainIcon.setSize("1.9rem");
+        trainIcon.getStyle().set("color", "#4caf7d");
 
-    private static void profileSaveButtonClickListener(Button profileButton, ProfileDrawer profileDrawer) {
-        profileButton.addClickListener(clickEvent -> {
-            profileButton.removeClassName("profile-btn--highlight");
-            profileButton.getElement().executeJs(
-                    "this.querySelectorAll('.profile-btn-ripple-ring').forEach(el => el.remove());"
-            );
-            profileDrawer.open();
-        });
-    }
-
-    private static void reCheckProfileStatusForRippleEffect(String cryptoSecret, String cryptoSalt, ProfileDrawer profileDrawer, ProfileSetupBanner profileSetupBanner, Runnable profileHighlightCallback) {
-        profileDrawer.setOnCloseCallback(() ->
-                BrowserStorageUtils.encryptedLocalStorageLoad("userProfile", cryptoSecret, cryptoSalt, profileJson -> {
-                    UserProfile profile =
-                            profileJson != null ? UserProfile.fromJson(profileJson) : null;
-                    boolean complete = profile != null && profile.isComplete();
-                    UI ui = UI.getCurrent();
-                    if (ui != null) {
-                        ui.access(() -> {
-                            profileSetupBanner.setVisible(!complete);
-                            if (!complete) {
-                                profileHighlightCallback.run();
-                            }
-                        });
-                    }
-                })
-        );
-    }
-
-    private static void profileOnSaveCallback(ProfileDrawer profileDrawer, TripInfoCard tripInfoCard, Button profileButton, Runnable profileHighlightCallback) {
-        profileDrawer.setOnSaveCallback(saved -> {
-            boolean complete = saved != null && saved.isComplete();
-            tripInfoCard.updateProfileState(complete);
-            if (complete) {
-                profileButton.removeClassName("profile-btn--highlight");
-                profileButton.getElement().executeJs(
-                        "this.querySelectorAll('.profile-btn-ripple-ring').forEach(el => el.remove());"
-                );
-            } else {
-                profileHighlightCallback.run();
-            }
-        });
-    }
-
-    private static InputLayout getInputLayout(TripInfoService tripInfoService, RateLimiterService rateLimiterService, TripInfoCard tripInfoCard, AdminControls adminControls, ScheduledJobTimer scheduledJobTimer, Runnable[] collectHolder, Runnable[] clearDateHolder) {
-        InputLayout inputLayout = new InputLayout(tripInfoService, tripInfoCard, adminControls, rateLimiterService, scheduledJobTimer);
-        collectHolder[0] = inputLayout.buildCollectRunnable(tripInfoService, tripInfoCard, rateLimiterService);
-        clearDateHolder[0] = inputLayout.buildClearDateRunnable(tripInfoService, tripInfoCard, rateLimiterService);
-
-        inputLayout.setWidthFull();
-        inputLayout.setMaxWidth("700px");
-        inputLayout.getStyle().set("margin-left", "auto").set("margin-right", "auto");
-        return inputLayout;
-    }
-
-    private static Button getMetricsButton() {
-        Button metricsButton = new Button();
-        metricsButton.getElement().setAttribute("aria-label", "Metrics");
-        metricsButton.addClassName("metrics-fab-btn");
-        metricsButton.getElement().executeJs(
-                "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
-                        "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
-                        "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
-                        "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
-                        "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
-                        "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
-                        "</svg>';"
-        );
-        metricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
-        return metricsButton;
-    }
-
-    private static HorizontalLayout getHeaderRow(Button profileButton, Div titleWrapper, Div githubWrapper) {
-        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleWrapper, githubWrapper);
-        headerRow.setWidthFull();
-        headerRow.setAlignItems(Alignment.CENTER);
-        headerRow.addClassName("header-row");
-        return headerRow;
-    }
-
-    private static HorizontalLayout getTitleGroup(Icon trainIcon, H1 heading) {
-        HorizontalLayout titleGroup = new HorizontalLayout(trainIcon, heading);
-        titleGroup.setAlignItems(Alignment.CENTER);
-        titleGroup.setSpacing(true);
-        return titleGroup;
-    }
-
-    private static H1 getHeading() {
         H1 heading = new H1("Movingo Tracker");
         heading.getStyle()
                 .set("color", "#e2ede6")
@@ -240,17 +147,29 @@ public class TripInfoView extends VerticalLayout {
                 .set("font-weight", "600")
                 .set("letter-spacing", "-0.01em")
                 .set("margin", "0");
-        return heading;
+
+        HorizontalLayout titleGroup = new HorizontalLayout(trainIcon, heading);
+        titleGroup.setAlignItems(Alignment.CENTER);
+        titleGroup.setSpacing(true);
+
+        Div titleWrapper = new Div(titleGroup);
+        titleWrapper.addClassName("header-title-wrapper");
+
+        GitHubLink githubLink = new GitHubLink("https://github.com/hasshe/railway-stats.git", appVersion);
+        Div githubWrapper = new Div(githubLink);
+        githubWrapper.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "flex-end");
+
+        HorizontalLayout headerRow = new HorizontalLayout(profileButton, titleWrapper, githubWrapper);
+        headerRow.setWidthFull();
+        headerRow.setAlignItems(Alignment.CENTER);
+        headerRow.addClassName("header-row");
+        return headerRow;
     }
 
-    private static Icon getTrainIcon() {
-        Icon trainIcon = new Icon(VaadinIcon.TRAIN);
-        trainIcon.setSize("1.9rem");
-        trainIcon.getStyle().set("color", "#4caf7d");
-        return trainIcon;
-    }
-
-    private static Button getProfileButton() {
+    private static Button buildProfileButton() {
         Icon profileIcon = new Icon(VaadinIcon.MENU);
         profileIcon.setSize("2rem");
         profileIcon.getStyle().set("color", "#7abf9a");
@@ -259,4 +178,28 @@ public class TripInfoView extends VerticalLayout {
         profileButton.getElement().setAttribute("aria-label", "Profile");
         return profileButton;
     }
+
+    private static Runnable buildProfileHighlightCallback(Button profileButton) {
+        return () -> {
+            profileButton.addClassName("profile-btn--highlight");
+            profileButton.getElement().executeJs(
+                    "if (!this.querySelector('.profile-btn-ripple-ring')) {" +
+                    "  var r1 = document.createElement('div');" +
+                    "  r1.className = 'profile-btn-ripple-ring';" +
+                    "  var r2 = document.createElement('div');" +
+                    "  r2.className = 'profile-btn-ripple-ring';" +
+                    "  this.appendChild(r1);" +
+                    "  this.appendChild(r2);" +
+                    "}"
+            );
+        };
+    }
+
+    private static Runnable clearCacheRunnable(Runnable clearAction, String message) {
+        return () -> {
+            clearAction.run();
+            Notification.show(message);
+        };
+    }
 }
+

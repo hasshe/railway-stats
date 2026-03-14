@@ -4,6 +4,7 @@ import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.exception.TripCollectionException;
 import com.hs.railway_stats.service.RateLimiterService;
 import com.hs.railway_stats.service.TripInfoService;
+import com.hs.railway_stats.view.util.VaadinRequestUtils;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -18,86 +19,51 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.server.VaadinRequest;
 
 import java.time.LocalDate;
 
 public class InputLayout extends VerticalLayout {
 
+    private static final String CSS_ROUTE_SUB        = "route-selector__sub";
+    private static final String CSS_ROUTE_STATION    = "route-selector__station";
+    private static final String CSS_ROUTE_BLOCK      = "route-selector__block";
+    private static final String CSS_ROUTE_ROW        = "route-selector-row";
+    private static final String CSS_SWAP_BTN         = "metrics-swap-btn";
+
     private final String[] stations = {StationConstants.UPPSALA, StationConstants.STOCKHOLM};
-    private final int[] idx = {0};
+    private int idx = 0;
+
     private final Span originSpan;
     private final Span destSpan;
     private final DatePicker dateFilter;
+
+    private final TripInfoService tripInfoService;
+    private final TripInfoCard tripInfoCard;
+    private final RateLimiterService rateLimiterService;
+
     private Runnable onRouteChange = () -> {};
 
     public InputLayout(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
                        AdminControls adminControls,
                        RateLimiterService rateLimiterService, ScheduledJobTimer scheduledJobTimer) {
 
+        this.tripInfoService  = tripInfoService;
+        this.tripInfoCard     = tripInfoCard;
+        this.rateLimiterService = rateLimiterService;
+
         setPadding(false);
         setSpacing(true);
         setWidthFull();
 
-        Span fromLabel = new Span("From");
-        fromLabel.addClassName("route-selector__sub");
-        originSpan = new Span(stations[idx[0]]);
-        originSpan.addClassName("route-selector__station");
-        Div originBlock = new Div(fromLabel, originSpan);
-        originBlock.addClassName("route-selector__block");
-
-        Icon swapIcon = new Icon(VaadinIcon.ARROWS_LONG_H);
-        swapIcon.getStyle().set("color", "#4caf7d");
-        Button swapButton = new Button(swapIcon);
-        swapButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        swapButton.addClassName("metrics-swap-btn");
-        swapButton.getElement().setAttribute("aria-label", "Swap stations");
-
-        Span toLabel = new Span("To");
-        toLabel.addClassName("route-selector__sub");
-        destSpan = new Span(stations[1 - idx[0]]);
-        destSpan.addClassName("route-selector__station");
-        Div destBlock = new Div(toLabel, destSpan);
-        destBlock.addClassName("route-selector__block");
-
-        HorizontalLayout selectorRow = new HorizontalLayout(originBlock, swapButton, destBlock);
-        selectorRow.setAlignItems(FlexComponent.Alignment.CENTER);
-        selectorRow.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        selectorRow.setSpacing(true);
-        selectorRow.setWidthFull();
-        selectorRow.addClassName("route-selector-row");
-
-        swapButton.addClickListener(e -> {
-            idx[0] = 1 - idx[0];
-            originSpan.setText(stations[idx[0]]);
-            destSpan.setText(stations[1 - idx[0]]);
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
-            onRouteChange.run();
-        });
-
+        originSpan = new Span(stations[idx]);
+        destSpan   = new Span(getDestination());
         dateFilter = new DatePicker("Date:");
         dateFilter.setMax(LocalDate.now().minusDays(1));
-        dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
         adminControls.setOnAdminModeEnabled(() -> setAdminMode(true));
         adminControls.setOnAdminModeDisabled(() -> setAdminMode(false));
 
-        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
-        dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
-        dateAndFilterRow.setSpacing(true);
-
-        FormLayout formControls = new FormLayout();
-        formControls.setWidthFull();
-        formControls.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("400px", 2),
-                new FormLayout.ResponsiveStep("800px", 4)
-        );
-        formControls.add(dateAndFilterRow, scheduledJobTimer, adminControls);
-        formControls.setColspan(dateAndFilterRow, 4);
-        formControls.setColspan(adminControls, 4);
-
-        add(selectorRow, formControls);
+        add(buildRouteSelector(), buildFormControls(adminControls, scheduledJobTimer));
     }
 
     /** Register a callback that fires whenever origin or destination changes. */
@@ -106,30 +72,25 @@ public class InputLayout extends VerticalLayout {
     }
 
     public void setAdminMode(boolean admin) {
-        if (admin) {
-            dateFilter.setMax(null);
-        } else {
-            dateFilter.setMax(LocalDate.now().minusDays(1));
-        }
+        dateFilter.setMax(admin ? null : LocalDate.now().minusDays(1));
     }
 
     public String getOrigin() {
-        return stations[idx[0]];
+        return stations[idx];
     }
 
     public String getDestination() {
-        return stations[1 - idx[0]];
+        return stations[1 - idx];
     }
 
-    public Runnable buildCollectRunnable(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
-                                         RateLimiterService rateLimiterService) {
+    public Runnable buildCollectRunnable() {
         return () -> {
             String origin = getOrigin();
             String destination = getDestination();
             try {
                 tripInfoService.collectTripInformation(origin, destination);
                 Notification.show("Trip information collected for " + origin + " → " + destination, 3000, Position.TOP_CENTER);
-                refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+                refreshGrid();
             } catch (TripCollectionException e) {
                 Notification notification = Notification.show("Could not collect trip data. Please try again later.", 4000, Position.TOP_CENTER);
                 notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -140,19 +101,73 @@ public class InputLayout extends VerticalLayout {
         };
     }
 
-    public Runnable buildClearDateRunnable(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
-                                           RateLimiterService rateLimiterService) {
+    public Runnable buildClearDateRunnable() {
         return () -> {
-            LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
+            LocalDate selectedDate = getSelectedDate();
             tripInfoService.deleteTripsByDate(selectedDate);
             Notification.show("Cleared all trip records for " + selectedDate);
-            refreshGrid(tripInfoService, tripInfoCard, rateLimiterService);
+            refreshGrid();
         };
     }
 
-    private void refreshGrid(TripInfoService tripInfoService, TripInfoCard tripInfoCard,
-                             RateLimiterService rateLimiterService) {
-        String ip = getClientIp();
+    private HorizontalLayout buildRouteSelector() {
+        Span fromLabel = new Span("From");
+        fromLabel.addClassName(CSS_ROUTE_SUB);
+        originSpan.addClassName(CSS_ROUTE_STATION);
+        Div originBlock = new Div(fromLabel, originSpan);
+        originBlock.addClassName(CSS_ROUTE_BLOCK);
+
+        Icon swapIcon = new Icon(VaadinIcon.ARROWS_LONG_H);
+        swapIcon.getStyle().set("color", "#4caf7d");
+        Button swapButton = new Button(swapIcon);
+        swapButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        swapButton.addClassName(CSS_SWAP_BTN);
+        swapButton.getElement().setAttribute("aria-label", "Swap stations");
+        swapButton.addClickListener(e -> {
+            idx = 1 - idx;
+            originSpan.setText(getOrigin());
+            destSpan.setText(getDestination());
+            refreshGrid();
+            onRouteChange.run();
+        });
+
+        Span toLabel = new Span("To");
+        toLabel.addClassName(CSS_ROUTE_SUB);
+        destSpan.addClassName(CSS_ROUTE_STATION);
+        Div destBlock = new Div(toLabel, destSpan);
+        destBlock.addClassName(CSS_ROUTE_BLOCK);
+
+        HorizontalLayout row = new HorizontalLayout(originBlock, swapButton, destBlock);
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        row.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        row.setSpacing(true);
+        row.setWidthFull();
+        row.addClassName(CSS_ROUTE_ROW);
+        return row;
+    }
+
+    private FormLayout buildFormControls(AdminControls adminControls, ScheduledJobTimer scheduledJobTimer) {
+        dateFilter.addValueChangeListener(event -> refreshGrid());
+
+        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
+        dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
+        dateAndFilterRow.setSpacing(true);
+
+        FormLayout form = new FormLayout();
+        form.setWidthFull();
+        form.setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("400px", 2),
+                new FormLayout.ResponsiveStep("800px", 4)
+        );
+        form.add(dateAndFilterRow, scheduledJobTimer, adminControls);
+        form.setColspan(dateAndFilterRow, 4);
+        form.setColspan(adminControls, 4);
+        return form;
+    }
+
+    private void refreshGrid() {
+        String ip = VaadinRequestUtils.getClientIp();
         if (!rateLimiterService.tryConsume(ip)) {
             long remaining = rateLimiterService.getRemainingBlockSeconds(ip);
             Notification notification = Notification.show(
@@ -161,11 +176,7 @@ public class InputLayout extends VerticalLayout {
             return;
         }
         try {
-            String origin = getOrigin();
-            String destination = getDestination();
-
-            LocalDate selectedDate = dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
-            tripInfoCard.setTrips(tripInfoService.getTripInfo(origin, destination, selectedDate));
+            tripInfoCard.setTrips(tripInfoService.getTripInfo(getOrigin(), getDestination(), getSelectedDate()));
         } catch (TripCollectionException e) {
             Notification notification = Notification.show("Could not load trips. Please try again later.", 4000, Position.TOP_CENTER);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -175,13 +186,7 @@ public class InputLayout extends VerticalLayout {
         }
     }
 
-    private String getClientIp() {
-        VaadinRequest request = VaadinRequest.getCurrent();
-        if (request == null) return "unknown";
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+    private LocalDate getSelectedDate() {
+        return dateFilter.getValue() != null ? dateFilter.getValue() : LocalDate.now();
     }
 }

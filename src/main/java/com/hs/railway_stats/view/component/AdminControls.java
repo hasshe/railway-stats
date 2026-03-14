@@ -40,8 +40,6 @@ public class AdminControls extends HorizontalLayout {
     public AdminControls(AdminBanner adminBanner,
                          String cryptoSecret,
                          String cryptoSalt,
-                         Runnable onCollect,
-                         Runnable onClearDate,
                          Runnable onClearTripInfoCache,
                          Runnable onClearMetricsCache,
                          Runnable onClearTranslationCache,
@@ -52,13 +50,6 @@ public class AdminControls extends HorizontalLayout {
         adminCollectButton = new Button("Collect (Admin)", new Icon(VaadinIcon.CLOUD_UPLOAD));
         adminCollectButton.setVisible(false);
         adminCollectButton.addClassName("admin-controls-btn");
-        adminCollectButton.addClickListener(clickEvent -> {
-            try {
-                onCollect.run();
-            } catch (Exception e) {
-                Notification.show("Error collecting trip information: " + e.getMessage());
-            }
-        });
 
         adminAddStationButton = new Button("Add Station (Admin)", new Icon(VaadinIcon.PLUS));
         adminAddStationButton.setVisible(false);
@@ -71,13 +62,6 @@ public class AdminControls extends HorizontalLayout {
         adminClearDateButton = new Button("Clear Date (Admin)", new Icon(VaadinIcon.TRASH));
         adminClearDateButton.setVisible(false);
         adminClearDateButton.addClassName("admin-controls-btn");
-        adminClearDateButton.addClickListener(clickEvent -> {
-            try {
-                onClearDate.run();
-            } catch (Exception e) {
-                Notification.show("Error clearing trips: " + e.getMessage());
-            }
-        });
 
         adminClearTripInfoCacheButton = new Button("Clear Trip Info Cache", new Icon(VaadinIcon.REFRESH));
         adminClearTripInfoCacheButton.setVisible(false);
