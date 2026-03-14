@@ -26,6 +26,17 @@ public class AdminControls extends HorizontalLayout {
     @Getter
     private final AdminBanner adminBanner;
 
+    private Runnable onAdminModeEnabled = () -> {};
+    private Runnable onAdminModeDisabled = () -> {};
+
+    public void setOnAdminModeEnabled(Runnable callback) {
+        this.onAdminModeEnabled = callback != null ? callback : () -> {};
+    }
+
+    public void setOnAdminModeDisabled(Runnable callback) {
+        this.onAdminModeDisabled = callback != null ? callback : () -> {};
+    }
+
     public AdminControls(AdminBanner adminBanner,
                          String cryptoSecret,
                          String cryptoSalt,
@@ -108,6 +119,7 @@ public class AdminControls extends HorizontalLayout {
                     adminClearTripInfoCacheButton.setVisible(true);
                     adminClearMetricsCacheButton.setVisible(true);
                     adminClearTranslationCacheButton.setVisible(true);
+                    onAdminModeEnabled.run();
                 });
 
         setWidthFull();
@@ -124,5 +136,10 @@ public class AdminControls extends HorizontalLayout {
         adminClearMetricsCacheButton.setVisible(visible);
         adminClearTranslationCacheButton.setVisible(visible);
         adminBanner.setVisible(visible);
+        if (visible) {
+            onAdminModeEnabled.run();
+        } else {
+            onAdminModeDisabled.run();
+        }
     }
 }

@@ -79,6 +79,9 @@ public class InputLayout extends VerticalLayout {
         dateFilter.setMax(LocalDate.now().minusDays(1));
         dateFilter.addValueChangeListener(event -> refreshGrid(tripInfoService, tripInfoCard, rateLimiterService));
 
+        adminControls.setOnAdminModeEnabled(() -> setAdminMode(true));
+        adminControls.setOnAdminModeDisabled(() -> setAdminMode(false));
+
         HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
         dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
         dateAndFilterRow.setSpacing(true);
@@ -100,6 +103,14 @@ public class InputLayout extends VerticalLayout {
     /** Register a callback that fires whenever origin or destination changes. */
     public void setOnRouteChange(Runnable callback) {
         this.onRouteChange = callback != null ? callback : () -> {};
+    }
+
+    public void setAdminMode(boolean admin) {
+        if (admin) {
+            dateFilter.setMax(null);
+        } else {
+            dateFilter.setMax(LocalDate.now().minusDays(1));
+        }
     }
 
     public String getOrigin() {
