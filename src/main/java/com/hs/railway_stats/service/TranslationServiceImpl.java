@@ -5,12 +5,18 @@ import com.hs.railway_stats.dto.TranslationDto;
 import com.hs.railway_stats.exception.StationNotFoundException;
 import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.entity.Translation;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.function.Supplier;
 
 @Service
+@Validated
 public class TranslationServiceImpl implements TranslationService {
 
     private static final Logger logger = LoggerFactory.getLogger(TranslationServiceImpl.class);
@@ -25,58 +31,70 @@ public class TranslationServiceImpl implements TranslationService {
     }
 
     @Override
-    public Translation addStation(int stationId, String stationName, String claimsStationId) {
-        translationRepository.findByStationId(stationId).ifPresent(t -> {
-            throw new IllegalArgumentException("Station with ID " + stationId + " already exists: " + t.getStationName());
-        });
-        translationRepository.findByStationName(stationName).ifPresent(t -> {
-            throw new IllegalArgumentException("Station with name '" + stationName + "' already exists.");
-        });
+    public Translation addStation(int stationId, @NotBlank String stationName, String claimsStationId) {
         Translation translation = Translation.builder()
                 .stationId(stationId)
-                .stationName(stationName)
+                .stationName(stationName.trim().toLowerCase())
                 .claimsStationId(claimsStationId)
                 .build();
-        return translationRepository.save(translation);
-    }
-
-    @Override
-    public int translateClaimsStationId(String claimsStationId) {
-        TranslationDto cached = translationCache.getIfPresent(claimsStationId);
-        if (cached != null) {
-            logger.info("TRANSLATION CACHE HIT for claimsStationId: {}", claimsStationId);
-            return cached.stationId();
+        try {
+            return translationRepository.save(translation);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException(
+                    "Station with ID " + stationId + " or name '" + stationName + "' already exists.", e);
         }
-        logger.info("TRANSLATION CACHE MISS (DB) for claimsStationId: {}", claimsStationId);
-        Translation translation = translationRepository.findByClaimsStationId(claimsStationId)
-                .orElseThrow(() -> new IllegalArgumentException("No station found for claims station ID: " + claimsStationId));
-        TranslationDto dto = new TranslationDto(translation.getStationId(), translation.getStationName(), translation.getClaimsStationId());
-        cacheUnderAllKeys(dto);
-        return dto.stationId();
     }
 
     @Override
-    public TranslationDto getTranslationByName(String stationName) {
-        String key = stationName.toLowerCase();
+    public int translateClaimsStationId(@NotBlank String claimsStationId) {
+        return getOrLoad(
+                cacheKeyForClaimsId(claimsStationId),
+                () -> translationRepository.findByClaimsStationId(claimsStationId)
+                        .map(TranslationDto::from)
+                        .orElseThrow(() -> new StationNotFoundException(claimsStationId))
+        ).stationId();
+    }
+
+    @Override
+    public TranslationDto getTranslationByName(@NotBlank String stationName) {
+        return getOrLoad(
+                cacheKeyForName(stationName),
+                () -> translationRepository.findByStationName(stationName.toLowerCase())
+                        .map(TranslationDto::from)
+                        .orElseThrow(() -> new StationNotFoundException(stationName))
+        );
+    }
+
+    private TranslationDto getOrLoad(String key, Supplier<TranslationDto> loader) {
         TranslationDto cached = translationCache.getIfPresent(key);
         if (cached != null) {
-            logger.info("TRANSLATION CACHE HIT for station: {}", stationName);
+            logger.debug("TRANSLATION CACHE HIT for key: {}", key);
             return cached;
         }
-        logger.info("TRANSLATION CACHE MISS (DB) for station: {}", stationName);
-        Translation t = translationRepository.findByStationName(key)
-                .orElseThrow(() -> new StationNotFoundException(stationName));
-        TranslationDto dto = new TranslationDto(t.getStationId(), t.getStationName(), t.getClaimsStationId());
+        logger.debug("TRANSLATION CACHE MISS (DB) for key: {}", key);
+        TranslationDto dto = loader.get();
         cacheUnderAllKeys(dto);
         return dto;
     }
 
     private void cacheUnderAllKeys(TranslationDto dto) {
-        translationCache.put(dto.stationName().toLowerCase(), dto);
+        translationCache.put(cacheKeyForName(dto.stationName()), dto);
+        translationCache.put(cacheKeyForId(dto.stationId()), dto);
         if (dto.claimsStationId() != null) {
-            translationCache.put(dto.claimsStationId(), dto);
+            translationCache.put(cacheKeyForClaimsId(dto.claimsStationId()), dto);
         }
-        translationCache.put(String.valueOf(dto.stationId()), dto);
+    }
+
+    private static String cacheKeyForName(String stationName) {
+        return stationName.toLowerCase();
+    }
+
+    private static String cacheKeyForId(int stationId) {
+        return String.valueOf(stationId);
+    }
+
+    private static String cacheKeyForClaimsId(String claimsStationId) {
+        return claimsStationId;
     }
 
     @Override

@@ -1,10 +1,10 @@
 package com.hs.railway_stats.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.hs.railway_stats.dto.TranslationDto;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoMetricRepository;
-import com.hs.railway_stats.repository.entity.Translation;
 import com.hs.railway_stats.repository.entity.TripInfoMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,8 +136,9 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
     }
 
     private int stationNameToId(String stationName) {
-        Translation translation = translationRepository.findByStationName(stationName.toLowerCase())
+        return translationRepository.findByStationName(stationName.toLowerCase())
+                .map(TranslationDto::from)
+                .map(TranslationDto::stationId)
                 .orElseThrow(() -> new RuntimeException("Station not found: " + stationName));
-        return translation.getStationId();
     }
 }
