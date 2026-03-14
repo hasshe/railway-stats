@@ -15,5 +15,7 @@ public interface TripInfoMetricService {
 
     void updateMetrics(List<TripInfoResponse> trips, int originId, int destinationId, LocalDate today);
 
+    void refreshMetricsCache(List<String> stations);
+
     void clearCache();
 }

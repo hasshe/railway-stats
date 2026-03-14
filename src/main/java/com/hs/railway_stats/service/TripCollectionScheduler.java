@@ -13,10 +13,14 @@ public class TripCollectionScheduler {
 
     private final TripInfoService tripInfoService;
     private final TripPruningService tripPruningService;
+    private final TripInfoMetricService tripInfoMetricService;
 
-    public TripCollectionScheduler(TripInfoService tripInfoService, TripPruningService tripPruningService) {
+    public TripCollectionScheduler(TripInfoService tripInfoService,
+                                   TripPruningService tripPruningService,
+                                   TripInfoMetricService tripInfoMetricService) {
         this.tripInfoService = tripInfoService;
         this.tripPruningService = tripPruningService;
+        this.tripInfoMetricService = tripInfoMetricService;
     }
 
     @Scheduled(cron = "${tripinfo.scheduling.collect-cron}", zone = "${tripinfo.scheduling.zone}")
@@ -31,5 +35,9 @@ public class TripCollectionScheduler {
     public void schedulePruning() {
         tripPruningService.pruneOldTrips();
     }
-}
 
+    @Scheduled(cron = "${tripinfo.scheduling.metrics-refresh-cron}", zone = "${tripinfo.scheduling.zone}")
+    public void scheduleMetricsRefresh() {
+        tripInfoMetricService.refreshMetricsCache(StationConstants.ALL_STATIONS);
+    }
+}

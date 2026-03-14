@@ -1,7 +1,6 @@
 package com.hs.railway_stats.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.hs.railway_stats.config.StationConstants;
 import com.hs.railway_stats.dto.TripInfoResponse;
 import com.hs.railway_stats.repository.TranslationRepository;
 import com.hs.railway_stats.repository.TripInfoMetricRepository;
@@ -10,7 +9,6 @@ import com.hs.railway_stats.repository.entity.TripInfoMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,7 +21,7 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
 
     private static final Logger logger = LoggerFactory.getLogger(TripInfoMetricServiceImpl.class);
     private static final int REIMBURSABLE_MINUTES_THRESHOLD = 20;
-    private static final String ZONE_ID = "Europe/Stockholm";
+    private static final ZoneId STOCKHOLM_ZONE = ZoneId.of("Europe/Stockholm");
 
     private final TripInfoMetricRepository tripInfoMetricRepository;
     private final TranslationRepository translationRepository;
@@ -46,13 +44,7 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
             return cached;
         }
         logger.info("METRICS CACHE MISS (DB) for key: {}", cacheKey);
-        int originId = stationNameToId(originStationName);
-        int destinationId = stationNameToId(destinationStationName);
-        List<TripInfoMetric> result = tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
-        if (!result.isEmpty()) {
-            metricsCache.put(cacheKey, result);
-        }
-        return result;
+        return loadAndCacheMetrics(originStationName, destinationStationName);
     }
 
     @Override
@@ -65,43 +57,30 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
 
     @Override
     public void updateMetrics(List<TripInfoResponse> trips, int originId, int destinationId, LocalDate today) {
-        ZoneId stockholmZone = ZoneId.of(ZONE_ID);
-        trips.forEach(trip -> {
-            if (trip.initialDepartureTime() == null) {
-                return;
-            }
-            if (trip.actualArrivalTime() == null && !trip.isCancelled()) {
-                return;
-            }
-
-            LocalTime scheduledDeparture = getScheduledDeparture(trip, stockholmZone);
-
-            TripInfoMetric metric = getTripInfoMetric(originId, destinationId, scheduledDeparture);
-
-            calculateMetrics(today, trip, metric);
-
-            tripInfoMetricRepository.save(metric);
-            logger.debug("Updated metric for origin={} destination={} departure={}", originId, destinationId, scheduledDeparture);
-        });
+        trips.stream()
+                .filter(trip -> trip.initialDepartureTime() != null)
+                .filter(trip -> trip.actualArrivalTime() != null || trip.isCancelled())
+                .forEach(trip -> {
+                    LocalTime scheduledDeparture = trip.initialDepartureTime()
+                            .atZoneSameInstant(STOCKHOLM_ZONE)
+                            .toLocalTime();
+                    TripInfoMetric metric = getTripInfoMetric(originId, destinationId, scheduledDeparture);
+                    calculateMetrics(today, trip, metric);
+                    tripInfoMetricRepository.save(metric);
+                    logger.debug("Updated metric for origin={} destination={} departure={}", originId, destinationId, scheduledDeparture);
+                });
     }
 
-    @Scheduled(cron = "0 59 23 * * ?", zone = ZONE_ID)
-    protected final void refreshMetricsCache() {
+    @Override
+    public void refreshMetricsCache(List<String> stations) {
         logger.info("Refreshing metrics cache for all station pairs");
         metricsCache.invalidateAll();
         logger.info("Metrics cache cleared");
-        for (String origin : StationConstants.ALL_STATIONS) {
-            for (String destination : StationConstants.ALL_STATIONS) {
+        for (String origin : stations) {
+            for (String destination : stations) {
                 if (!origin.equals(destination)) {
                     try {
-                        String cacheKey = origin + "-" + destination;
-                        int originId = stationNameToId(origin);
-                        int destinationId = stationNameToId(destination);
-                        List<TripInfoMetric> metrics = tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
-                        if (!metrics.isEmpty()) {
-                            metricsCache.put(cacheKey, metrics);
-                            logger.info("Metrics cache repopulated for key: {}", cacheKey);
-                        }
+                        loadAndCacheMetrics(origin, destination);
                     } catch (Exception e) {
                         logger.error("Failed to repopulate metrics cache for {} -> {}", origin, destination, e);
                     }
@@ -117,28 +96,34 @@ public class TripInfoMetricServiceImpl implements TripInfoMetricService {
         logger.info("Metrics cache cleared by admin");
     }
 
+    private List<TripInfoMetric> loadAndCacheMetrics(String originStationName, String destinationStationName) {
+        String cacheKey = originStationName + "-" + destinationStationName;
+        int originId = stationNameToId(originStationName);
+        int destinationId = stationNameToId(destinationStationName);
+        List<TripInfoMetric> metrics = tripInfoMetricRepository.findByOriginIdAndDestinationId(originId, destinationId);
+        if (!metrics.isEmpty()) {
+            metricsCache.put(cacheKey, metrics);
+            logger.info("Metrics cache repopulated for key: {}", cacheKey);
+        }
+        return metrics;
+    }
+
     private static void calculateMetrics(LocalDate today, TripInfoResponse trip, TripInfoMetric metric) {
-        int n = metric.getTotalTrips();
+        long n = metric.getTotalTrips();
         int minutesLate = Math.max(0, trip.totalMinutesLate());
-        int newAvg = (metric.getAverageMinutesLate() * n + minutesLate) / (n + 1);
+        int newAvg = (int) ((metric.getAverageMinutesLate() * n + minutesLate) / (n + 1));
         metric.setAverageMinutesLate(newAvg);
-        metric.setTotalTrips(n + 1);
+        metric.setTotalTrips((int) (n + 1));
 
         if (trip.isCancelled()) {
             metric.getCanceledTripDates().add(today);
         }
 
-        boolean reimbursable = trip.isCancelled() || minutesLate >= REIMBURSABLE_MINUTES_THRESHOLD;
-        if (reimbursable) {
+        if (trip.isCancelled() || minutesLate >= REIMBURSABLE_MINUTES_THRESHOLD) {
             metric.setTotalReimbursableTrips(metric.getTotalReimbursableTrips() + 1);
         }
     }
 
-    private static LocalTime getScheduledDeparture(TripInfoResponse trip, ZoneId stockholmZone) {
-        return trip.initialDepartureTime()
-                .atZoneSameInstant(stockholmZone)
-                .toLocalTime();
-    }
 
     private TripInfoMetric getTripInfoMetric(int originId, int destinationId, LocalTime scheduledDeparture) {
         return tripInfoMetricRepository
