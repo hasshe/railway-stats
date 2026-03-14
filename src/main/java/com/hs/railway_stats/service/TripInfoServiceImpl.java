@@ -174,7 +174,7 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Scheduled(cron = "0 40 23 * * ?", zone = ZONE_ID)
     @Transactional
-    protected final void pruneOldTrips() {
+    protected void pruneOldTrips() {
         ZoneId stockholmZone = ZoneId.of(ZONE_ID);
         LocalDate today = LocalDate.now(stockholmZone);
 
@@ -205,7 +205,7 @@ public class TripInfoServiceImpl implements TripInfoService {
     }
 
     @Scheduled(cron = "59 50 23 * * ?", zone = ZONE_ID)
-    protected final void scheduleRun() {
+    protected void scheduleRun() {
         logger.info("Starting scheduled trip information collection job");
         try {
             collectTripInformation(StationConstants.UPPSALA, StationConstants.STOCKHOLM);
