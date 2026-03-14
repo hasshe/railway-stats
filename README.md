@@ -7,7 +7,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 ## Features
 
 - **Automatic data collection:** Nightly job fetches all departures for both directions from the [TransitHub API](https://v2.api.transithub.se).
-- **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window.
+- **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window (configurable via `tripinfo.retention.days`).
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
 - **Claimable filter:** Shows only trips that were cancelled or ≥ 20 minutes late (Swedish reimbursement threshold).
 - **Metrics view:** `/metrics` page with four bar charts: Average Minutes Late, Times Cancelled, Claims Requested, and Total Reimbursable Trips.
@@ -16,8 +16,9 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Profile drawer:** Save personal details for claims, encrypted client-side — including preferred **payout option** (SWISH or SUS).
 - **Payout option selection:** Dropdown in the profile drawer to choose between SWISH and SUS; value is persisted encrypted in localStorage and sent with every claim submission.
 - **Rate limiter:** IP-based protection against abuse.
-- **Admin mode:** Password-protected, enables manual data collection and station management.
+- **Admin mode:** Password-protected, enables manual data collection, date clearing, cache management, and station management. The full date picker is available in admin mode (no `today - 1` restriction).
 - **Global exception handling:** Typed exceptions (`StationNotFoundException`, `TripCollectionException`, `ClaimSubmissionException`, `ExternalApiException`) with clean, user-friendly notifications — no raw error messages exposed to the UI.
+- **Dev mode:** Claim submissions are intercepted at the UI layer in dev mode and never reach the service layer — metrics tables are **not** updated for dev claims.
 
 ---
 
@@ -107,21 +108,26 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 
 ## Admin Mode
 
-- Unlocks manual data collection, date clearing, and station management.
+- Unlocks manual data collection, date clearing, cache management, and station management.
 - Enable via the **Admin Mode** accordion in the Profile drawer — enter username and password, then click **Login as Admin**.
 - The accordion is always visible in the drawer and starts collapsed.
-- Session persists via encrypted localStorage.
-- Admin panel includes buttons to clear both the Trip Info cache and Metrics cache instantly.
+- Session persists via encrypted localStorage. Admin mode is restored automatically on page reload.
+- Disabling admin mode (via the same login fields) immediately reverts all admin-only UI changes, including the date picker restriction, without requiring a page refresh.
+- Admin panel includes buttons to clear the Trip Info cache, Metrics cache, and Translation cache instantly.
 
 ---
 
 ## Scheduled Jobs
 
-| Time   | Job                    | Description                                                      |
-|--------|------------------------|------------------------------------------------------------------|
-| 23:40  | Rolling-window pruning | Prunes oldest records to maintain 30-day window.                 |
-| 23:50  | Trip data collection   | Fetches all departures, updates trip and metric tables.          |
-| 23:59  | Metrics cache refresh  | Clears and repopulates metrics cache for all station pairs.      |
+All cron expressions and the retention window are configured in `application.yml` under `tripinfo.scheduling` and `tripinfo.retention`.
+
+| Time  | Property key                              | Job                    | Description                                               |
+|-------|-------------------------------------------|------------------------|-----------------------------------------------------------|
+| 23:40 | `tripinfo.scheduling.prune-cron`          | Rolling-window pruning | Prunes oldest records to maintain the retention window.   |
+| 23:50 | `tripinfo.scheduling.collect-cron`        | Trip data collection   | Fetches all departures, updates trip and metric tables.   |
+| 23:59 | `tripinfo.scheduling.metrics-refresh-cron`| Metrics cache refresh  | Clears and repopulates metrics cache for all station pairs.|
+
+All scheduled jobs run in `TripCollectionScheduler`. Pruning logic lives in `TripPruningService`.
 
 ---
 
@@ -139,8 +145,26 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 - Claim marks trip as claimed in localStorage; button replaced with label.
 - Cannot claim same trip twice from same browser.
 - **Payout option** from profile (SWISH or SUS) is included in the claim request; defaults to SWISH if not set.
-- **Claims Requested** chart updates only for real claims (not dev mode).
-- **Total Reimbursable Trips** chart updates automatically for qualifying trips.
+- **Claims Requested** chart updates only for real claims — dev mode intercepts submissions at the UI layer before they reach the service or metrics layer.
+- **Total Reimbursable Trips** chart updates automatically for qualifying trips during nightly collection.
+
+---
+
+## Configuration Reference
+
+Key properties across `application.yml`, `application-dev.yml`, and `application-prod.yml`:
+
+| Property | Default | Description |
+|---|---|---|
+| `app.dev-mode` | `false` | Enables dev mode (claim submissions intercepted in UI) |
+| `tripinfo.scheduling.prune-cron` | `0 40 23 * * ?` | Cron for rolling-window pruning |
+| `tripinfo.scheduling.collect-cron` | `59 50 23 * * ?` | Cron for nightly trip collection |
+| `tripinfo.scheduling.metrics-refresh-cron` | `0 59 23 * * ?` | Cron for metrics cache refresh |
+| `tripinfo.scheduling.zone` | `Europe/Stockholm` | Timezone for all scheduled jobs |
+| `tripinfo.retention.days` | `30` | Number of days of trip data to retain |
+| `tripinfo.cache.expiry.hours` | `24` | Trip info cache TTL |
+| `tripinfo.cache.max-size` | `100` | Trip info cache max entries |
+| `metrics.cache.max-size` | `50` | Metrics cache max entries |
 
 ---
 
@@ -148,47 +172,41 @@ The `GlobalExceptionHandler` (`@ControllerAdvice`) centralises all handling, log
 
 ```
 src/main/java/com/hs/railway_stats/
-├── config/          # Station constants, GlobalExceptionHandler
-├── dto/             # API request/response records, UserProfile
-├── exception/       # Typed exceptions: StationNotFoundException, TripCollectionException, ClaimSubmissionException, ExternalApiException
-├── external/        # TransitHub REST client (MalarDalenClient)
+├── config/          # Station constants, cache providers, GlobalExceptionHandler
+├── dto/             # API request/response records, UserProfile, TranslationDto (with from() factory)
+├── exception/       # Typed exceptions: StationNotFoundException, TripCollectionException,
+│                    #   ClaimSubmissionException, ExternalApiException
+├── external/        # TransitHub REST client
 ├── mapper/          # Maps API responses to internal DTOs
 ├── repository/      # JPA repositories + entities (TripInfo, TripInfoMetric, Translation)
 ├── service/
-│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion, rolling-window pruning
-│   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, departure times
-│   ├── ClaimsService / ClaimsServiceImpl              # Claim submission
-│   ├── TranslationService                             # Station name ↔ ID mapping
+│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion
+│   ├── TripPruningService                             # Rolling-window pruning logic
+│   ├── TripCollectionScheduler                        # All @Scheduled jobs (collect, prune, metrics refresh)
+│   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, cache refresh
+│   ├── ClaimsService / ClaimsServiceImpl              # Claim submission + reimbursement count increment
+│   ├── TranslationService / TranslationServiceImpl    # Station name ↔ ID mapping with cache-aside
 │   └── RateLimiterService                             # IP-based rate limiting
+└── util/
+│   └── DateRange.java                                 # Record for start/end ZonedDateTime day ranges
 └── view/
     ├── TripInfoView.java     # Main view (route /)
     ├── MetricsView.java      # Metrics view (route /metrics)
+    ├── util/
+    │   ├── AdminSessionUtils.java      # Encrypted localStorage admin session save/restore
+    │   ├── BrowserStorageUtils.java    # Generic localStorage read/write helpers
+    │   └── VaadinRequestUtils.java     # Client IP resolution (X-Forwarded-For aware)
     └── component/
         ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
-        ├── InputLayout       # Route selector (From/To labels + swap button) and date/filter controls
+        ├── InputLayout       # Route selector, date picker, claimable filter; stores service
+        │                     #   dependencies as fields; admin mode widens date picker range
         ├── TripInfoCard      # Individual trip card + claim button
         ├── ProfileDrawer     # Slide-in profile panel (incl. payout option dropdown)
-        ├── AdminAccordion    # Collapsible accordion inside ProfileDrawer for admin login (username + password)
-        ├── AdminControls     # Collect / Add Station admin buttons
+        ├── AdminAccordion    # Collapsible accordion inside ProfileDrawer for admin login
+        ├── AdminControls     # Admin buttons; fires onAdminModeEnabled/Disabled callbacks
         ├── AdminBanner       # "Admin Mode Active" status banner
         ├── GitHubLink        # Header GitHub icon anchor
         └── ScheduledJobTimer # Next-run countdown display
-
-src/main/frontend/
-├── trip-stats-chart.js           # <trip-stats-chart> custom element (Chart.js)
-├── icons/github.svg              # GitHub SVG icon
-└── themes/railway-stats/
-    ├── styles.css                # Stylesheet entry point (@import chain)
-    ├── tokens.css                # CSS custom properties (colours, radii, shadows)
-    ├── base.css                  # Reset, page shell, header grid, Lumo overrides
-    ├── buttons.css               # All button variants (FAB, swap, admin, back, GitHub)
-    ├── cards.css                 # Trip card list, badges, action button, empty state
-    ├── input.css                 # Input form card, field labels, checkbox
-    ├── chart.css                 # Chart element, route selector, departure filter
-    ├── profile-drawer.css        # Slide-in drawer: backdrop, panel, fields, footer
-    ├── admin-accordion.css       # Admin Mode accordion heading/arrow colour overrides
-    └── components/
-        └── vaadin-accordion-heading.css  # Shadow DOM override for accordion arrow colour
 ```
 
 ---
@@ -217,7 +235,7 @@ src/main/frontend/
 | `average_minutes_late` | INTEGER | Rolling average minutes late |
 | `total_trips` | INTEGER | Total trips recorded for this slot |
 | `total_reimbursable_trips` | INTEGER | Trips cancelled or ≥ 20 min late (shown in chart) |
-| `total_reimbursements_requested` | INTEGER | Claims submitted (shown in chart) |
+| `total_reimbursements_requested` | INTEGER | Claims submitted — incremented atomically via a single `UPDATE` query |
 | `canceled_trip_dates` | TEXT[] | Dates on which this departure was cancelled |
 
 ### `translation`
@@ -225,7 +243,7 @@ src/main/frontend/
 |---|---|---|
 | `id` | INTEGER (PK) | Auto-generated |
 | `station_id` | INTEGER | TransitHub numeric station ID |
-| `station_name` | TEXT | Human-readable display name |
+| `station_name` | TEXT | Human-readable display name (stored lowercase) |
 | `claims_station_id` | TEXT | Station identifier for claim URLs |
 
 ---
@@ -238,13 +256,14 @@ Personal use only. No license specified.
 
 ## Caching
 
-- Trip info queries cached in-memory using [Caffeine](https://github.com/ben-manes/caffeine).
-- Metrics queries cached in-memory using Caffeine for fast chart rendering. Metrics cache is cleared and repopulated nightly at 23:59 for all station pairs.
-- **Admin users can clear both caches instantly from the admin panel.**
-- Configurable via properties or YAML:
+- Trip info and metrics queries cached in-memory using [Caffeine](https://github.com/ben-manes/caffeine).
+- Metrics cache is cleared and repopulated nightly at 23:59 for all station pairs via `TripInfoMetricService.refreshMetricsCache`.
+- **Admin users can clear all three caches (Trip Info, Metrics, Translation) instantly from the admin panel.**
+- Configurable via YAML:
   - `tripinfo.cache.expiry.hours`, `tripinfo.cache.max-size`
   - `metrics.cache.max-size`
 - Cache keys:
-  - Trip info: `origin`, `destination`, `date`
-  - Metrics: `origin`, `destination`
-- Hits/misses logged. Empty results not cached. LRU eviction.
+  - Trip info: `origin-destination-date`
+  - Metrics: `origin-destination`
+  - Translation: station name (lowercase), station ID, or claims station ID — all three keys populated on first load
+- Hits/misses logged at DEBUG level. Empty results not cached. LRU eviction.
