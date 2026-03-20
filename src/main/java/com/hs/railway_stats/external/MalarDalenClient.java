@@ -31,7 +31,7 @@ public class MalarDalenClient implements RestClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private static final String BASE_URL =
-            "https://v2.api.transithub.se/travelplanner/api/v2/trip";
+            "https://bff.malardalstrafik.se/v2/trip";
 
     public MalarDalenClient() {
         this.httpClient = HttpClient.newHttpClient();
