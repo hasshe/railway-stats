@@ -9,6 +9,7 @@ import com.hs.railway_stats.exception.ClaimSubmissionException;
 import com.hs.railway_stats.exception.ExternalApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -30,10 +31,14 @@ public class MalarDalenClient implements RestClient {
     public static final String ZONE_ID = "Europe/Stockholm";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private static final String BASE_URL =
-            "https://bff.malardalstrafik.se/v2/trip";
+    private final String tripSearchUrl;
+    private final String claimsUrl;
 
-    public MalarDalenClient() {
+    public MalarDalenClient(
+            @Value("${external.api.trip-search-url}") String tripSearchUrl,
+            @Value("${external.api.claims-url}") String claimsUrl) {
+        this.tripSearchUrl = tripSearchUrl;
+        this.claimsUrl = claimsUrl;
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.findAndRegisterModules();
@@ -61,7 +66,7 @@ public class MalarDalenClient implements RestClient {
 
     private HttpRequest getRequest(String json) {
         return HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL))
+                .uri(URI.create(tripSearchUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -84,11 +89,10 @@ public class MalarDalenClient implements RestClient {
 
     @Override
     public void callClaim(ClaimRequest body) throws IOException, InterruptedException {
-        String url = "https://evf-regionsormland.preciocloudapp.net/api/Claims";
         String json = objectMapper.writeValueAsString(body);
         log.info("Claim request JSON: {}", json);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(claimsUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();

@@ -22,3 +22,8 @@ tripinfo:
     multiplier: 2.0           # Exponential backoff multiplier
     max-interval-ms: 60000    # Maximum backoff delay in ms
 
+external:
+  api:
+    trip-search-url: "https://bff.malardalstrafik.se/v2/trip"
+    claims-url: "https://evf-regionsormland.preciocloudapp.net/api/Claims"
+

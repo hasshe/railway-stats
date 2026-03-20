@@ -170,6 +170,8 @@ Key properties across `application.yml`, `application-dev.yml`, and `application
 | `tripinfo.cache.expiry.hours` | `24` | Trip info cache TTL |
 | `tripinfo.cache.max-size` | `100` | Trip info cache max entries |
 | `metrics.cache.max-size` | `50` | Metrics cache max entries |
+| `external.api.trip-search-url` | `https://bff.malardalstrafik.se/v2/trip` | TransitHub trip search endpoint |
+| `external.api.claims-url` | `https://evf-regionsormland.preciocloudapp.net/api/Claims` | Claims submission endpoint |
 
 ---
 
