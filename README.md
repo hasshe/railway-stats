@@ -7,6 +7,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 ## Features
 
 - **Automatic data collection:** Nightly job fetches all departures for both directions from the [TransitHub API](https://v2.api.transithub.se).
+- **Retry on collection failure:** The nightly collection job automatically retries on failure with configurable exponential backoff (see `tripinfo.retry.*`).
 - **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window (configurable via `tripinfo.retention.days`).
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
 - **Claimable filter:** Shows only trips that were cancelled or ≥ 20 minutes late (Swedish reimbursement threshold).
@@ -124,10 +125,10 @@ All cron expressions and the retention window are configured in `application.yml
 | Time  | Property key                              | Job                    | Description                                               |
 |-------|-------------------------------------------|------------------------|-----------------------------------------------------------|
 | 23:40 | `tripinfo.scheduling.prune-cron`          | Rolling-window pruning | Prunes oldest records to maintain the retention window.   |
-| 23:50 | `tripinfo.scheduling.collect-cron`        | Trip data collection   | Fetches all departures, updates trip and metric tables.   |
+| 23:50 | `tripinfo.scheduling.collect-cron`        | Trip data collection   | Fetches all departures, updates trip and metric tables. Retries on failure with exponential backoff. |
 | 23:59 | `tripinfo.scheduling.metrics-refresh-cron`| Metrics cache refresh  | Clears and repopulates metrics cache for all station pairs.|
 
-All scheduled jobs run in `TripCollectionScheduler`. Pruning logic lives in `TripPruningService`.
+All scheduled jobs run in `TripCollectionScheduler`. Pruning logic lives in `TripPruningService`. Retry behaviour on the collection job is implemented via `@Retryable` on `TripInfoService.collectTripInformation` and is fully configurable via the `tripinfo.retry.*` properties.
 
 ---
 
@@ -162,52 +163,13 @@ Key properties across `application.yml`, `application-dev.yml`, and `application
 | `tripinfo.scheduling.metrics-refresh-cron` | `0 59 23 * * ?` | Cron for metrics cache refresh |
 | `tripinfo.scheduling.zone` | `Europe/Stockholm` | Timezone for all scheduled jobs |
 | `tripinfo.retention.days` | `30` | Number of days of trip data to retain |
+| `tripinfo.retry.max-attempts` | `3` | Total collection attempts (1 initial + retries) |
+| `tripinfo.retry.initial-interval-ms` | `5000` | Initial backoff delay in milliseconds |
+| `tripinfo.retry.multiplier` | `2.0` | Exponential backoff multiplier between retries |
+| `tripinfo.retry.max-interval-ms` | `60000` | Maximum backoff delay cap in milliseconds |
 | `tripinfo.cache.expiry.hours` | `24` | Trip info cache TTL |
 | `tripinfo.cache.max-size` | `100` | Trip info cache max entries |
 | `metrics.cache.max-size` | `50` | Metrics cache max entries |
-
----
-
-## Project Structure
-
-```
-src/main/java/com/hs/railway_stats/
-├── config/          # Station constants, cache providers, GlobalExceptionHandler
-├── dto/             # API request/response records, UserProfile, TranslationDto (with from() factory)
-├── exception/       # Typed exceptions: StationNotFoundException, TripCollectionException,
-│                    #   ClaimSubmissionException, ExternalApiException
-├── external/        # TransitHub REST client
-├── mapper/          # Maps API responses to internal DTOs
-├── repository/      # JPA repositories + entities (TripInfo, TripInfoMetric, Translation)
-├── service/
-│   ├── TripInfoService / TripInfoServiceImpl          # Trip collection, retrieval, deletion
-│   ├── TripPruningService                             # Rolling-window pruning logic
-│   ├── TripCollectionScheduler                        # All @Scheduled jobs (collect, prune, metrics refresh)
-│   ├── TripInfoMetricService / TripInfoMetricServiceImpl  # Metric upsert, query, cache refresh
-│   ├── ClaimsService / ClaimsServiceImpl              # Claim submission + reimbursement count increment
-│   ├── TranslationService / TranslationServiceImpl    # Station name ↔ ID mapping with cache-aside
-│   └── RateLimiterService                             # IP-based rate limiting
-└── util/
-│   └── DateRange.java                                 # Record for start/end ZonedDateTime day ranges
-└── view/
-    ├── TripInfoView.java     # Main view (route /)
-    ├── MetricsView.java      # Metrics view (route /metrics)
-    ├── util/
-    │   ├── AdminSessionUtils.java      # Encrypted localStorage admin session save/restore
-    │   ├── BrowserStorageUtils.java    # Generic localStorage read/write helpers
-    │   └── VaadinRequestUtils.java     # Client IP resolution (X-Forwarded-For aware)
-    └── component/
-        ├── TripStatsChart    # Vaadin wrapper for <trip-stats-chart> Chart.js web component
-        ├── InputLayout       # Route selector, date picker, claimable filter; stores service
-        │                     #   dependencies as fields; admin mode widens date picker range
-        ├── TripInfoCard      # Individual trip card + claim button
-        ├── ProfileDrawer     # Slide-in profile panel (incl. payout option dropdown)
-        ├── AdminAccordion    # Collapsible accordion inside ProfileDrawer for admin login
-        ├── AdminControls     # Admin buttons; fires onAdminModeEnabled/Disabled callbacks
-        ├── AdminBanner       # "Admin Mode Active" status banner
-        ├── GitHubLink        # Header GitHub icon anchor
-        └── ScheduledJobTimer # Next-run countdown display
-```
 
 ---
 
