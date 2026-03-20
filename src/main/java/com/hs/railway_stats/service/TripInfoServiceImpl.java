@@ -13,6 +13,9 @@ import com.hs.railway_stats.util.DateRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +56,15 @@ public class TripInfoServiceImpl implements TripInfoService {
 
     @Override
     @Transactional
+    @Retryable(
+            retryFor = TripCollectionException.class,
+            maxAttemptsExpression = "${tripinfo.retry.max-attempts:3}",
+            backoff = @Backoff(
+                    delayExpression = "${tripinfo.retry.initial-interval-ms:5000}",
+                    multiplierExpression = "${tripinfo.retry.multiplier:2.0}",
+                    maxDelayExpression = "${tripinfo.retry.max-interval-ms:60000}"
+            )
+    )
     public void collectTripInformation(String originStationName, String destinationStationName) {
         try {
             TranslationDto origin = translationService.getTranslationByName(originStationName);
@@ -68,6 +80,12 @@ public class TripInfoServiceImpl implements TripInfoService {
             logger.error("Failed to collect trip information for {} to {}", originStationName, destinationStationName, e);
             throw new TripCollectionException(originStationName, destinationStationName, e);
         }
+    }
+
+    @Recover
+    public void recoverCollectTripInformation(TripCollectionException e, String originStationName, String destinationStationName) {
+        logger.error("All retry attempts exhausted for trip collection [{} -> {}]: {}",
+                originStationName, destinationStationName, e.getMessage());
     }
 
     private List<TripInfoResponse> findAndFilterTrips(long originId, long destinationId, List<TripInfoResponse> allTrips,

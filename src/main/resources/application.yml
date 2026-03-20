@@ -16,4 +16,9 @@ tripinfo:
     zone: "Europe/Stockholm"
   retention:
     days: 30
+  retry:
+    max-attempts: 3           # Total attempts (1 initial + 2 retries)
+    initial-interval-ms: 5000 # Initial backoff delay in ms
+    multiplier: 2.0           # Exponential backoff multiplier
+    max-interval-ms: 60000    # Maximum backoff delay in ms
 
