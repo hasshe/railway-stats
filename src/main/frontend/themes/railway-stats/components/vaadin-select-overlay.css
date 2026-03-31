@@ -1,0 +1,27 @@
+/* ── vaadin-select-overlay shadow-DOM styles ────────────── */
+/* Applied directly inside the overlay's shadow root by Vaadin's theming */
+:host {
+    --lumo-base-color:           #1a241c;
+    --lumo-tint-5pct:            rgba(255, 255, 255, 0.05);
+    --lumo-tint-10pct:           rgba(255, 255, 255, 0.08);
+    --lumo-primary-color:        #4caf7d;
+    --lumo-primary-text-color:   #4caf7d;
+    --lumo-body-text-color:      #e2ede6;
+    --lumo-secondary-text-color: #8aaa92;
+    --lumo-contrast-5pct:        rgba(255, 255, 255, 0.05);
+    --lumo-contrast-10pct:       rgba(255, 255, 255, 0.08);
+    --lumo-contrast-20pct:       rgba(255, 255, 255, 0.12);
+}
+
+[part='overlay'] {
+    background: #1a241c;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+[part='content'] {
+    background: #1a241c;
+    padding: 4px;
+}
+

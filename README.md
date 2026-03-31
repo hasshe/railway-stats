@@ -2,6 +2,8 @@
 
 A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** visualizes per-departure-time statistics as interactive Chart.js bar charts.
 
+> **Current version: 3.2.0**
+
 ---
 
 ## Features
@@ -10,7 +12,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Retry on collection failure:** The nightly collection job automatically retries on failure with configurable exponential backoff (see `tripinfo.retry.*`).
 - **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window (configurable via `tripinfo.retention.days`).
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
-- **Claimable filter:** Shows only trips that were cancelled or ≥ 20 minutes late (Swedish reimbursement threshold).
+- **Trip filter dropdown:** A multi-option dropdown replaces the old claimable checkbox, offering five filter modes — see [Trip Filter](#trip-filter) below.
 - **Metrics view:** `/metrics` page with four bar charts: Average Minutes Late, Times Cancelled, Claims Requested, and Total Reimbursable Trips.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
 - **Metrics FAB:** Floating button to access metrics from anywhere.
@@ -37,7 +39,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 
 ### Main view (`/`)
 - Header with profile/menu, title, and GitHub link.
-- Route selector, swap button, date picker, claimable filter, and admin controls.
+- Route selector, swap button, date picker, **trip filter dropdown**, and admin controls.
 - Scrollable trip card list.
 - Metrics FAB (bottom-right).
 - Profile drawer with all personal fields including a **Payout Option** dropdown (SWISH / SUS).
@@ -54,6 +56,20 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
 - **Total Reimbursable Trips:** Number of trips cancelled or ≥ 20 minutes late (updated automatically during nightly collection and metric refresh).
 - Metrics queries are cached in-memory using Caffeine for fast chart rendering. The cache is cleared and repopulated nightly at 23:59.
+
+---
+
+## Trip Filter
+
+The trip list filter is a dropdown (`TripFilter` enum, `TripInfoCard`) that replaces the old **Claimable** checkbox. It defaults to **Claimable (All)** on load.
+
+| Option | Behaviour |
+|---|---|
+| **Claimable (All)** *(default)* | Trips that are cancelled **or** ≥ 20 min late |
+| **Late (>= 20min)** | Trips that are ≥ 20 min late and not cancelled |
+| **Late (All)** | Any trip with a delay > 0 min (not cancelled) |
+| **Cancelled** | Only cancelled trips |
+| **No Filter** | All trips, unfiltered |
 
 ---
 

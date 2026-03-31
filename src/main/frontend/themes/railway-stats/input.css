@@ -86,43 +86,103 @@
     color: var(--accent);
 }
 
-/* ── Checkbox ───────────────────────────────────────────── */
-/* Reimbursable-filter checkbox: custom size, label colour and accent fill */
-.trip-info-view vaadin-checkbox {
-    --vaadin-checkbox-size: 1.1rem;
-    --vaadin-checkbox-label-color: #e2ede6;
-    --lumo-body-text-color: #e2ede6;
-    padding-bottom: 0.25rem;
-    align-self: flex-end;
-    margin-bottom: 1px;
-}
-
-.trip-info-view vaadin-checkbox::part(label) {
+/* ── Filter Select ──────────────────────────────────────── */
+/* Trip filter dropdown — matches the date picker style */
+.trip-info-view vaadin-select::part(label) {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-.trip-info-view vaadin-checkbox::part(checkbox) {
+.trip-info-view vaadin-select::part(input-field) {
     background: rgba(255, 255, 255, 0.05);
-    border: 1.5px solid rgba(76, 175, 125, 0.40);
-    border-radius: var(--radius-sm);
-    transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    --vaadin-input-field-value-color: #ffffff;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    cursor: pointer;
 }
 
-.trip-info-view vaadin-checkbox:hover::part(checkbox) {
-    border-color: rgba(76, 175, 125, 0.70);
-    background: rgba(76, 175, 125, 0.08);
-    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.12);
+.trip-info-view vaadin-select::part(input-field):hover {
+    border-color: rgba(76, 175, 125, 0.35);
 }
 
-.trip-info-view vaadin-checkbox[checked]::part(checkbox) {
-    background: var(--accent);
+.trip-info-view vaadin-select[focused]::part(input-field),
+.trip-info-view vaadin-select::part(input-field):focus-within {
+    background: rgba(76, 175, 125, 0.06);
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.18);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    outline: none;
 }
 
-.trip-info-view vaadin-checkbox::part(checkmark) {
-    color: #0d1410;
+.trip-info-view vaadin-select::part(value) {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.trip-info-view vaadin-select::part(toggle-button) {
+    color: var(--text-secondary);
+    transition: color var(--transition);
+}
+
+.trip-info-view vaadin-select:hover::part(toggle-button) {
+    color: var(--accent);
+}
+
+/* ── Filter Select Overlay (dropdown list) ──────────────── */
+/* Override Lumo tokens on the overlay so the popup inherits the dark theme */
+vaadin-select-overlay {
+    --lumo-base-color:            var(--bg-elevated);
+    --lumo-tint-5pct:             rgba(255, 255, 255, 0.05);
+    --lumo-tint-10pct:            rgba(255, 255, 255, 0.08);
+    --lumo-primary-color:         var(--accent);
+    --lumo-primary-text-color:    var(--accent);
+    --lumo-body-text-color:       var(--text-primary);
+    --lumo-secondary-text-color:  var(--text-secondary);
+    --lumo-disabled-text-color:   var(--text-muted);
+    --lumo-contrast-5pct:         rgba(255, 255, 255, 0.05);
+    --lumo-contrast-10pct:        rgba(255, 255, 255, 0.08);
+    --lumo-contrast-20pct:        rgba(255, 255, 255, 0.12);
+}
+
+vaadin-select-overlay::part(overlay) {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 4px;
+}
+
+vaadin-select-overlay::part(content) {
+    background: var(--bg-elevated);
+    padding: 2px;
+}
+
+vaadin-select-item {
+    color: var(--text-secondary);
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    transition: background var(--transition), color var(--transition);
+    --lumo-body-text-color: var(--text-secondary);
+}
+
+vaadin-select-item:hover {
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+vaadin-select-item[selected] {
+    background: rgba(76, 175, 125, 0.15);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+vaadin-select-item[focused]:not([selected]) {
+    background: var(--accent-subtle);
+    color: var(--text-primary);
 }

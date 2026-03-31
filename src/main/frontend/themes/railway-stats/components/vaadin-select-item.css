@@ -1,0 +1,26 @@
+/* ── vaadin-select-item shadow-DOM styles ───────────────── */
+:host {
+    color: #8aaa92;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                color      0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:host(:hover) {
+    background: rgba(76, 175, 125, 0.10);
+    color: #4caf7d;
+}
+
+:host([selected]) {
+    background: rgba(76, 175, 125, 0.15);
+    color: #4caf7d;
+    font-weight: 600;
+}
+
+:host([focused]:not([selected])) {
+    background: rgba(76, 175, 125, 0.10);
+    color: #e2ede6;
+}
+

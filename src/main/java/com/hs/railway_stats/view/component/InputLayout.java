@@ -148,10 +148,8 @@ public class InputLayout extends VerticalLayout {
 
     private FormLayout buildFormControls(AdminControls adminControls, ScheduledJobTimer scheduledJobTimer) {
         dateFilter.addValueChangeListener(event -> refreshGrid());
-
-        HorizontalLayout dateAndFilterRow = new HorizontalLayout(dateFilter, tripInfoCard.reimbursableFilter);
-        dateAndFilterRow.setAlignItems(FlexComponent.Alignment.END);
-        dateAndFilterRow.setSpacing(true);
+        dateFilter.setWidthFull();
+        tripInfoCard.reimbursableFilter.setWidthFull();
 
         FormLayout form = new FormLayout();
         form.setWidthFull();
@@ -160,8 +158,8 @@ public class InputLayout extends VerticalLayout {
                 new FormLayout.ResponsiveStep("400px", 2),
                 new FormLayout.ResponsiveStep("800px", 4)
         );
-        form.add(dateAndFilterRow, scheduledJobTimer, adminControls);
-        form.setColspan(dateAndFilterRow, 4);
+        form.add(dateFilter, tripInfoCard.reimbursableFilter, scheduledJobTimer, adminControls);
+        form.setColspan(scheduledJobTimer, 2);
         form.setColspan(adminControls, 4);
         return form;
     }

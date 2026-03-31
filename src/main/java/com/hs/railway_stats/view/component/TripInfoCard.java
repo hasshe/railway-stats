@@ -11,9 +11,9 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.card.Card;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -44,7 +44,7 @@ public class TripInfoCard extends VerticalLayout {
 
     private final VerticalLayout cardsContainer = new VerticalLayout();
     private final List<TripInfoResponse> allTrips = new ArrayList<>();
-    public final Checkbox reimbursableFilter = new Checkbox("Claimable", true);
+    public final Select<TripFilter> reimbursableFilter = new Select<>();
 
     private String emptyStateMessage = "No trips found for the selected route and date.";
 
@@ -55,7 +55,6 @@ public class TripInfoCard extends VerticalLayout {
     private final ProfileSetupBanner profileSetupBanner;
     private final Runnable profileHighlightCallback;
 
-    /** Whether the loaded profile is complete; gates claim buttons. */
     private boolean profileComplete = false;
 
     public TripInfoCard(String cryptoSecret, String cryptoSalt, ClaimsService claimsService,
@@ -77,6 +76,11 @@ public class TripInfoCard extends VerticalLayout {
         cardsContainer.setWidthFull();
         cardsContainer.addClassName("trip-cards-container");
 
+        reimbursableFilter.setLabel("Filter:");
+        reimbursableFilter.setItems(TripFilter.values());
+        reimbursableFilter.setItemLabelGenerator(TripFilter::getLabel);
+        reimbursableFilter.setValue(TripFilter.CLAIMABLE_ALL);
+        reimbursableFilter.addClassName("trip-filter-select");
         reimbursableFilter.addValueChangeListener(event -> applyFilter());
 
         add(cardsContainer);
@@ -121,17 +125,46 @@ public class TripInfoCard extends VerticalLayout {
     }
 
     public void applyFilter() {
+        TripFilter filter = reimbursableFilter.getValue();
+        if (filter == null) filter = TripFilter.CLAIMABLE_ALL;
         List<TripInfoResponse> displayed;
-        if (reimbursableFilter.getValue()) {
-            displayed = allTrips.stream()
-                    .filter(t -> t.isCancelled() || t.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD)
-                    .toList();
-            emptyStateMessage = allTrips.isEmpty()
-                    ? "No trips found for the selected route and date."
-                    : "No claimable trips found. All trains were on time!";
-        } else {
-            displayed = List.copyOf(allTrips);
-            emptyStateMessage = "No trips found for the selected route and date.";
+        switch (filter) {
+            case CLAIMABLE_ALL -> {
+                displayed = allTrips.stream()
+                        .filter(t -> t.isCancelled() || t.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD)
+                        .toList();
+                emptyStateMessage = allTrips.isEmpty()
+                        ? "No trips found for the selected route and date."
+                        : "No claimable trips found. All trains were on time!";
+            }
+            case LATE_20 -> {
+                displayed = allTrips.stream()
+                        .filter(t -> !t.isCancelled() && t.totalMinutesLate() >= REIMBURSABLE_MINUTES_THRESHOLD)
+                        .toList();
+                emptyStateMessage = allTrips.isEmpty()
+                        ? "No trips found for the selected route and date."
+                        : "No trips with 20+ minutes delay found.";
+            }
+            case LATE_ALL -> {
+                displayed = allTrips.stream()
+                        .filter(t -> !t.isCancelled() && t.totalMinutesLate() > 0)
+                        .toList();
+                emptyStateMessage = allTrips.isEmpty()
+                        ? "No trips found for the selected route and date."
+                        : "No delayed trips found.";
+            }
+            case CANCELLED -> {
+                displayed = allTrips.stream()
+                        .filter(TripInfoResponse::isCancelled)
+                        .toList();
+                emptyStateMessage = allTrips.isEmpty()
+                        ? "No trips found for the selected route and date."
+                        : "No cancelled trips found.";
+            }
+            default -> {
+                displayed = List.copyOf(allTrips);
+                emptyStateMessage = "No trips found for the selected route and date.";
+            }
         }
         renderCards(displayed);
     }
