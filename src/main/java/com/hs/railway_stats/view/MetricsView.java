@@ -89,9 +89,11 @@ public class MetricsView extends VerticalLayout {
 
         addAttachListener(event -> reloadAll.run());
 
-        add(headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart);
+        Div footer = getFooter();
+
+        add(headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart, footer);
         setAlignItems(Alignment.CENTER);
-        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart);
+        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart, footer);
     }
 
     private static Div getFilterRow(MultiSelectComboBox<String> timeFilter) {
@@ -189,5 +191,19 @@ public class MetricsView extends VerticalLayout {
         headerRow.setSpacing(true);
         headerRow.getStyle().set("flex-shrink", "0");
         return headerRow;
+    }
+
+    private static Div getFooter() {
+        Span footerText = new Span("Data since 2026");
+        footerText.addClassName("route-selector__sub");
+        Div footer = new Div(footerText);
+        footer.setWidthFull();
+        footer.setMaxWidth("700px");
+        footer.getStyle()
+                .set("margin-left", "auto")
+                .set("margin-right", "auto")
+                .set("text-align", "center")
+                .set("padding-top", "1.5rem");
+        return footer;
     }
 }
