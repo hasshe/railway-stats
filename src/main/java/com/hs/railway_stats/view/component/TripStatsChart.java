@@ -35,7 +35,6 @@ import java.util.Set;
 public class TripStatsChart extends Div {
 
     public enum ChartType {
-        AVG_LATE,
         CANCELLATIONS,
         CLAIMS,
         REIMBURSABLE
@@ -84,7 +83,6 @@ public class TripStatsChart extends Div {
 
     private String resolveTitle() {
         return switch (chartType) {
-            case AVG_LATE -> "Average Minutes Late";
             case CANCELLATIONS -> "Times Cancelled";
             case CLAIMS -> "Claims Requested";
             case REIMBURSABLE -> "Total Reimbursable Trips";
@@ -100,8 +98,7 @@ public class TripStatsChart extends Div {
 
         for (TripInfoMetric m : metrics) {
             labels.add(m.getScheduledDepartureTime().format(TIME_FMT));
-            data.add((int) switch (chartType) {
-                case AVG_LATE -> m.getAverageMinutesLate();
+            data.add((int)switch (chartType) {
                 case CANCELLATIONS -> m.getCanceledTripDates() != null ? m.getCanceledTripDates().size() : 0;
                 case CLAIMS -> m.getTotalReimbursementsRequested();
                 case REIMBURSABLE -> m.getTotalReimbursableTrips();
@@ -112,7 +109,6 @@ public class TripStatsChart extends Div {
         ObjectNode ds = datasets.addObject();
 
         String color = switch (chartType) {
-            case AVG_LATE -> "#e8a56b";
             case CANCELLATIONS -> "#e84b4b";
             case CLAIMS -> "#4caf7d";
             case REIMBURSABLE -> "#2196f3";

@@ -64,18 +64,17 @@ public class MetricsView extends VerticalLayout {
 
         Div filterRow = getFilterRow(timeFilter);
 
-        TripStatsChart avgLateChart = new TripStatsChart(tripInfoMetricService, TripStatsChart.ChartType.AVG_LATE);
         TripStatsChart cancelChart = new TripStatsChart(tripInfoMetricService, TripStatsChart.ChartType.CANCELLATIONS);
         TripStatsChart claimsChart = new TripStatsChart(tripInfoMetricService, TripStatsChart.ChartType.CLAIMS);
         TripStatsChart reimbursableChart = new TripStatsChart(tripInfoMetricService, TripStatsChart.ChartType.REIMBURSABLE);
 
-        for (TripStatsChart statsChart : new TripStatsChart[]{avgLateChart, cancelChart, claimsChart, reimbursableChart}) {
+        for (TripStatsChart statsChart : new TripStatsChart[]{cancelChart, claimsChart, reimbursableChart}) {
             statsChart.setWidthFull();
             statsChart.setMaxWidth("700px");
             statsChart.getStyle().set("margin-left", "auto").set("margin-right", "auto");
         }
 
-        Runnable reloadCharts = getReloadCharts(stations, idx, timeFilter, avgLateChart, cancelChart, claimsChart, reimbursableChart);
+        Runnable reloadCharts = getReloadCharts(stations, idx, timeFilter, cancelChart, claimsChart, reimbursableChart);
 
         Runnable reloadAll = getReloadAll(tripInfoMetricService, stations, idx, timeFilter, reloadCharts);
 
@@ -90,9 +89,9 @@ public class MetricsView extends VerticalLayout {
 
         addAttachListener(event -> reloadAll.run());
 
-        add(headerRow, selectorRow, filterRow, avgLateChart, cancelChart, claimsChart, reimbursableChart);
+        add(headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart);
         setAlignItems(Alignment.CENTER);
-        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, avgLateChart, cancelChart, claimsChart, reimbursableChart);
+        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, cancelChart, claimsChart, reimbursableChart);
     }
 
     private static Div getFilterRow(MultiSelectComboBox<String> timeFilter) {
@@ -120,14 +119,13 @@ public class MetricsView extends VerticalLayout {
         };
     }
 
-    private static Runnable getReloadCharts(String[] stations, int[] idx, MultiSelectComboBox<String> timeFilter, TripStatsChart avgLateChart, TripStatsChart cancelChart, TripStatsChart claimsChart, TripStatsChart reimbursableChart) {
+    private static Runnable getReloadCharts(String[] stations, int[] idx, MultiSelectComboBox<String> timeFilter, TripStatsChart cancelChart, TripStatsChart claimsChart, TripStatsChart reimbursableChart) {
         return () -> {
             String origin = stations[idx[0]];
             String dest = stations[1 - idx[0]];
             Set<LocalTime> selected = timeFilter.getSelectedItems().stream()
                     .map(s -> LocalTime.parse(s, TIME_FMT))
                     .collect(Collectors.toSet());
-            avgLateChart.loadMetrics(origin, dest, selected);
             cancelChart.loadMetrics(origin, dest, selected);
             claimsChart.loadMetrics(origin, dest, selected);
             reimbursableChart.loadMetrics(origin, dest, selected);
