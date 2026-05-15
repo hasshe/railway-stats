@@ -133,7 +133,7 @@ public class MetricsView extends VerticalLayout {
     }
 
     private static MultiSelectComboBox<String> getMultiSelectComboBox() {
-        MultiSelectComboBox<String> timeFilter = new MultiSelectComboBox<>("Filter by departure time");
+        MultiSelectComboBox<String> timeFilter = new MultiSelectComboBox<>();
         timeFilter.setPlaceholder("All departures");
         timeFilter.setClearButtonVisible(true);
         timeFilter.setWidthFull();
