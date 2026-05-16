@@ -4,6 +4,7 @@ import com.hs.railway_stats.dto.TripInfoResponse;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface TripInfoService {
 
@@ -14,4 +15,6 @@ public interface TripInfoService {
     void deleteTripsByDate(LocalDate date);
 
     void clearCache();
+
+    Optional<LocalDate> getLatestGatheredDate();
 }

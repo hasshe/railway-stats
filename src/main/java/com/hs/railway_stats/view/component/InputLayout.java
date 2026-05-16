@@ -60,6 +60,16 @@ public class InputLayout extends VerticalLayout {
         dateFilter = new DatePicker("Date:");
         dateFilter.setMax(LocalDate.now().minusDays(1));
 
+        // Set up the value change listener BEFORE setting the value
+        dateFilter.addValueChangeListener(event -> refreshGrid());
+
+        // Set default date to latest gathered date, fallback to yesterday if no data
+        tripInfoService.getLatestGatheredDate()
+                .ifPresentOrElse(
+                        dateFilter::setValue,
+                        () -> dateFilter.setValue(LocalDate.now().minusDays(1))
+                );
+
         adminControls.setOnAdminModeEnabled(() -> setAdminMode(true));
         adminControls.setOnAdminModeDisabled(() -> setAdminMode(false));
 
@@ -147,7 +157,6 @@ public class InputLayout extends VerticalLayout {
     }
 
     private FormLayout buildFormControls(AdminControls adminControls, ScheduledJobTimer scheduledJobTimer) {
-        dateFilter.addValueChangeListener(event -> refreshGrid());
         dateFilter.setWidthFull();
         tripInfoCard.reimbursableFilter.setWidthFull();
 

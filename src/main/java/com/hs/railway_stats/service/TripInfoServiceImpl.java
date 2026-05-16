@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TripInfoServiceImpl implements TripInfoService {
@@ -185,6 +186,12 @@ public class TripInfoServiceImpl implements TripInfoService {
     public void clearCache() {
         tripInfoCache.invalidateAll();
         logger.info("Trip info cache cleared by admin");
+    }
+
+    @Override
+    public Optional<LocalDate> getLatestGatheredDate() {
+        return tripInfoRepository.findLatestDepartureTime()
+                .map(zdt -> zdt.withZoneSameInstant(STOCKHOLM_ZONE).toLocalDate());
     }
 
     private boolean isLastTrainOfDay(final TripResponse response, final LocalDate today) {

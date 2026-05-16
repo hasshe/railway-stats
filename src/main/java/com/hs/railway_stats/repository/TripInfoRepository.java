@@ -28,6 +28,9 @@ public interface TripInfoRepository extends JpaRepository<TripInfo, Integer> {
     @Query("SELECT MIN(t.originalDepartureTime) FROM TripInfo t")
     Optional<ZonedDateTime> findEarliestDepartureTime();
 
+    @Query("SELECT MAX(t.originalDepartureTime) FROM TripInfo t")
+    Optional<ZonedDateTime> findLatestDepartureTime();
+
     @Query("SELECT COUNT(DISTINCT CAST(t.originalDepartureTime AS date)) FROM TripInfo t " +
            "WHERE t.originalDepartureTime < :cutoff")
     long countDistinctDaysBefore(ZonedDateTime cutoff);

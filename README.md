@@ -2,7 +2,7 @@
 
 A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** visualizes per-departure-time statistics as an interactive, consolidated Chart.js bar chart with a legend.
 
-> **Current version: 3.4.0**
+> **Current version: 3.4.1**
 
 ---
 
@@ -13,6 +13,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window (configurable via `tripinfo.retention.days`).
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
 - **Trip filter dropdown:** A multi-option dropdown replaces the old claimable checkbox, offering five filter modes — see [Trip Filter](#trip-filter) below.
+- **Smart date picker:** Automatically defaults to the latest gathered date, so you see the most recent data immediately upon page load.
 - **Metrics view:** `/metrics` page with a unified, interactive bar chart displaying three metrics (Times Cancelled, Claims Requested, Total Reimbursable Trips) with a color-coded legend for easy comparison.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
 - **Metrics FAB:** Floating button to access metrics from anywhere.
@@ -57,6 +58,19 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
 - **Total Reimbursable Trips:** Number of trips cancelled or ≥ 20 minutes late (updated automatically during nightly collection and metric refresh).
 - Metrics queries are cached in-memory using Caffeine for fast chart rendering. The cache is cleared and repopulated nightly at 23:59.
+
+---
+
+## Date Picker
+
+The date picker on the main view automatically defaults to the latest gathered date, ensuring you see the most recent data immediately:
+
+- **Smart Default:** On page load, the date picker is set to the latest date with collected trip data
+  - Example: If today is May 16th and data was collected for May 15th, the picker shows May 15th
+  - No manual navigation needed to find recent data
+- **Fallback Behavior:** If no data exists in the database, defaults to yesterday (LocalDate.now().minusDays(1))
+- **Admin Override:** In admin mode, the picker can go back to any available date (no `today - 1` restriction)
+- **Timezone Aware:** All date calculations use Stockholm timezone for consistency
 
 ---
 
