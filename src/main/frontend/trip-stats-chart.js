@@ -49,7 +49,7 @@ class TripStatsChart extends HTMLElement {
                 }
             </style>
             <div class="chart-wrapper">
-                <div class="chart-title"></div>
+                <div class="chart-title">Departure Statistics</div>
                 <canvas></canvas>
                 <div class="chart-empty">No data available</div>
             </div>
@@ -63,25 +63,15 @@ class TripStatsChart extends HTMLElement {
         }
     }
 
-    static get observedAttributes() {
-        return ['title'];
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (name === 'title' && this.shadowRoot) {
-            const titleEl = this.shadowRoot.querySelector('.chart-title');
-            if (titleEl) titleEl.textContent = newValue || '';
-        }
-    }
-
     /**
      * Set chart data from Java via element.data = { labels, datasets }
      * Expected format:
      * {
      *   labels: ["06:00","06:30",...],
      *   datasets: [
-     *     { label: "Avg Minutes Late", data: [2, 5, 0, ...], color: "#e88c6b" },
-     *     { label: "Cancelled", data: [0, 1, 0, ...], color: "#e84b4b" }
+     *     { label: "Times Cancelled", data: [2, 5, 0, ...], color: "#e84b4b" },
+     *     { label: "Claims Requested", data: [0, 1, 0, ...], color: "#4caf7d" },
+     *     { label: "Total Reimbursable Trips", data: [2, 6, 0, ...], color: "#2196f3" }
      *   ]
      * }
      */
@@ -137,10 +127,16 @@ class TripStatsChart extends HTMLElement {
                 },
                 plugins: {
                     legend: {
+                        display: true,
+                        position: 'top',
                         labels: {
                             color: '#a8d5b5',
-                            font: { size: 12 },
+                            font: { size: 12, weight: '500' },
                             padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'rect',
+                            boxWidth: 12,
+                            boxHeight: 12,
                         },
                     },
                     tooltip: {

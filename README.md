@@ -1,8 +1,8 @@
 # 🚆 Movingo Tracker (railway-stats)
 
-A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** visualizes per-departure-time statistics as interactive Chart.js bar charts.
+A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** visualizes per-departure-time statistics as an interactive, consolidated Chart.js bar chart with a legend.
 
-> **Current version: 3.2.0**
+> **Current version: 3.4.0**
 
 ---
 
@@ -13,7 +13,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Rolling 30-day retention:** Oldest records are pruned to maintain a strict 30-day window (configurable via `tripinfo.retention.days`).
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
 - **Trip filter dropdown:** A multi-option dropdown replaces the old claimable checkbox, offering five filter modes — see [Trip Filter](#trip-filter) below.
-- **Metrics view:** `/metrics` page with four bar charts: Average Minutes Late, Times Cancelled, Claims Requested, and Total Reimbursable Trips.
+- **Metrics view:** `/metrics` page with a unified, interactive bar chart displaying three metrics (Times Cancelled, Claims Requested, Total Reimbursable Trips) with a color-coded legend for easy comparison.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
 - **Metrics FAB:** Floating button to access metrics from anywhere.
 - **Profile drawer:** Save personal details for claims, encrypted client-side — including preferred **payout option** (SWISH or SUS).
@@ -46,11 +46,12 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 
 ### Metrics view (`/metrics`)
 - Back button, route selector, departure-time filter.
-- Four stacked bar charts:
-  - **Average Minutes Late** (amber)
-  - **Times Cancelled** (red)
-  - **Claims Requested** (green)
-  - **Total Reimbursable Trips** (blue)
+- **Unified metrics chart** with interactive legend:
+  - **Times Cancelled** (red) — Number of cancellations per departure time
+  - **Claims Requested** (green) — Number of claims submitted per departure time
+  - **Total Reimbursable Trips** (blue) — Trips cancelled or ≥ 20 min late per departure time
+- Legend is positioned at the top and allows toggling individual metrics on/off
+- Single consolidated view reduces scrolling and enables easy side-by-side metric comparison
 
 #### Chart details
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
