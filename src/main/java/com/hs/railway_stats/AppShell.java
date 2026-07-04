@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @PWA(
-    name = "Railway Stats",
-    shortName = "Railway Stats",
+    name = "Movingo Tracker",
+    shortName = "Movingo Tracker",
     description = "Railway statistics and trip tracking application",
     startPath = "/",
     backgroundColor = "#ffffff",
@@ -23,9 +23,10 @@ import org.springframework.stereotype.Component;
     iconPath = "icons/icon-192x192.png",
     manifestPath = "manifest.webmanifest"
 )
-@Viewport("width=device-width, initial-scale=1, viewport-fit=cover")
+@Viewport("width=device-width, initial-scale=1, viewport-fit=contain")
 @Meta(name = "apple-mobile-web-app-capable", content = "yes")
 @Meta(name = "apple-mobile-web-app-status-bar-style", content = "black-translucent")
+@Meta(name = "apple-mobile-web-app-title", content = "Movingo Tracker")
 public class AppShell implements AppShellConfigurator {
     // Configuration is done via annotations
 }
