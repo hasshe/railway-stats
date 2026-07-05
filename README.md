@@ -1,8 +1,8 @@
 # 🚆 Movingo Tracker (railway-stats)
 
-A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** visualizes per-departure-time statistics as an interactive, consolidated Chart.js bar chart with a legend.
+A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** now combines summary cards, top insights, and an interactive Chart.js bar chart.
 
-> **Current version: 3.4.1**
+> **Current version: 4.1.0**
 
 ---
 
@@ -14,7 +14,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Trip list:** Filterable cards show departure, arrival, minutes late, and status badges.
 - **Trip filter dropdown:** A multi-option dropdown replaces the old claimable checkbox, offering five filter modes — see [Trip Filter](#trip-filter) below.
 - **Smart date picker:** Automatically defaults to the latest gathered date, so you see the most recent data immediately upon page load.
-- **Metrics view:** `/metrics` page with a unified, interactive bar chart displaying three metrics (Times Cancelled, Claims Requested, Total Reimbursable Trips) with a color-coded legend for easy comparison.
+- **Metrics view:** `/metrics` page with four departure statistics cards, two top insight cards, and a unified interactive bar chart displaying three metrics (Times Cancelled, Claims Requested, Total Reimbursable Trips) with a color-coded legend.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
 - **Metrics FAB:** Floating button to access metrics from anywhere.
 - **Profile drawer:** Save personal details for claims, encrypted client-side — including preferred **payout option** (SWISH or SUS).
@@ -23,6 +23,8 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Admin mode:** Password-protected, enables manual data collection, date clearing, cache management, and station management. The full date picker is available in admin mode (no `today - 1` restriction).
 - **Global exception handling:** Typed exceptions (`StationNotFoundException`, `TripCollectionException`, `ClaimSubmissionException`, `ExternalApiException`) with clean, user-friendly notifications — no raw error messages exposed to the UI.
 - **Dev mode:** Claim submissions are intercepted at the UI layer in dev mode and never reach the service layer — metrics tables are **not** updated for dev claims.
+- **Local data scripts:** `seed-db.sh` and `clear-db.sh` populate or wipe the local database before starting the app.
+- **PWA support:** App shell, manifest, and custom icons are configured so the app installs as a proper PWA.
 
 ---
 
@@ -47,6 +49,14 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 
 ### Metrics view (`/metrics`)
 - Back button, route selector, departure-time filter.
+- **Departure statistics cards**:
+  - **Reimbursable trips** — total qualifying trips for the selected route/filter
+  - **Claims requested** — total claims submitted for the selected route/filter
+  - **Cancelled trips** — total cancelled trips for the selected route/filter
+  - **Reimbursable rate** — percentage of trips eligible for reimbursement
+- **Top insights cards**:
+  - **Worst train** — departure time with the highest reimbursable count
+  - **Worst time span** — busiest time-of-day window for reimbursable trips
 - **Unified metrics chart** with interactive legend:
   - **Times Cancelled** (red) — Number of cancellations per departure time
   - **Claims Requested** (green) — Number of claims submitted per departure time
@@ -58,6 +68,33 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Claims Requested:** Number of claims submitted per departure time (only real claims, not dev mode).
 - **Total Reimbursable Trips:** Number of trips cancelled or ≥ 20 minutes late (updated automatically during nightly collection and metric refresh).
 - Metrics queries are cached in-memory using Caffeine for fast chart rendering. The cache is cleared and repopulated nightly at 23:59.
+
+---
+
+## Local Database Scripts
+
+Two helper scripts are included for local development:
+
+- `./seed-db.sh` — builds the app and seeds the database with:
+  - translations for **Uppsala C** and **Stockholm C**
+  - random historical trip data with on-time, delayed, and cancelled departures
+  - precomputed statistics rows for the metrics view
+- `./clear-db.sh` — builds the app and clears the local database tables
+
+Both scripts use the packaged application jar and are intended to be run before starting the app locally.
+
+---
+
+## PWA / App Shell
+
+The app is configured as a Progressive Web App with Vaadin:
+
+- `AppShell.java` defines the PWA metadata via `@PWA`
+- `src/main/frontend/manifest.webmanifest` provides the install manifest
+- `src/main/frontend/icons/` and `src/main/resources/icons/` contain the custom app icons
+- `src/main/frontend/index.html` includes the manifest and Apple touch icon references
+
+The app is set up to install cleanly as a standalone PWA with the custom Movingo Tracker branding.
 
 ---
 

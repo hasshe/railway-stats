@@ -31,15 +31,6 @@ class TripStatsChart extends HTMLElement {
                 canvas {
                     width: 100% !important;
                 }
-                .chart-title {
-                    color: var(--chart-title-color, #a8d5b5);
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    letter-spacing: 0.04em;
-                    text-transform: uppercase;
-                    margin-bottom: 12px;
-                    text-align: center;
-                }
                 .chart-empty {
                     color: var(--chart-empty-color, #6b8a74);
                     font-size: 0.85rem;
@@ -49,7 +40,6 @@ class TripStatsChart extends HTMLElement {
                 }
             </style>
             <div class="chart-wrapper">
-                <div class="chart-title">Departure Statistics</div>
                 <canvas></canvas>
                 <div class="chart-empty">No data available</div>
             </div>
