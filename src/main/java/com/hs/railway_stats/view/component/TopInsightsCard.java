@@ -33,7 +33,7 @@ public class TopInsightsCard extends VerticalLayout {
 
         String worstTime = worstMetric != null ? worstMetric.getScheduledDepartureTime().toString() : "-";
         int worstCount = worstMetric != null ? worstMetric.getTotalReimbursableTrips() : 0;
-        int worstTotal = metrics.stream().mapToInt(TripInfoMetric::getTotalTrips).sum();
+        int worstTotal = worstMetric != null ? worstMetric.getTotalTrips() : 0;
 
         // Time of day spans
         Map<String, int[]> spans = Map.of(

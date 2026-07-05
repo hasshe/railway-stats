@@ -42,4 +42,4 @@ build/
 .env
 .env.*
 
-.gitattributes
+.gitattributes.vaadin-node-tasks*.lock
