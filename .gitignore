@@ -43,3 +43,4 @@ build/
 .env.*
 
 .gitattributes.vaadin-node-tasks*.lock
+.DS_Store
