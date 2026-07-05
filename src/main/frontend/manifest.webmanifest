@@ -1,7 +1,7 @@
 {
-  "name": "Railway Stats",
-  "short_name": "Railway Stats",
-  "description": "Railway statistics and trip tracking application",
+  "name": "Movingo Tracker",
+  "short_name": "Movingo Tracker",
+  "description": "Movingo Tracker application",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -13,13 +13,13 @@
       "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

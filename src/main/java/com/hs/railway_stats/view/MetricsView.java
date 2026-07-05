@@ -1,7 +1,10 @@
 package com.hs.railway_stats.view;
 
 import com.hs.railway_stats.config.StationConstants;
+import com.hs.railway_stats.repository.entity.TripInfoMetric;
 import com.hs.railway_stats.service.TripInfoMetricService;
+import com.hs.railway_stats.view.component.DepartureStatisticsCard;
+import com.hs.railway_stats.view.component.TopInsightsCard;
 import com.hs.railway_stats.view.component.TripStatsChart;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -64,12 +67,23 @@ public class MetricsView extends VerticalLayout {
 
         Div filterRow = getFilterRow(timeFilter);
 
+        DepartureStatisticsCard statisticsCard = new DepartureStatisticsCard();
+        TopInsightsCard insightsCard = new TopInsightsCard();
+
         TripStatsChart combinedChart = new TripStatsChart(tripInfoMetricService);
         combinedChart.setWidthFull();
         combinedChart.setMaxWidth("700px");
         combinedChart.getStyle().set("margin-left", "auto").set("margin-right", "auto");
 
-        Runnable reloadCharts = getReloadCharts(stations, idx, timeFilter, combinedChart);
+        // Statistics row (the four metric cards)
+        statisticsCard.setMaxWidth("700px");
+        statisticsCard.getStyle().set("margin-left", "auto").set("margin-right", "auto");
+
+        // Insights panel placed below the stats
+        insightsCard.setMaxWidth("700px");
+        insightsCard.getStyle().set("margin-left", "auto").set("margin-right", "auto");
+
+        Runnable reloadCharts = getReloadCharts(stations, idx, timeFilter, combinedChart, statisticsCard, insightsCard, tripInfoMetricService);
 
         Runnable reloadAll = getReloadAll(tripInfoMetricService, stations, idx, timeFilter, reloadCharts);
 
@@ -86,9 +100,9 @@ public class MetricsView extends VerticalLayout {
 
         Div footer = getFooter();
 
-        add(headerRow, selectorRow, filterRow, combinedChart, footer);
+        add(headerRow, selectorRow, filterRow, statisticsCard, insightsCard, combinedChart, footer);
         setAlignItems(Alignment.CENTER);
-        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, combinedChart, footer);
+        setAlignSelf(Alignment.STRETCH, headerRow, selectorRow, filterRow, statisticsCard, insightsCard, combinedChart, footer);
     }
 
     private static Div getFilterRow(MultiSelectComboBox<String> timeFilter) {
@@ -116,13 +130,22 @@ public class MetricsView extends VerticalLayout {
         };
     }
 
-    private static Runnable getReloadCharts(String[] stations, int[] idx, MultiSelectComboBox<String> timeFilter, TripStatsChart combinedChart) {
+    private static Runnable getReloadCharts(String[] stations, int[] idx, MultiSelectComboBox<String> timeFilter, TripStatsChart combinedChart, DepartureStatisticsCard statisticsCard, TopInsightsCard insightsCard, TripInfoMetricService tripInfoMetricService) {
         return () -> {
             String origin = stations[idx[0]];
             String dest = stations[1 - idx[0]];
             Set<LocalTime> selected = timeFilter.getSelectedItems().stream()
                     .map(s -> LocalTime.parse(s, TIME_FMT))
                     .collect(Collectors.toSet());
+
+            List<TripInfoMetric> filteredMetrics = tripInfoMetricService
+                    .getMetrics(origin, dest)
+                    .stream()
+                    .filter(m -> selected.isEmpty() || selected.contains(m.getScheduledDepartureTime()))
+                    .toList();
+
+            statisticsCard.loadMetrics(filteredMetrics);
+            insightsCard.loadInsights(filteredMetrics);
             combinedChart.loadMetrics(origin, dest, selected);
         };
     }
