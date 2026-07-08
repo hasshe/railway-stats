@@ -77,7 +77,7 @@ public class TripInfoView extends VerticalLayout {
         Button quickActionsTbdButton = new Button("TBD", new Icon(VaadinIcon.TOOLS));
         quickActionsTbdButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         quickActionsTbdButton.addClassName("metrics-fab-option");
-        quickActionsTbdButton.addClickListener(e -> Notification.show("TBD is not implemented yet"));
+        quickActionsTbdButton.addClickListener(e -> UI.getCurrent().navigate("tbd"));
 
         Div quickActionsMenu = new Div(quickActionsMetricsButton, quickActionsTbdButton);
         quickActionsMenu.addClassName("metrics-fab-menu");
