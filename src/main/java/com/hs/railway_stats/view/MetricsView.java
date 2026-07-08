@@ -200,11 +200,21 @@ public class MetricsView extends VerticalLayout {
         HorizontalLayout titleGroup = new HorizontalLayout(chartIcon, heading);
         titleGroup.setAlignItems(Alignment.CENTER);
         titleGroup.setSpacing(true);
+        titleGroup.setWidthFull();
+        titleGroup.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        HorizontalLayout headerRow = new HorizontalLayout(backButton, titleGroup);
+        Div rightSpacer = new Div();
+        rightSpacer.getStyle()
+                .set("width", "2.4rem")
+                .set("height", "2.4rem")
+                .set("flex-shrink", "0");
+
+        HorizontalLayout headerRow = new HorizontalLayout(backButton, titleGroup, rightSpacer);
         headerRow.setWidthFull();
         headerRow.setAlignItems(Alignment.CENTER);
+        headerRow.setJustifyContentMode(JustifyContentMode.BETWEEN);
         headerRow.setSpacing(true);
+        headerRow.setFlexGrow(1, titleGroup);
         headerRow.getStyle().set("flex-shrink", "0");
         return headerRow;
     }
