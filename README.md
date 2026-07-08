@@ -2,7 +2,7 @@
 
 A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stockholm C** corridor. It collects trip data nightly, stores it locally, and lets you browse historical delay/cancellation stats and claim eligibility. The **Metrics view** now combines summary cards, top insights, and an interactive Chart.js bar chart.
 
-> **Current version: 4.1.0**
+> **Current version: 4.2.1**
 
 ---
 
@@ -16,7 +16,7 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - **Smart date picker:** Automatically defaults to the latest gathered date, so you see the most recent data immediately upon page load.
 - **Metrics view:** `/metrics` page with four departure statistics cards, two top insight cards, and a unified interactive bar chart displaying three metrics (Times Cancelled, Claims Requested, Total Reimbursable Trips) with a color-coded legend.
 - **Departure-time filter:** Multi-select dropdown to filter charts by departure time.
-- **Metrics FAB:** Floating button to access metrics from anywhere.
+- **Quick actions FAB:** Floating menu for fast navigation to **Metrics** and **TBD** views.
 - **Profile drawer:** Save personal details for claims, encrypted client-side — including preferred **payout option** (SWISH or SUS).
 - **Payout option selection:** Dropdown in the profile drawer to choose between SWISH and SUS; value is persisted encrypted in localStorage and sent with every claim submission.
 - **Rate limiter:** IP-based protection against abuse.
@@ -44,8 +44,14 @@ A self-hosted web app for tracking train punctuality on the **Uppsala C ↔ Stoc
 - Header with profile/menu, title, and GitHub link.
 - Route selector, swap button, date picker, **trip filter dropdown**, and admin controls.
 - Scrollable trip card list.
-- Metrics FAB (bottom-right).
+- Quick actions FAB (bottom-right) with shortcuts to **Metrics** and **TBD**.
 - Profile drawer with all personal fields including a **Payout Option** dropdown (SWISH / SUS).
+
+### TBD view (`/tbd`)
+- Back button and page header matching the metrics styling.
+- “Under construction” banner shown above the card.
+- Placeholder “Expired tickets total” card with year selector.
+- **Calculate** button currently shows notification: **“Under Construction...”**
 
 ### Metrics view (`/metrics`)
 - Back button, route selector, departure-time filter.
