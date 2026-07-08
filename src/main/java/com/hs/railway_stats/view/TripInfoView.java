@@ -40,9 +40,9 @@ public class TripInfoView extends VerticalLayout {
             "this.innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" " +
             "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" " +
             "stroke-linecap=\"round\" stroke-linejoin=\"round\">" +
-            "<rect x=\"3\" y=\"12\" width=\"4\" height=\"9\"/>" +
-            "<rect x=\"10\" y=\"7\" width=\"4\" height=\"14\"/>" +
-            "<rect x=\"17\" y=\"3\" width=\"4\" height=\"18\"/>" +
+            "<line x1=\"4\" y1=\"7\" x2=\"20\" y2=\"7\"/>" +
+            "<line x1=\"4\" y1=\"12\" x2=\"20\" y2=\"12\"/>" +
+            "<line x1=\"4\" y1=\"17\" x2=\"20\" y2=\"17\"/>" +
             "</svg>';";
 
     public TripInfoView(final TripInfoService tripInfoService,
@@ -64,15 +64,28 @@ public class TripInfoView extends VerticalLayout {
         Button profileButton = buildProfileButton();
         HorizontalLayout headerRow = buildHeader(profileButton, appVersion);
 
-        Button metricsButton = new Button();
-        metricsButton.getElement().setAttribute("aria-label", "Metrics");
-        metricsButton.addClassName("metrics-fab-btn");
-        metricsButton.getElement().executeJs(METRICS_FAB_SVG);
-        metricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
-        Div metricsFab = new Div(metricsButton);
-        metricsFab.addClassName("metrics-fab");
-        addAttachListener(e -> UI.getCurrent().getElement().appendChild(metricsFab.getElement()));
-        addDetachListener(e -> metricsFab.getElement().removeFromParent());
+        Button quickActionsFabButton = new Button();
+        quickActionsFabButton.getElement().setAttribute("aria-label", "Open quick actions");
+        quickActionsFabButton.addClassName("metrics-fab-btn");
+        quickActionsFabButton.getElement().executeJs(METRICS_FAB_SVG);
+
+        Button quickActionsMetricsButton = new Button("Metrics", new Icon(VaadinIcon.BAR_CHART));
+        quickActionsMetricsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        quickActionsMetricsButton.addClassName("metrics-fab-option");
+        quickActionsMetricsButton.addClickListener(e -> UI.getCurrent().navigate("metrics"));
+
+        Button quickActionsTbdButton = new Button("TBD", new Icon(VaadinIcon.TOOLS));
+        quickActionsTbdButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        quickActionsTbdButton.addClassName("metrics-fab-option");
+        quickActionsTbdButton.addClickListener(e -> Notification.show("TBD is not implemented yet"));
+
+        Div quickActionsMenu = new Div(quickActionsMetricsButton, quickActionsTbdButton);
+        quickActionsMenu.addClassName("metrics-fab-menu");
+
+        Div quickActionsFab = new Div(quickActionsMenu, quickActionsFabButton);
+        quickActionsFab.addClassName("metrics-fab");
+        addAttachListener(e -> UI.getCurrent().getElement().appendChild(quickActionsFab.getElement()));
+        addDetachListener(e -> quickActionsFab.getElement().removeFromParent());
 
         ProfileSetupBanner profileSetupBanner = new ProfileSetupBanner();
         Runnable profileHighlightCallback = buildProfileHighlightCallback(profileButton);
@@ -202,4 +215,3 @@ public class TripInfoView extends VerticalLayout {
         };
     }
 }
-
